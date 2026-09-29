@@ -259,13 +259,14 @@ public class AuthService {
   public AuthDtos.TokenResponse refresh(AuthDtos.RefreshRequest req) {
     String hash = sha256(req.refreshToken());
     var session = jdbc.query(
-        "SELECT session_id, account_id, token_family_id, revoked_at, expires_at, mfa_satisfied "
+        "SELECT session_id, account_id, student_id, token_family_id, revoked_at, expires_at, mfa_satisfied "
             + "FROM auth_session WHERE refresh_hash = ?",
         rs -> {
           if (!rs.next()) return null;
           return Map.of(
               "sessionId", rs.getObject("session_id"),
               "accountId", rs.getObject("account_id"),
+              "studentId", rs.getObject("student_id"),
               "family", rs.getObject("token_family_id"),
               "revoked", rs.getTimestamp("revoked_at") != null,
               "expires", rs.getTimestamp("expires_at").toInstant(),
@@ -284,7 +285,12 @@ public class AuthService {
     }
     UUID sessionId = (UUID) session.get("sessionId");
     jdbc.update("UPDATE auth_session SET revoked_at = ? WHERE session_id = ?", clock.instant(), sessionId);
-    return issueTokens((UUID) session.get("accountId"), (Boolean) session.get("mfa"), (UUID) session.get("family"));
+    UUID accountId = (UUID) session.get("accountId");
+    UUID studentId = (UUID) session.get("studentId");
+    if (accountId != null) {
+      return issueTokens(accountId, (Boolean) session.get("mfa"), (UUID) session.get("family"));
+    }
+    return issueStudentTokens(studentId, (UUID) session.get("family"));
   }
 
   @Transactional
@@ -341,6 +347,29 @@ public class AuthService {
   }
 
   public AuthDtos.MeResponse me(AccountPrincipal principal) {
+    if (principal.accountId() == null && principal.studentId() != null) {
+      var student = jdbc.query(
+          "SELECT display_name, status FROM student_profile WHERE student_id = ?",
+          rs -> rs.next()
+              ? Map.of("displayName", rs.getString("display_name"), "status", rs.getString("status"))
+              : null,
+          principal.studentId());
+      if (student == null) {
+        throw AppException.notFound("Student not found");
+      }
+      Map<String, Boolean> flags = loadFeatureFlags();
+      return new AuthDtos.MeResponse(
+          null,
+          null,
+          (String) student.get("displayName"),
+          "STUDENT",
+          (String) student.get("status"),
+          principal.roles(),
+          List.of(),
+          List.of(),
+          flags,
+          principal.mfaSatisfied());
+    }
     var account = jdbc.query(
         "SELECT email, display_name, kind, status FROM account WHERE account_id = ?",
         rs -> {
@@ -359,12 +388,27 @@ public class AuthService {
         "SELECT role FROM account_role WHERE account_id = ?",
         (rs, i) -> rs.getString(1),
         principal.accountId());
-    Map<String, Boolean> flags = new HashMap<>();
-    jdbc.query("SELECT flag_key, enabled FROM feature_flag", rs -> {
-      while (rs.next()) {
-        flags.put(rs.getString(1), rs.getBoolean(2));
-      }
-    });
+    List<Map<String, Object>> children = List.of();
+    if (roles.contains("PARENT")) {
+      children = jdbc.query(
+          """
+          SELECT sp.student_id, sp.display_name, sp.year_group, sp.age_band, sp.status
+          FROM student_profile sp
+          JOIN parent_student_link psl ON psl.student_id = sp.student_id
+          WHERE psl.parent_account_id = ?
+          ORDER BY sp.created_at
+          """,
+          (rs, i) -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("studentId", rs.getObject("student_id"));
+            m.put("displayName", rs.getString("display_name"));
+            m.put("yearGroup", rs.getString("year_group"));
+            m.put("ageBand", rs.getString("age_band"));
+            m.put("status", rs.getString("status"));
+            return m;
+          },
+          principal.accountId());
+    }
     return new AuthDtos.MeResponse(
         principal.accountId(),
         (String) account.get("email"),
@@ -372,9 +416,9 @@ public class AuthService {
         (String) account.get("kind"),
         (String) account.get("status"),
         roles,
+        children,
         List.of(),
-        List.of(),
-        flags,
+        loadFeatureFlags(),
         principal.mfaSatisfied());
   }
 
@@ -398,8 +442,118 @@ public class AuthService {
     throw AppException.featureDisabled("OIDC deferred to W1 configuration");
   }
 
-  public void deferredPicturePin() {
-    throw AppException.featureDisabled("Picture PIN delivered in W1 (B-11)");
+  @Transactional
+  public AuthDtos.TokenResponse loginPicturePin(AuthDtos.PicturePinLoginRequest req) {
+    var cred = jdbc.query(
+        """
+        SELECT sc.credential_id, sc.student_id, sc.secret_hash, sc.failed_attempts, sc.locked_until, sp.status
+        FROM student_credential sc
+        JOIN student_profile sp ON sp.student_id = sc.student_id
+        WHERE sc.login_handle = ? AND sc.kind = 'PICTURE_PIN'
+        """,
+        rs -> {
+          if (!rs.next()) {
+            return null;
+          }
+          return Map.of(
+              "credentialId", rs.getObject("credential_id"),
+              "studentId", rs.getObject("student_id"),
+              "secretHash", rs.getString("secret_hash"),
+              "failed", rs.getShort("failed_attempts"),
+              "lockedUntil", rs.getTimestamp("locked_until"),
+              "status", rs.getString("status"));
+        },
+        req.loginHandle().toLowerCase());
+    if (cred == null) {
+      throw AppException.unauthorized(ProblemCode.AUTH_INVALID_CREDENTIALS, "Invalid credentials");
+    }
+    UUID studentId = (UUID) cred.get("studentId");
+    if (!"ACTIVE".equals(cred.get("status"))) {
+      throw AppException.unauthorized(ProblemCode.AUTH_ACCOUNT_LOCKED, "Account not active");
+    }
+    var lockedUntil = (java.sql.Timestamp) cred.get("lockedUntil");
+    if (lockedUntil != null && lockedUntil.toInstant().isAfter(clock.instant())) {
+      throw AppException.unauthorized(ProblemCode.AUTH_ACCOUNT_LOCKED, "Picture PIN locked");
+    }
+    String joined = String.join("|", req.pictureSequence());
+    String hash = (String) cred.get("secretHash");
+    if (!passwordHasher.verify(hash, joined.toCharArray())) {
+      short failed = (Short) cred.get("failed");
+      short next = (short) (failed + 1);
+      jdbc.update(
+          """
+          UPDATE student_credential SET failed_attempts = ?,
+            locked_until = CASE WHEN ? >= 5 THEN ? ELSE locked_until END
+          WHERE credential_id = ?
+          """,
+          next,
+          next,
+          clock.instant().plus(15, ChronoUnit.MINUTES),
+          cred.get("credentialId"));
+      if (next >= 5) {
+        notifyParentLockout(studentId);
+      }
+      throw AppException.unauthorized(ProblemCode.AUTH_INVALID_CREDENTIALS, "Invalid credentials");
+    }
+    jdbc.update(
+        "UPDATE student_credential SET failed_attempts = 0, locked_until = NULL WHERE credential_id = ?",
+        cred.get("credentialId"));
+    return issueStudentTokens(studentId);
+  }
+
+  private AuthDtos.TokenResponse issueStudentTokens(UUID studentId) {
+    return issueStudentTokens(studentId, UUID.randomUUID());
+  }
+
+  private AuthDtos.TokenResponse issueStudentTokens(UUID studentId, UUID familyId) {
+    UUID sessionId = UUID.randomUUID();
+    String refresh = HexFormat.of().formatHex(randomBytes(32));
+    Instant expires = clock.instant().plus(30, ChronoUnit.DAYS);
+    jdbc.update(
+        """
+        INSERT INTO auth_session (session_id, student_id, token_family_id, refresh_hash, mfa_satisfied, expires_at)
+        VALUES (?, ?, ?, ?, FALSE, ?)
+        """,
+        sessionId,
+        studentId,
+        familyId,
+        sha256(refresh),
+        expires);
+    AccountPrincipal principal = new AccountPrincipal(null, studentId, List.of("STU"), false, sessionId);
+    String access = jwtService.createAccessToken(principal);
+    auditLogService.append(null, "STU", "LOGIN", "student", studentId.toString(), Map.of());
+    return AuthDtos.TokenResponse.tokens(access, refresh, 15 * 60);
+  }
+
+  private void notifyParentLockout(UUID studentId) {
+    jdbc.query(
+        """
+        SELECT psl.parent_account_id FROM parent_student_link psl WHERE psl.student_id = ? AND psl.is_primary = TRUE LIMIT 1
+        """,
+        rs -> {
+          if (rs.next()) {
+            UUID parentId = (UUID) rs.getObject(1);
+            jdbc.update(
+                """
+                INSERT INTO notification (notification_id, recipient_account_id, kind, title, body, data_json)
+                VALUES (?, ?, 'SECURITY', 'Picture PIN locked', 'Too many failed picture PIN attempts.', '{}'::jsonb)
+                """,
+                UUID.randomUUID(),
+                parentId);
+          }
+          return null;
+        },
+        studentId);
+  }
+
+  private Map<String, Boolean> loadFeatureFlags() {
+    Map<String, Boolean> flags = new HashMap<>();
+    jdbc.query("SELECT flag_key, enabled FROM feature_flag", rs -> {
+      while (rs.next()) {
+        flags.put(rs.getString(1), rs.getBoolean(2));
+      }
+    });
+    return flags;
   }
 
   private AuthDtos.TokenResponse issueTokens(UUID accountId, boolean mfaSatisfied) {

@@ -32,27 +32,40 @@ public class JwtService {
   public String createAccessToken(AccountPrincipal principal) {
     Instant now = clock.instant();
     var builder = Jwts.builder()
-        .subject(principal.accountId() != null ? principal.accountId().toString() : principal.studentId().toString())
         .claim("roles", principal.roles())
         .claim("mfa", principal.mfaSatisfied())
         .claim("sid", principal.sessionId().toString())
         .issuedAt(Date.from(now))
         .expiration(Date.from(now.plusSeconds(accessTtlMinutes * 60)))
         .signWith(key);
-    if (principal.studentId() != null) {
-      builder.claim("studentId", principal.studentId().toString());
+    if (principal.accountId() != null) {
+      builder.subject(principal.accountId().toString()).claim("accountId", principal.accountId().toString());
+      if (principal.studentId() != null) {
+        builder.claim("studentId", principal.studentId().toString());
+      }
+    } else {
+      builder.subject(principal.studentId().toString()).claim("studentId", principal.studentId().toString());
     }
     return builder.compact();
   }
 
   public AccountPrincipal parse(String token) {
     Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
-    UUID accountId = UUID.fromString(claims.getSubject());
     @SuppressWarnings("unchecked")
     List<String> roles = claims.get("roles", List.class);
     boolean mfa = Boolean.TRUE.equals(claims.get("mfa", Boolean.class));
     UUID sid = UUID.fromString(claims.get("sid", String.class));
-    UUID studentId = claims.get("studentId") != null ? UUID.fromString(claims.get("studentId", String.class)) : null;
+    UUID accountId = claims.get("accountId") != null
+        ? UUID.fromString(claims.get("accountId", String.class))
+        : null;
+    UUID studentId = claims.get("studentId") != null
+        ? UUID.fromString(claims.get("studentId", String.class))
+        : null;
+    if (accountId == null && studentId == null) {
+      accountId = UUID.fromString(claims.getSubject());
+    } else if (accountId == null) {
+      studentId = studentId != null ? studentId : UUID.fromString(claims.getSubject());
+    }
     return new AccountPrincipal(accountId, studentId, roles, mfa, sid);
   }
 }

@@ -116,8 +116,8 @@ public class AuthController {
 
   @PostMapping("/auth/student/picture-pin")
   @CatalogueRoles(id = "AUTH-15", roles = "PUB")
-  public void picturePin() {
-    authService.deferredPicturePin();
+  public AuthDtos.TokenResponse picturePin(@Valid @RequestBody AuthDtos.PicturePinLoginRequest req) {
+    return authService.loginPicturePin(req);
   }
 
   @PostMapping("/auth/student/register")

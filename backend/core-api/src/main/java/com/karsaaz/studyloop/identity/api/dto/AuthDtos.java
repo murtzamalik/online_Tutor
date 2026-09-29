@@ -2,6 +2,7 @@ package com.karsaaz.studyloop.identity.api.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,11 @@ public final class AuthDtos {
   public record MfaEnrollConfirmRequest(@NotBlank String factorId, @NotBlank String code) {}
 
   public record MfaEnrollConfirmResponse(List<String> recoveryCodes) {}
+
+  public record PicturePinLoginRequest(
+      @NotBlank String loginHandle,
+      @NotEmpty @Size(min = 3, max = 12) List<String> pictureSequence
+  ) {}
 
   public record MeResponse(
       UUID accountId,

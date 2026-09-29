@@ -28,6 +28,9 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/actuator/health", "/actuator/info").permitAll()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/catalog/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/legal/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/cookie-consent").permitAll()
             .requestMatchers(
                 "/api/v1/auth/register-parent",
                 "/api/v1/auth/verify-email",
