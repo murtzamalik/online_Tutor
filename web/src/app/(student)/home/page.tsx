@@ -8,6 +8,8 @@ import { listStudents, studentHome, dailyGoal } from "@/lib/api/students";
 import { startPractice } from "@/lib/api/practice";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { Button } from "@/components/ui/Button";
+import { SurpriseQuizOverlay } from "@/components/engagement/SurpriseQuizOverlay";
+import { LiveChatWidget } from "@/components/support/LiveChatWidget";
 import { z } from "zod";
 
 type Me = z.infer<typeof MeSchema>;
@@ -83,9 +85,16 @@ export default function StudentHomePage() {
               <p className="mt-2 text-ink/70">Continue practice or review due topics.</p>
             </div>
             {goal && (
-              <p className="rounded-md border border-mist bg-white/70 px-4 py-3 text-sm">
-                Today&apos;s goal: {goal.answered} / {goal.target} questions
-              </p>
+              <div className="rounded-md border border-mist bg-white/70 px-4 py-3" aria-label="Daily micro-goal">
+                <p className="font-display text-lg">Daily micro-goal</p>
+                <p className="text-sm">Today: {goal.answered} / {goal.target} questions</p>
+                <div className="mt-2 h-2 w-full rounded bg-mist">
+                  <div
+                    className="h-2 rounded bg-ink"
+                    style={{ width: `${Math.min(100, Math.round((goal.answered / Math.max(1, goal.target)) * 100))}%` }}
+                  />
+                </div>
+              </div>
             )}
             {home ? (
               <pre className="overflow-auto rounded-md bg-mist/30 p-3 text-xs text-ink/70">
@@ -100,6 +109,21 @@ export default function StudentHomePage() {
             <div className="flex flex-wrap gap-3">
               <Link className="rounded-md border border-mist px-4 py-2 font-semibold" href="/onboarding/subjects">
                 Subjects
+              </Link>
+              <Link className="rounded-md border border-mist px-4 py-2 font-semibold" href="/onboarding/plan">
+                Weekly plan
+              </Link>
+              <Link className="rounded-md border border-mist px-4 py-2 font-semibold" href="/mock/new">
+                Mock setup
+              </Link>
+              <Link className="rounded-md border border-mist px-4 py-2 font-semibold" href="/practice/redrill">
+                Redrill
+              </Link>
+              <Link className="rounded-md border border-mist px-4 py-2 font-semibold" href="/search">
+                Search
+              </Link>
+              <Link className="rounded-md border border-mist px-4 py-2 font-semibold" href="/notifications">
+                Notifications
               </Link>
               <Link className="rounded-md border border-mist px-4 py-2 font-semibold" href="/parent">
                 Parent home
@@ -123,6 +147,8 @@ export default function StudentHomePage() {
                 </Link>
               )}
             </div>
+            {studentId && <SurpriseQuizOverlay studentId={studentId} />}
+            <LiveChatWidget />
           </div>
         )}
       </main>
