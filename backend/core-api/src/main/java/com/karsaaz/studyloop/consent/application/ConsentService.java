@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.consent.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.common.error.ProblemCode;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
@@ -48,7 +50,7 @@ public class ConsentService {
         WHERE record_id = ? AND account_id = ? AND outcome = 'PENDING'
         """,
         pass ? "PASS" : "FAIL",
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         recordId,
         principal.accountId());
     if (updated == 0) {

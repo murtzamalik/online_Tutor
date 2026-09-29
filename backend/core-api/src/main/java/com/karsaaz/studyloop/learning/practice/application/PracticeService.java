@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.learning.practice.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.common.error.ProblemCode;
@@ -312,7 +314,7 @@ public class PracticeService {
     access.requireStudent(principal);
     jdbc.update(
         "UPDATE practice_session SET status = 'COMPLETED', ended_at = ? WHERE session_id = ? AND student_id = ?",
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         sessionId,
         principal.studentId());
     Integer answered = jdbc.queryForObject(

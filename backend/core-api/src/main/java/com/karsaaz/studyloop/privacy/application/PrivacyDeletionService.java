@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.privacy.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
@@ -222,7 +224,7 @@ public class PrivacyDeletionService {
         WHERE status = 'COOLING_OFF' AND scheduled_for <= ?
         """,
         (rs, i) -> (UUID) rs.getObject(1),
-        clock.instant());
+        SqlTime.ts(clock.instant()));
     int processed = 0;
     for (UUID id : due) {
       jdbc.update(
@@ -234,7 +236,7 @@ public class PrivacyDeletionService {
           UPDATE deletion_request SET status = 'COMPLETED', completed_at = ?, certificate_ref = ?
           WHERE deletion_id = ?
           """,
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
           "purge-cert-" + id,
           id);
       processed++;

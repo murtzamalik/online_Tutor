@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.content.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.common.error.ProblemCode;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
@@ -69,14 +71,14 @@ public class ContentService {
       jdbc.update(
           "UPDATE question SET question_text = ?, updated_at = ? WHERE question_id = ?",
           body.get("questionText").toString(),
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
           questionId);
     }
     if (body.get("reviewStatus") != null) {
       jdbc.update(
           "UPDATE question SET review_status = ?, updated_at = ? WHERE question_id = ?",
           body.get("reviewStatus").toString(),
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
           questionId);
     }
     return getQuestion(questionId);
@@ -94,7 +96,7 @@ public class ContentService {
         questionId);
     jdbc.update(
         "UPDATE question SET review_status = 'PENDING_QC', updated_at = ? WHERE question_id = ?",
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         questionId);
     return qcExceptionDetail(principal, questionId);
   }
@@ -108,8 +110,8 @@ public class ContentService {
         WHERE question_id = ? AND review_status IN ('PENDING_QC','QC_FAILED')
         """,
         principal.accountId(),
-        clock.instant(),
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
+        SqlTime.ts(clock.instant()),
         questionId);
     if (updated == 0) {
       throw AppException.notFound("Question not found or not rejectable");
@@ -125,8 +127,8 @@ public class ContentService {
         WHERE question_id = ? AND review_status IN ('PENDING_QC','QC_FAILED')
         """,
         principal.accountId(),
-        clock.instant(),
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
+        SqlTime.ts(clock.instant()),
         questionId);
     if (updated == 0) {
       throw AppException.notFound("Question not found or not approvable");
@@ -197,8 +199,8 @@ public class ContentService {
         UPDATE question SET review_status = 'RETIRED', retired_at = ?, updated_at = ?
         WHERE question_id = ?
         """,
-        clock.instant(),
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
+        SqlTime.ts(clock.instant()),
         questionId);
     if (updated == 0) {
       throw AppException.notFound("Question not found");
@@ -292,7 +294,7 @@ public class ContentService {
         """,
         jobId,
         paperId,
-        clock.instant());
+        SqlTime.ts(clock.instant()));
     jdbc.update(
         "UPDATE past_paper SET ingest_status = 'QUEUED' WHERE paper_id = ?", paperId);
     // Stub pipeline: create a NEEDS_REVIEW item and move statuses
@@ -308,7 +310,7 @@ public class ContentService {
         UPDATE ingestion_job SET status = 'SUCCEEDED', finished_at = ?, stage = 'REVIEW'
         WHERE job_id = ?
         """,
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         jobId);
     jdbc.update(
         "UPDATE past_paper SET ingest_status = 'NEEDS_REVIEW' WHERE paper_id = ?", paperId);

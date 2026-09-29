@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.learning.mock.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
@@ -136,8 +138,8 @@ public class MockService {
         mockId,
         sid,
         enrolmentId,
-        clock.instant(),
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
+        SqlTime.ts(clock.instant()),
         resultJson);
     Long qid = jdbc.query(
         "SELECT question_id FROM question WHERE review_status = 'APPROVED' ORDER BY question_id LIMIT 1",
@@ -268,7 +270,7 @@ public class MockService {
     }
     jdbc.update(
         "UPDATE mock_paper SET status = 'IN_PROGRESS', started_at = ? WHERE mock_id = ? AND status = 'SETUP'",
-        clock.instant(), mockId);
+        SqlTime.ts(clock.instant()), mockId);
     return getMock(principal, mockId);
   }
 
@@ -300,7 +302,7 @@ public class MockService {
           result_json = jsonb_build_object('note','Auto-scored demo mock','overallPct',60)
         WHERE mock_id = ?
         """,
-        clock.instant(), total == null ? 0 : total.shortValue(),
+        SqlTime.ts(clock.instant()), total == null ? 0 : total.shortValue(),
         total == null ? 0 : total * 0.6, mockId);
     return results(principal, mockId);
   }

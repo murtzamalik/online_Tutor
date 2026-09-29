@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.generation.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
@@ -95,7 +97,7 @@ public class GenerationService {
     promoteApprovedPending(1);
     jdbc.update(
         "UPDATE generation_run SET finished_at = ?, stats_json = ?::jsonb WHERE run_id = ?",
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         "{\"promoted\":1,\"blueprints\":1}",
         runId);
     Map<String, Object> out = new HashMap<>();
@@ -150,8 +152,8 @@ public class GenerationService {
     for (Long id : ids) {
       n += jdbc.update(
           "UPDATE question SET review_status = 'APPROVED', reviewed_at = ?, updated_at = ? WHERE question_id = ?",
-          clock.instant(),
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
+          SqlTime.ts(clock.instant()),
           id);
     }
     return n;

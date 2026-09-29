@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Clock;
+import com.karsaaz.studyloop.common.db.SqlTime;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public class AuthService {
     String code = String.format("%06d", random.nextInt(1_000_000));
     jdbc.update(
         "INSERT INTO email_verification (account_id, code_hash, expires_at) VALUES (?, ?, ?)",
-        accountId, sha256(code), clock.instant().plus(15, ChronoUnit.MINUTES));
+        accountId, sha256(code), SqlTime.ts(clock.instant().plus(15, ChronoUnit.MINUTES)));
     sendMail(req.email(), "Verify your Study Loop email", "Your verification code is: " + code);
     auditLogService.append(accountId, "PARENT", "ACCOUNT_REGISTER", "account", accountId.toString(), Map.of());
     return new AuthDtos.RegisterParentResponse(accountId, "PENDING_VERIFICATION");
@@ -130,10 +131,10 @@ public class AuthService {
     if (!sha256(req.code()).equals(codeHash)) {
       throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "Invalid verification");
     }
-    jdbc.update("UPDATE email_verification SET verified_at = ? WHERE verification_id = ?", clock.instant(), verificationId);
+    jdbc.update("UPDATE email_verification SET verified_at = ? WHERE verification_id = ?", SqlTime.ts(clock.instant()), verificationId);
     jdbc.update(
         "UPDATE account SET status = 'ACTIVE', email_verified_at = ? WHERE account_id = ?",
-        clock.instant(), accountId);
+        SqlTime.ts(clock.instant()), accountId);
   }
 
   @Transactional
@@ -148,7 +149,7 @@ public class AuthService {
     String code = String.format("%06d", random.nextInt(1_000_000));
     jdbc.update(
         "INSERT INTO email_verification (account_id, code_hash, expires_at) VALUES (?, ?, ?)",
-        accountId, sha256(code), clock.instant().plus(15, ChronoUnit.MINUTES));
+        accountId, sha256(code), SqlTime.ts(clock.instant().plus(15, ChronoUnit.MINUTES)));
     sendMail(email, "Verify your Study Loop email", "Your verification code is: " + code);
   }
 
@@ -182,7 +183,7 @@ public class AuthService {
       jdbc.update(
           "UPDATE account SET failed_login_count = failed_login_count + 1, "
               + "locked_until = CASE WHEN failed_login_count + 1 >= 5 THEN ? ELSE locked_until END WHERE account_id = ?",
-          clock.instant().plus(15, ChronoUnit.MINUTES), accountId);
+          SqlTime.ts(clock.instant().plus(15, ChronoUnit.MINUTES)), accountId);
       throw AppException.unauthorized(ProblemCode.AUTH_INVALID_CREDENTIALS, "Invalid credentials");
     }
     String status = (String) account.get("status");
@@ -193,7 +194,7 @@ public class AuthService {
       throw AppException.unauthorized(ProblemCode.AUTH_ACCOUNT_LOCKED, "Account not active");
     }
     jdbc.update("UPDATE account SET failed_login_count = 0, locked_until = NULL, last_login_at = ? WHERE account_id = ?",
-        clock.instant(), accountId);
+        SqlTime.ts(clock.instant()), accountId);
     boolean mfaRequired = (Boolean) account.get("mfaRequired");
     if (mfaRequired) {
       String challenge = UUID.randomUUID().toString();
@@ -241,7 +242,7 @@ public class AuthService {
     if (!totpService.verify(secret, req.code())) {
       throw AppException.unauthorized(ProblemCode.AUTH_MFA_INVALID, "MFA code invalid");
     }
-    jdbc.update("UPDATE mfa_factor SET confirmed_at = ? WHERE factor_id = ?", clock.instant(), UUID.fromString(req.factorId()));
+    jdbc.update("UPDATE mfa_factor SET confirmed_at = ? WHERE factor_id = ?", SqlTime.ts(clock.instant()), UUID.fromString(req.factorId()));
     jdbc.update("UPDATE account SET mfa_required = TRUE WHERE account_id = ?", accountId);
     List<String> codes = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
@@ -280,11 +281,11 @@ public class AuthService {
     if ((Boolean) session.get("revoked") || ((Instant) session.get("expires")).isBefore(clock.instant())) {
       UUID family = (UUID) session.get("family");
       jdbc.update("UPDATE auth_session SET revoked_at = ? WHERE token_family_id = ? AND revoked_at IS NULL",
-          clock.instant(), family);
+          SqlTime.ts(clock.instant()), family);
       throw AppException.unauthorized(ProblemCode.AUTH_TOKEN_INVALID, "Refresh token reused or expired");
     }
     UUID sessionId = (UUID) session.get("sessionId");
-    jdbc.update("UPDATE auth_session SET revoked_at = ? WHERE session_id = ?", clock.instant(), sessionId);
+    jdbc.update("UPDATE auth_session SET revoked_at = ? WHERE session_id = ?", SqlTime.ts(clock.instant()), sessionId);
     UUID accountId = (UUID) session.get("accountId");
     UUID studentId = (UUID) session.get("studentId");
     if (accountId != null) {
@@ -300,7 +301,7 @@ public class AuthService {
     }
     jdbc.update(
         "UPDATE auth_session SET revoked_at = ? WHERE refresh_hash = ? AND revoked_at IS NULL",
-        clock.instant(), sha256(refreshToken));
+        SqlTime.ts(clock.instant()), sha256(refreshToken));
   }
 
   @Transactional
@@ -316,7 +317,7 @@ public class AuthService {
     String token = HexFormat.of().formatHex(randomBytes(32));
     jdbc.update(
         "INSERT INTO password_reset (account_id, token_hash, expires_at) VALUES (?, ?, ?)",
-        accountId, sha256(token), clock.instant().plus(1, ChronoUnit.HOURS));
+        accountId, sha256(token), SqlTime.ts(clock.instant().plus(1, ChronoUnit.HOURS)));
     sendMail(req.email(), "Reset your Study Loop password", "Reset token: " + token);
   }
 
@@ -340,9 +341,9 @@ public class AuthService {
     UUID accountId = (UUID) row[1];
     String hash = passwordHasher.hash(req.newPassword().toCharArray());
     jdbc.update("UPDATE account SET password_hash = ? WHERE account_id = ?", hash, accountId);
-    jdbc.update("UPDATE password_reset SET used_at = ? WHERE reset_id = ?", clock.instant(), row[0]);
+    jdbc.update("UPDATE password_reset SET used_at = ? WHERE reset_id = ?", SqlTime.ts(clock.instant()), row[0]);
     jdbc.update("UPDATE auth_session SET revoked_at = ? WHERE account_id = ? AND revoked_at IS NULL",
-        clock.instant(), accountId);
+        SqlTime.ts(clock.instant()), accountId);
     auditLogService.append(accountId, null, "PASSWORD_RESET", "account", accountId.toString(), Map.of());
   }
 
@@ -491,7 +492,7 @@ public class AuthService {
             return m;
           },
           principal.accountId(),
-          clock.instant());
+          SqlTime.ts(clock.instant()));
     }
     return jdbc.query(
         """
@@ -511,7 +512,7 @@ public class AuthService {
           return m;
         },
         principal.studentId(),
-        clock.instant());
+        SqlTime.ts(clock.instant()));
   }
 
   @Transactional
@@ -520,13 +521,13 @@ public class AuthService {
     if (principal.accountId() != null) {
       updated = jdbc.update(
           "UPDATE auth_session SET revoked_at = ? WHERE session_id = ? AND account_id = ? AND revoked_at IS NULL",
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
           sessionId,
           principal.accountId());
     } else {
       updated = jdbc.update(
           "UPDATE auth_session SET revoked_at = ? WHERE session_id = ? AND student_id = ? AND revoked_at IS NULL",
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
           sessionId,
           principal.studentId());
     }
@@ -600,7 +601,7 @@ public class AuthService {
           """,
           next,
           next,
-          clock.instant().plus(15, ChronoUnit.MINUTES),
+          SqlTime.ts(clock.instant().plus(15, ChronoUnit.MINUTES)),
           cred.get("credentialId"));
       if (next >= 5) {
         notifyParentLockout(studentId);
@@ -629,8 +630,7 @@ public class AuthService {
         sessionId,
         studentId,
         familyId,
-        sha256(refresh),
-        expires);
+        sha256(refresh), SqlTime.ts(expires));
     AccountPrincipal principal = new AccountPrincipal(null, studentId, List.of("STU"), false, sessionId);
     String access = jwtService.createAccessToken(principal);
     auditLogService.append(null, "STU", "LOGIN", "student", studentId.toString(), Map.of());
@@ -683,7 +683,7 @@ public class AuthService {
     jdbc.update(
         "INSERT INTO auth_session (session_id, account_id, token_family_id, refresh_hash, mfa_satisfied, expires_at) "
             + "VALUES (?, ?, ?, ?, ?, ?)",
-        sessionId, accountId, familyId, sha256(refresh), mfaSatisfied, expires);
+        sessionId, accountId, familyId, sha256(refresh), mfaSatisfied, SqlTime.ts(expires));
     AccountPrincipal principal = new AccountPrincipal(accountId, null, roles, mfaSatisfied, sessionId);
     String access = jwtService.createAccessToken(principal);
     auditLogService.append(accountId, roles.isEmpty() ? null : roles.get(0), "LOGIN", "account", accountId.toString(), Map.of());
@@ -703,7 +703,7 @@ public class AuthService {
     }
     Integer updated = jdbc.update(
         "UPDATE mfa_recovery_code SET used_at = ? WHERE account_id = ? AND code_hash = ? AND used_at IS NULL",
-        clock.instant(), accountId, sha256(code));
+        SqlTime.ts(clock.instant()), accountId, sha256(code));
     return updated != null && updated > 0;
   }
 

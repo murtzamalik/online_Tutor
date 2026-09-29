@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.aiops.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.common.error.ProblemCode;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
@@ -127,7 +129,7 @@ public class AiOpsService {
         evalId,
         promptVersionId,
         gold.size(),
-        clock.instant());
+        SqlTime.ts(clock.instant()));
     int agreed = 0;
     for (Map<String, Object> g : gold) {
       UUID goldId = (UUID) g.get("goldId");
@@ -154,7 +156,7 @@ public class AiOpsService {
         """,
         exactRate,
         exactRate,
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         exactRate.compareTo(new BigDecimal("0.95")) >= 0,
         evalId);
     return Map.of("evalId", evalId, "nItems", gold.size(), "exactTotalAgreement", exactRate);
@@ -366,7 +368,7 @@ public class AiOpsService {
         WHERE prompt_version_id = ?
         """,
         principal.accountId(),
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         versionId);
     return Map.of("promptVersionId", versionId, "status", "LIVE");
   }

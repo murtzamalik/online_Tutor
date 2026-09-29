@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.learning.practice.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.common.error.ProblemCode;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
@@ -100,11 +102,11 @@ public class DiagnosticService {
         UPDATE diagnostic_run SET status = 'COMPLETED', completed_at = ?
         WHERE diagnostic_id = ?
         """,
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         diagnosticId);
     jdbc.update(
         "UPDATE student_enrolment SET baseline_completed_at = ? WHERE enrolment_id = (SELECT enrolment_id FROM diagnostic_run WHERE diagnostic_id = ?)",
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         diagnosticId);
     double theta = currentTheta(diagnosticId);
     List<Long> topics = jdbc.query(

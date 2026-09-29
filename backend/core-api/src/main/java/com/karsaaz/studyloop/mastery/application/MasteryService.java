@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.mastery.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.mastery.domain.BktEngine;
@@ -69,8 +71,8 @@ public class MasteryService {
           (short) next.masteryLevel(),
           attempts,
           correctCount,
-          reviewDue,
-          clock.instant());
+          SqlTime.ts(reviewDue),
+          SqlTime.ts(clock.instant()));
     } else {
       double prior = (Double) existing.get("p");
       next = BktEngine.update(prior, correct);
@@ -88,8 +90,8 @@ public class MasteryService {
           (short) next.masteryLevel(),
           attempts,
           correctCount,
-          reviewDue,
-          clock.instant(),
+          SqlTime.ts(reviewDue),
+          SqlTime.ts(clock.instant()),
           masteryId);
     }
   }
@@ -181,7 +183,7 @@ public class MasteryService {
             "masteryLevel", rs.getShort("mastery_level"),
             "dueAt", rs.getTimestamp("next_review_due_at").toInstant()),
         sid,
-        clock.instant());
+        SqlTime.ts(clock.instant()));
   }
 
   public void seedFromDiagnostic(UUID studentId, long topicId, double theta) {
@@ -205,8 +207,8 @@ public class MasteryService {
         BktEngine.toDecimal(state.masteryProbability()),
         (short) state.masteryLevel(),
         BigDecimal.valueOf(theta),
-        clock.instant().plus(BktEngine.reviewDaysForLevel(state.masteryLevel()), ChronoUnit.DAYS),
-        clock.instant());
+        SqlTime.ts(clock.instant().plus(BktEngine.reviewDaysForLevel(state.masteryLevel()), ChronoUnit.DAYS)),
+        SqlTime.ts(clock.instant()));
   }
 
   public Map<String, Object> misconceptions(AccountPrincipal principal, UUID studentId) {

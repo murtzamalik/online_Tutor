@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.learning.students.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.common.error.ProblemCode;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
@@ -209,7 +211,7 @@ public class StudentService {
         """,
         (rs, i) -> Map.of("topicId", rs.getLong("topic_id"), "dueAt", rs.getTimestamp("next_review_due_at")),
         sid,
-        clock.instant());
+        SqlTime.ts(clock.instant()));
     return Map.of(
         "studentId", sid,
         "dailyGoal", goal,

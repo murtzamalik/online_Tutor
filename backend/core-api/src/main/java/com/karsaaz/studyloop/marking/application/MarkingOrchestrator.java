@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.marking.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karsaaz.studyloop.gatewayclient.api.GatewayClient;
 import com.karsaaz.studyloop.mastery.application.MasteryService;
@@ -118,7 +120,7 @@ public class MarkingOrchestrator {
           responseId,
           trigger,
           passA.marks,
-          clock.instant().plusSeconds(48 * 3600));
+          SqlTime.ts(clock.instant().plusSeconds(48 * 3600)));
       jdbc.update(
           "UPDATE student_response SET marking_status = 'IN_EXCEPTION' WHERE response_id = ?",
           responseId);
@@ -142,7 +144,7 @@ public class MarkingOrchestrator {
           WHERE response_id = ?
           """,
           aLevel.marks,
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
           responseId);
       Long specId = jdbc.query(
           "SELECT specification_id FROM question WHERE question_id = ?",
@@ -161,7 +163,7 @@ public class MarkingOrchestrator {
             "AL-" + responseId.toString().substring(0, 8).toUpperCase(),
             specId,
             aLevel.marks,
-            clock.instant().plusSeconds(ALevelProvisionalRouter.defaultSlaHours() * 3600L));
+            SqlTime.ts(clock.instant().plusSeconds(ALevelProvisionalRouter.defaultSlaHours() * 3600L)));
       }
       return;
     }
@@ -177,7 +179,7 @@ public class MarkingOrchestrator {
         """,
         decision.finalMarks(),
         correct,
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         responseId);
     masteryService.updateFromResponse(studentId, topicId, correct);
   }
@@ -204,7 +206,7 @@ public class MarkingOrchestrator {
         """,
         result.marksAwarded(),
         correct,
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         responseId);
     masteryService.updateFromResponse(studentId, topicId, correct);
   }
@@ -231,7 +233,7 @@ public class MarkingOrchestrator {
         """,
         result.marksAwarded(),
         correct,
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         responseId);
     masteryService.updateFromResponse(studentId, topicId, correct);
   }

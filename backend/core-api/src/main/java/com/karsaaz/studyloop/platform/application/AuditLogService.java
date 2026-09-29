@@ -1,8 +1,11 @@
 package com.karsaaz.studyloop.platform.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HexFormat;
@@ -52,7 +55,7 @@ public class AuditLogService {
     String rowHash = sha256(canonical);
     String sql = "INSERT INTO audit_log (occurred_at, actor_account_id, actor_role, action, target_type, target_id, metadata_json, prev_hash, row_hash) "
         + "VALUES (?, ?, ?, ?, ?, ?, CAST(? AS jsonb), ?, ?)";
-    jdbc.update(sql, now, actorAccountId, actorRole, action, targetType, targetId, metaJson, prev, rowHash);
+    jdbc.update(sql, Timestamp.from(now), actorAccountId, actorRole, action, targetType, targetId, metaJson, prev, rowHash);
   }
 
   private static String nullToEmpty(String s) {

@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.learning.entrance.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.learning.entrance.domain.EntranceLockRules;
@@ -121,12 +123,12 @@ public class EntranceTestService {
           SET status = 'COMPLETED', completed_at = ?, ability_estimate = ?
           WHERE run_id = ?
           """,
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
           answered / (double) Math.max(1, ctx.quota()),
           runId);
       jdbc.update(
           "UPDATE practice_session SET status = 'COMPLETED', ended_at = ? WHERE session_id = ?",
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
           ctx.sessionId());
     }
     Map<String, Object> out = new HashMap<>();

@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.marking.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.mastery.application.MasteryService;
@@ -115,7 +117,7 @@ public class ExceptionQueueService {
         finalMarks,
         resolution,
         note,
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         body.get("addToGold") instanceof Boolean b ? b : null,
         exceptionId);
     jdbc.update(
@@ -150,7 +152,7 @@ public class ExceptionQueueService {
           """,
           finalMarks,
           correct,
-          clock.instant(),
+          SqlTime.ts(clock.instant()),
           responseId);
       masteryService.updateFromResponse((UUID) meta.get("studentId"), (Long) meta.get("topicId"), correct);
     }

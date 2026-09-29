@@ -78,14 +78,18 @@ ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, body_md = EXCLUDED.body
 INSERT INTO exam_date (qualification_id, region, exam_name, exam_on, notes)
 SELECT q.qualification_id, 'England', 'GCSE Chemistry Paper 1 (illustrative)', DATE '2027-05-18',
        'Illustrative W1 calendar date — confirm against official board timetable'
-FROM qualification q WHERE q.code = 'GCSE' LIMIT 1
-AND NOT EXISTS (SELECT 1 FROM exam_date LIMIT 1);
+FROM qualification q
+WHERE q.code = 'GCSE'
+  AND NOT EXISTS (SELECT 1 FROM exam_date LIMIT 1)
+LIMIT 1;
 
 INSERT INTO exam_date (qualification_id, region, exam_name, exam_on, notes)
 SELECT q.qualification_id, 'England', 'GCSE Chemistry Paper 2 (illustrative)', DATE '2027-06-09',
        'Illustrative W1 calendar date'
-FROM qualification q WHERE q.code = 'GCSE' LIMIT 1
-AND (SELECT COUNT(*) FROM exam_date) < 2;
+FROM qualification q
+WHERE q.code = 'GCSE'
+  AND (SELECT COUNT(*) FROM exam_date) < 2
+LIMIT 1;
 
 -- Board style profile for 8462 if missing (STY-*)
 INSERT INTO board_style_profile (

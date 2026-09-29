@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -27,7 +26,7 @@ public class PromptLoader {
 
   private String resolve(String promptId) {
     try {
-      Optional<String> fromDb = jdbc.query(
+      String fromDb = jdbc.query(
           "SELECT body_text FROM prompt_version WHERE prompt_id = ? AND status = 'LIVE' LIMIT 1",
           rs -> rs.next() ? rs.getString(1) : null,
           promptId);

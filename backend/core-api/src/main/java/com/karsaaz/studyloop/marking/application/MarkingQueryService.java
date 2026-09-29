@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.marking.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.common.error.ProblemCode;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
@@ -134,7 +136,7 @@ public class MarkingQueryService {
         exceptionId,
         responseId,
         disputeId,
-        clock.instant().plusSeconds(48 * 3600));
+        SqlTime.ts(clock.instant().plusSeconds(48 * 3600)));
     jdbc.update(
         "UPDATE student_response SET marking_status = 'IN_EXCEPTION' WHERE response_id = ?",
         responseId);

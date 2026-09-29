@@ -1,5 +1,7 @@
 package com.karsaaz.studyloop.marking.application;
 
+import com.karsaaz.studyloop.common.db.SqlTime;
+
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.mastery.application.MasteryService;
@@ -130,7 +132,7 @@ public class ReviewService {
         WHERE review_id = ? AND status = 'QUEUED'
         """,
         principal.accountId(),
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         reviewId);
     if (n == 0) {
       throw AppException.conflict("CONFLICT", "Already claimed or not queued");
@@ -151,7 +153,7 @@ public class ReviewService {
         """,
         aiMarks,
         principal.accountId(),
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         reviewId);
     finalizeResponse(responseId, aiMarks, "REVIEWER_CONFIRMED");
     return Map.of("reviewId", reviewId, "status", "CONFIRMED", "finalMarks", aiMarks);
@@ -176,7 +178,7 @@ public class ReviewService {
         finalMarks,
         note,
         principal.accountId(),
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         reviewId);
     finalizeResponse(responseId, finalMarks, "REVIEWER_CONFIRMED");
     return Map.of("reviewId", reviewId, "status", "ADJUSTED", "finalMarks", finalMarks);
@@ -289,7 +291,7 @@ public class ReviewService {
         marks,
         correct,
         mode,
-        clock.instant(),
+        SqlTime.ts(clock.instant()),
         responseId);
     jdbc.update(
         """
