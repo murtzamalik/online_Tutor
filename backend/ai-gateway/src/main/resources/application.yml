@@ -1,0 +1,25 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: ai-gateway
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/studyloop}
+    username: ${SPRING_DATASOURCE_USERNAME:tutor_gateway_login}
+    password: ${SPRING_DATASOURCE_PASSWORD:local_gateway_change_me}
+  flyway:
+    enabled: false
+
+studyloop:
+  gateway:
+    service-token: ${GATEWAY_SERVICE_TOKEN:local_gateway_service_token_change_me}
+    stub: ${AI_GATEWAY_STUB:true}
+    prompts-path: ${PROMPTS_PATH:../../ai_prompts}
+    embedding-url: ${EMBEDDING_SERVICE_URL:http://localhost:8100}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

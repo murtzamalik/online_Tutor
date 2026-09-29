@@ -1,0 +1,51 @@
+server:
+  port: 8080
+  error:
+    include-message: never
+    include-stacktrace: never
+
+spring:
+  application:
+    name: core-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/studyloop}
+    username: ${SPRING_DATASOURCE_USERNAME:tutor_app_login}
+    password: ${SPRING_DATASOURCE_PASSWORD:local_app_change_me}
+  flyway:
+    enabled: true
+    locations: filesystem:${STUDYLOOP_MIGRATIONS:${user.dir}/../../db/migrations}
+    user: ${FLYWAY_USER:${spring.datasource.username}}
+    password: ${FLYWAY_PASSWORD:${spring.datasource.password}}
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+studyloop:
+  jwt:
+    secret: ${JWT_SECRET:local_dev_jwt_secret_must_be_at_least_32_chars_long}
+    access-ttl-minutes: 15
+    refresh-ttl-days: 30
+  aes-data-key-hex: ${AES_DATA_KEY:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+  ai-gateway:
+    base-url: ${AI_GATEWAY_BASE_URL:http://localhost:8090}
+    service-token: ${GATEWAY_SERVICE_TOKEN:local_gateway_service_token_change_me}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8080}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{correlationId:-}]"

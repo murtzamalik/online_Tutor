@@ -1,0 +1,51 @@
+# OS / IDE
+.DS_Store
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Java / Maven
+backend/**/target/
+backend/**/.classpath
+backend/**/.project
+backend/**/.settings/
+
+# Node
+web/node_modules/
+web/.next/
+web/out/
+web/coverage/
+web/storybook-static/
+web/src/lib/api/generated/
+*.tsbuildinfo
+
+# Python
+embedding-service/.venv/
+embedding-service/__pycache__/
+embedding-service/**/__pycache__/
+*.pyc
+.pytest_cache/
+embedding-service/models/*.onnx
+
+# Docker / local data
+infra/data/
+*.log
+
+# Generated artefacts
+docs/erd/*.png
+docs/erd/*.svg
+!docs/erd/.gitkeep
+openapi-generated.yaml
+
+# Test / coverage
+**/jacoco/
+**/coverage/

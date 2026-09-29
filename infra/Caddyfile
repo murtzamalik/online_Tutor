@@ -1,0 +1,15 @@
+:80 {
+  encode gzip
+
+  handle_path /api/* {
+    reverse_proxy core-api:8080
+  }
+
+  handle /gateway/* {
+    respond "Gateway is service-to-service only" 403
+  }
+
+  handle {
+    reverse_proxy web:3000
+  }
+}
