@@ -157,20 +157,56 @@ public class MockService {
     UUID sid = principal.studentId();
     UUID enrolmentId = UUID.fromString(body.get("enrolmentId").toString());
     short duration = body.get("durationMinutes") instanceof Number n ? n.shortValue() : 45;
-    boolean extended = Boolean.TRUE.equals(body.get("extendedTime"));
-    if (extended) {
-      duration = (short) Math.round(duration * 1.25);
+    int extendedPct = 0;
+    if (body.get("extendedTimePct") instanceof Number n) {
+      extendedPct = n.intValue();
+    } else if (Boolean.TRUE.equals(body.get("extendedTime"))) {
+      extendedPct = 25;
+    } else {
+      // J-04: read from accessibility_json
+      String a11y = jdbc.query(
+          "SELECT accessibility_json::text FROM student_profile WHERE student_id = ?",
+          rs -> rs.next() ? rs.getString(1) : "{}",
+          sid);
+      if (a11y != null && a11y.contains("extended_time_pct")) {
+        try {
+          var node = mapper.readTree(a11y).path("extended_time_pct");
+          if (node.isNumber()) {
+            extendedPct = node.asInt();
+          }
+        } catch (Exception ignored) {
+        }
+      }
+      // also accept camelCase
+      if (extendedPct == 0 && a11y != null && a11y.contains("extendedTimePct")) {
+        try {
+          var node = mapper.readTree(a11y).path("extendedTimePct");
+          if (node.isNumber()) {
+            extendedPct = node.asInt();
+          }
+        } catch (Exception ignored) {
+        }
+      }
     }
+    if (extendedPct < 0) {
+      extendedPct = 0;
+    }
+    if (extendedPct > 100) {
+      extendedPct = 100;
+    }
+    short adjusted = (short) Math.round(duration * (1.0 + extendedPct / 100.0));
     UUID mockId = UUID.randomUUID();
     jdbc.update(
         """
         INSERT INTO mock_paper (
-          mock_id, student_id, enrolment_id, source_kind, duration_minutes, structure_json, status)
-        VALUES (?, ?, ?, ?, ?, '{"sections":[{"name":"A"}]}'::jsonb, 'SETUP')
+          mock_id, student_id, enrolment_id, source_kind, duration_minutes, extended_time_pct,
+          structure_json, status)
+        VALUES (?, ?, ?, ?, ?, ?, '{"sections":[{"name":"A"}]}'::jsonb, 'SETUP')
         """,
         mockId, sid, enrolmentId,
         body.getOrDefault("sourceKind", "GENERATED").toString(),
-        duration);
+        adjusted,
+        (short) extendedPct);
     List<Long> qids = jdbc.query(
         """
         SELECT q.question_id FROM question q
@@ -189,8 +225,10 @@ public class MockService {
     Map<String, Object> out = new HashMap<>();
     out.put("mockId", mockId);
     out.put("status", "SETUP");
-    out.put("durationMinutes", duration);
-    out.put("extendedTime", extended);
+    out.put("durationMinutes", adjusted);
+    out.put("baseDurationMinutes", duration);
+    out.put("extendedTimePct", extendedPct);
+    out.put("extendedTime", extendedPct > 0);
     out.put("itemCount", qids.size());
     return out;
   }

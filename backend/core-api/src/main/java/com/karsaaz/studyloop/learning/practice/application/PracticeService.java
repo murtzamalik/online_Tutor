@@ -147,11 +147,16 @@ public class PracticeService {
         marksAvailable);
     bumpDailyProgress(studentId);
     markingOrchestrator.mark(responseId);
-    return Map.of(
-        "responseId", responseId,
-        "status", "MARKING",
-        "resultUrl", "/api/v1/practice/answers/" + responseId + "/result",
-        "sse", true);
+    Map<String, Object> out = new HashMap<>();
+    out.put("responseId", responseId);
+    out.put("status", "MARKING");
+    out.put("resultUrl", "/api/v1/practice/answers/" + responseId + "/result");
+    out.put("sse", true);
+    Map<String, Object> session = loadSession(studentId, sessionId);
+    if ("TARGET_GRADE".equals(session.get("mode"))) {
+      out.put("keepGoing", keepGoingStatus(principal, sessionId));
+    }
+    return out;
   }
 
   private record AnswerParsed(String answerText, String structuredJson) {}
@@ -296,7 +301,8 @@ public class PracticeService {
   public void skip(AccountPrincipal principal, UUID sessionId) {
     access.requireStudent(principal);
     var session = loadSession(principal.studentId(), sessionId);
-    if ("DIAGNOSTIC".equals(session.get("mode"))) {
+    String mode = String.valueOf(session.get("mode"));
+    if ("DIAGNOSTIC".equals(mode) || "ENTRANCE_TEST".equals(mode)) {
       throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "Skip not allowed");
     }
   }
@@ -664,6 +670,66 @@ public class PracticeService {
     access.requireStudent(principal);
     loadSession(principal.studentId(), sessionId);
     String mode = body.getOrDefault("inputMode", body.getOrDefault("mode", "TYPED")).toString();
-    return Map.of("sessionId", sessionId, "inputMode", mode, "updated", true);
+    boolean simplified = Boolean.TRUE.equals(body.get("simplifiedLanguage"));
+    Map<String, Object> out = new HashMap<>();
+    out.put("sessionId", sessionId);
+    out.put("inputMode", mode);
+    out.put("simplifiedLanguage", simplified);
+    out.put("updated", true);
+    out.put("marksUnchanged", true);
+    out.put("note", "Simplified language never alters marks or facts (J-05).");
+    return out;
+  }
+
+  /** D-10: evaluate keep-going consistency after answers in TARGET_GRADE session. */
+  public Map<String, Object> keepGoingStatus(AccountPrincipal principal, UUID sessionId) {
+    access.requireStudent(principal);
+    var session = loadSession(principal.studentId(), sessionId);
+    int window = 5;
+    int minPct = 80;
+    try {
+      Integer w = jdbc.query(
+          "SELECT value_json::text FROM app_config WHERE config_key = 'practice.keep_going.consistency_window'",
+          rs -> rs.next() ? Integer.parseInt(rs.getString(1).replace("\"", "").trim()) : null);
+      if (w != null) window = w;
+      Integer p = jdbc.query(
+          "SELECT value_json::text FROM app_config WHERE config_key = 'practice.keep_going.consistency_min_pct'",
+          rs -> rs.next() ? Integer.parseInt(rs.getString(1).replace("\"", "").trim()) : null);
+      if (p != null) minPct = p;
+    } catch (Exception ignored) {
+    }
+    List<Boolean> recent = jdbc.query(
+        """
+        SELECT COALESCE(is_correct, FALSE) FROM student_response
+        WHERE session_id = ? ORDER BY responded_at ASC
+        """,
+        (rs, i) -> rs.getBoolean(1),
+        sessionId);
+    boolean[] arr = new boolean[recent.size()];
+    for (int i = 0; i < recent.size(); i++) {
+      arr[i] = Boolean.TRUE.equals(recent.get(i));
+    }
+    boolean consistent = com.karsaaz.studyloop.learning.practice.domain.KeepGoingConsistency
+        .meetsThreshold(arr, window, minPct);
+    int consecutiveIncorrect = 0;
+    for (int i = arr.length - 1; i >= 0; i--) {
+      if (!arr[i]) {
+        consecutiveIncorrect++;
+      } else {
+        break;
+      }
+    }
+    boolean fatigue = com.karsaaz.studyloop.learning.practice.domain.KeepGoingConsistency
+        .shouldStopForFatigue(consecutiveIncorrect, 4);
+    Map<String, Object> out = new HashMap<>();
+    out.put("sessionId", sessionId.toString());
+    out.put("mode", session.get("mode"));
+    out.put("answered", arr.length);
+    out.put("windowSize", window);
+    out.put("minPct", minPct);
+    out.put("consistent", consistent);
+    out.put("stopForFatigue", fatigue);
+    out.put("keepGoing", !consistent && !fatigue);
+    return out;
   }
 }

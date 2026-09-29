@@ -56,6 +56,13 @@ public class TutorController {
     return tutor.reexplain(principal, body);
   }
 
+  @PostMapping("/tutor/photo-walkthrough")
+  @CatalogueRoles(id = "TUT-06", roles = "STU")
+  public Map<String, Object> photoWalkthrough(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, Object> body) {
+    return tutor.photoWalkthrough(principal, body);
+  }
+
   @PostMapping("/tutor/sessions/{tutorSessionId}/explain-back")
   @CatalogueRoles(id = "TUT-07", roles = "STU")
   public Map<String, Object> explainBack(

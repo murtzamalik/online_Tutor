@@ -466,4 +466,30 @@ public class StudentService {
         sid);
     return Map.of("studentId", sid, "accessibilityJson", json == null ? "{}" : json);
   }
+
+  @Transactional
+  public Map<String, Object> putAccessibility(
+      AccountPrincipal principal, UUID studentId, Map<String, Object> body) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudent(principal, sid);
+    Object raw = body.get("accessibilityJson");
+    if (raw == null) {
+      raw = body;
+    }
+    String json;
+    if (raw instanceof String s) {
+      json = s;
+    } else {
+      try {
+        json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(raw);
+      } catch (Exception e) {
+        throw AppException.badRequest("VALIDATION_FAILED", "accessibilityJson must be object or JSON string");
+      }
+    }
+    jdbc.update(
+        "UPDATE student_profile SET accessibility_json = ?::jsonb, updated_at = now() WHERE student_id = ?",
+        json,
+        sid);
+    return accessibility(principal, sid);
+  }
 }

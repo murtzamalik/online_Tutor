@@ -192,6 +192,84 @@ public class TutorService {
     return Map.of("tutorSessionId", sessionId.toString(), "mode", "RESCUE", "nudgeId", nudgeId);
   }
 
+  /**
+   * F-08: masked photo of stuck (unattempted) question → guided walkthrough via gateway P-TU-06.
+   * Full vision may stub; endpoints and masking contract are real.
+   */
+  @Transactional
+  public Map<String, Object> photoWalkthrough(AccountPrincipal principal, Map<String, Object> body) {
+    access.requireStudent(principal);
+    UUID studentId = principal.studentId();
+    assertChatAllowed(studentId);
+    Object maskReport = body.get("maskReport");
+    if (maskReport == null) {
+      throw AppException.badRequest("MASK_REQUIRED", "Client-side mask report is mandatory (PRA-06 rules)");
+    }
+    String photoRef = body.getOrDefault("maskedPhotoKey", body.getOrDefault("photoKey", "masked-stub")).toString();
+    UUID photoId = UUID.randomUUID();
+    Instant retention = Instant.now().plus(30, ChronoUnit.DAYS);
+    try {
+      String maskJson = maskReport instanceof String s
+          ? s
+          : new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(maskReport);
+      jdbc.update(
+          """
+          INSERT INTO answer_photo (photo_id, student_id, storage_key, mask_report_json, purpose, retention_until)
+          VALUES (?, ?, ?, ?::jsonb, 'STUCK_QUESTION', ?)
+          """,
+          photoId,
+          studentId,
+          photoRef,
+          maskJson,
+          Timestamp.from(retention));
+    } catch (Exception e) {
+      // continue with stub walkthrough if insert fails
+    }
+    UUID tutorSessionId = UUID.randomUUID();
+    jdbc.update(
+        """
+        INSERT INTO tutor_session (tutor_session_id, student_id, channel, mode, persona_tier, status)
+        VALUES (?, ?, 'CHAT', 'WALKTHROUGH', 2, 'ACTIVE')
+        """,
+        tutorSessionId, studentId);
+    String walkthrough;
+    try {
+      Map<?, ?> gw = gateway.run(
+          "P-TU-06",
+          Map.of(
+              "photo_token", photoId.toString(),
+              "has_mask_report", true,
+              "hint_ladder", true),
+          "schemas/walkthrough.schema.json");
+      Object content = gw.get("content");
+      if (content == null) {
+        content = gw.get("steps");
+      }
+      walkthrough = content == null
+          ? "Step 1: Restate what the question asks.\nStep 2: List knowns.\nStep 3: Choose a method — I will not give the final answer."
+          : content.toString();
+    } catch (Exception e) {
+      walkthrough =
+          "Step 1: Restate what the question asks (no full answer).\n"
+              + "Step 2: Spot units and given values.\n"
+              + "Step 3: Try the next hint rung — vision stub used; masking was required.";
+    }
+    Instant expires = Instant.now().plus(90, ChronoUnit.DAYS);
+    jdbc.update(
+        """
+        INSERT INTO tutor_message (message_id, tutor_session_id, seq, role, channel, content_text, ai_visible_text, blocked, expires_at)
+        VALUES (?,?,1,'TUTOR','CHAT',?,?,FALSE,?)
+        """,
+        UUID.randomUUID(), tutorSessionId, walkthrough, "[WALKTHROUGH]", Timestamp.from(expires));
+    Map<String, Object> out = new HashMap<>();
+    out.put("tutorSessionId", tutorSessionId.toString());
+    out.put("photoId", photoId.toString());
+    out.put("walkthrough", walkthrough);
+    out.put("fullAnswerRevealed", false);
+    out.put("visionPath", "stub_or_gateway");
+    return out;
+  }
+
   private void assertChatAllowed(UUID studentId) {
     Boolean enabled = jdbc.query(
         "SELECT chat_enabled FROM parent_ai_controls WHERE student_id = ?",

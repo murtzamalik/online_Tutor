@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karsaaz.studyloop.billing.domain.DunningStateMachine;
 import com.karsaaz.studyloop.billing.domain.EntitlementMath;
 import com.karsaaz.studyloop.billing.domain.PaymentProvider;
+import com.karsaaz.studyloop.billing.domain.ReferralCodes;
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
+import com.karsaaz.studyloop.platform.feature.FeatureFlags;
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -27,12 +30,16 @@ public class BillingService {
   private final JdbcTemplate jdbc;
   private final PaymentProvider payments;
   private final StudentAccessHelper access;
+  private final FeatureFlags flags;
   private final ObjectMapper mapper = new ObjectMapper();
+  private final SecureRandom random = new SecureRandom();
 
-  public BillingService(JdbcTemplate jdbc, PaymentProvider payments, StudentAccessHelper access) {
+  public BillingService(
+      JdbcTemplate jdbc, PaymentProvider payments, StudentAccessHelper access, FeatureFlags flags) {
     this.jdbc = jdbc;
     this.payments = payments;
     this.access = access;
+    this.flags = flags;
   }
 
   public Map<String, Object> setupIntent(AccountPrincipal principal) {
@@ -680,6 +687,107 @@ public class BillingService {
   private static String str(Map<String, Object> body, String key, String def) {
     Object v = body.get(key);
     return v == null ? def : v.toString();
+  }
+
+  @Transactional
+  public Map<String, Object> createMicroSubscription(AccountPrincipal principal, Map<String, Object> body) {
+    access.requireParent(principal);
+    flags.require("micro_subscriptions", "Micro-subscriptions are flag-off");
+    UUID studentId = UUID.fromString(body.get("studentId").toString());
+    access.assertParentOwns(principal, studentId);
+    long subjectId = longVal(body.get("subjectId"));
+    String boardTrack = str(body, "boardTrack", null);
+    int amountPence = flags.configInt("billing.micro_sub.amount_pence", 999);
+    int days = flags.configInt("billing.micro_sub.duration_days", 30);
+    Instant starts = Instant.now();
+    Instant expires = starts.plus(days, ChronoUnit.DAYS);
+    UUID id = UUID.randomUUID();
+    String providerRef = "micro_fake_" + id.toString().substring(0, 8);
+    jdbc.update(
+        """
+        INSERT INTO micro_subscription (
+          micro_sub_id, account_id, student_id, subject_id, board_track,
+          amount_pence, currency, status, provider_ref, starts_at, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'GBP', 'ACTIVE', ?, ?, ?)
+        """,
+        id, principal.accountId(), studentId, subjectId, boardTrack,
+        amountPence, providerRef, Timestamp.from(starts), Timestamp.from(expires));
+    Map<String, Object> out = new HashMap<>();
+    out.put("microSubId", id.toString());
+    out.put("studentId", studentId.toString());
+    out.put("subjectId", subjectId);
+    out.put("boardTrack", boardTrack);
+    out.put("amountPence", amountPence);
+    out.put("currency", "GBP");
+    out.put("status", "ACTIVE");
+    out.put("expiresAt", expires.toString());
+    out.put("providerRef", providerRef);
+    return out;
+  }
+
+  public Map<String, Object> getReferral(AccountPrincipal principal) {
+    access.requireParent(principal);
+    flags.require("referrals", "Referrals are flag-off");
+    ensureReferralCode(principal.accountId());
+    return jdbc.query(
+        """
+        SELECT referral_id, code, status, reward_json::text, created_at
+        FROM referral WHERE referrer_account_id = ? ORDER BY created_at DESC LIMIT 1
+        """,
+        rs -> {
+          if (!rs.next()) {
+            return Map.of("code", null, "status", "NONE");
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("referralId", rs.getObject("referral_id").toString());
+          m.put("code", rs.getString("code"));
+          m.put("status", rs.getString("status"));
+          m.put("rewardJson", rs.getString("reward_json"));
+          m.put("rewardPence", flags.configInt("billing.referral.reward_pence", 500));
+          m.put("note", "Reward credited only after your invitee's first paid invoice — no signup tricks.");
+          return m;
+        },
+        principal.accountId());
+  }
+
+  @Transactional
+  public Map<String, Object> inviteReferral(AccountPrincipal principal, Map<String, Object> body) {
+    access.requireParent(principal);
+    flags.require("referrals", "Referrals are flag-off");
+    String email = str(body, "email", null);
+    if (email == null || email.isBlank()) {
+      throw AppException.badRequest("VALIDATION_FAILED", "email required");
+    }
+    Map<String, Object> ref = getReferral(principal);
+    String code = ref.get("code") == null ? ensureReferralCode(principal.accountId()) : ref.get("code").toString();
+    Map<String, Object> out = new HashMap<>(ref);
+    out.put("code", code);
+    out.put("invitedEmail", email.toLowerCase());
+    out.put("status", "INVITED");
+    out.put("message", "Invite recorded. Reward applies only after their first paid invoice.");
+    return out;
+  }
+
+  private String ensureReferralCode(UUID accountId) {
+    String existing = jdbc.query(
+        "SELECT code FROM referral WHERE referrer_account_id = ? ORDER BY created_at LIMIT 1",
+        rs -> rs.next() ? rs.getString(1) : null,
+        accountId);
+    if (existing != null) {
+      return existing;
+    }
+    String prefix = flags.configString("billing.referral.code_prefix", "SL");
+    String code = ReferralCodes.generate(prefix, random);
+    jdbc.update(
+        """
+        INSERT INTO referral (referral_id, referrer_account_id, code, status, reward_json)
+        VALUES (?, ?, ?, 'INVITED', ?::jsonb)
+        """,
+        UUID.randomUUID(),
+        accountId,
+        code,
+        "{\"rewardPence\":" + flags.configInt("billing.referral.reward_pence", 500) + "}");
+    return code;
   }
 
   private static long longVal(Object o) {

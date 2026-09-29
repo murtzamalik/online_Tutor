@@ -132,4 +132,13 @@ public class StudentController {
       @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
     return studentService.accessibility(principal, studentId);
   }
+
+  @PutMapping("/students/{studentId}/accessibility")
+  @CatalogueRoles(id = "STU-11", roles = "PAR,STU")
+  public Map<String, Object> putAccessibility(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID studentId,
+      @RequestBody Map<String, Object> body) {
+    return studentService.putAccessibility(principal, studentId, body);
+  }
 }

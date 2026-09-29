@@ -51,4 +51,18 @@ public class MasteryController {
       @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
     return masteryService.misconceptions(principal, studentId);
   }
+
+  @GetMapping("/students/{studentId}/skill-map")
+  @CatalogueRoles(id = "MAS-08", roles = "STU")
+  public Map<String, Object> skillMap(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
+    return masteryService.skillMap(principal, studentId);
+  }
+
+  @GetMapping("/students/{studentId}/cohort-benchmark")
+  @CatalogueRoles(id = "MAS-05", roles = "STU,PAR")
+  public Map<String, Object> cohortBenchmark(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
+    return masteryService.cohortBenchmark(principal, studentId);
+  }
 }

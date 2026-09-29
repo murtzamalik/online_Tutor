@@ -5,6 +5,7 @@ import com.karsaaz.studyloop.gatewayclient.api.GatewayClient;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -39,12 +40,16 @@ public class VoiceService {
       throw AppException.forbidden("Parent voice toggle is off");
     }
     UUID tutorSessionId = UUID.randomUUID();
+    String mode = body.getOrDefault("mode", "SOCRATIC").toString();
+    if (!List.of("SOCRATIC", "DISCUSSION", "WALKTHROUGH", "RESCUE", "FREE_REVISION").contains(mode)) {
+      mode = "SOCRATIC";
+    }
     jdbc.update(
         """
         INSERT INTO tutor_session (tutor_session_id, student_id, channel, mode, persona_tier, status)
-        VALUES (?, ?, 'VOICE', 'SOCRATIC', 2, 'ACTIVE')
+        VALUES (?, ?, 'VOICE', ?, 2, 'ACTIVE')
         """,
-        tutorSessionId, studentId);
+        tutorSessionId, studentId, mode);
     UUID voiceSessionId = UUID.randomUUID();
     jdbc.update(
         """
@@ -53,13 +58,18 @@ public class VoiceService {
         """,
         voiceSessionId, tutorSessionId, consentId);
     String token = "vox_" + UUID.randomUUID().toString().replace("-", "");
-    return Map.of(
-        "voiceSessionId", voiceSessionId.toString(),
-        "tutorSessionId", tutorSessionId.toString(),
-        "wsUrl", "/api/v1/voice/sessions/" + voiceSessionId + "/stream",
-        "token", token,
-        "sttVia", "ai-gateway",
-        "ttsVia", "ai-gateway");
+    Map<String, Object> out = new HashMap<>();
+    out.put("voiceSessionId", voiceSessionId.toString());
+    out.put("tutorSessionId", tutorSessionId.toString());
+    out.put("wsUrl", "/api/v1/voice/sessions/" + voiceSessionId + "/stream");
+    out.put("token", token);
+    out.put("mode", mode);
+    out.put("sttVia", "ai-gateway");
+    out.put("ttsVia", "ai-gateway");
+    if ("DISCUSSION".equals(mode)) {
+      out.put("scope", "English Lang/Lit discussion — not Q&A drill");
+    }
+    return out;
   }
 
   @Transactional

@@ -127,4 +127,25 @@ public class BillingController {
       @RequestBody Map<String, Object> body) {
     return billing.planPreview(principal, body);
   }
+
+  @PostMapping("/billing/micro-subscriptions")
+  @ResponseStatus(HttpStatus.CREATED)
+  @CatalogueRoles(id = "BIL-14", roles = "PAR")
+  public Map<String, Object> microSub(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, Object> body) {
+    return billing.createMicroSubscription(principal, body);
+  }
+
+  @GetMapping("/billing/referral")
+  @CatalogueRoles(id = "BIL-15", roles = "PAR")
+  public Map<String, Object> referral(@AuthenticationPrincipal AccountPrincipal principal) {
+    return billing.getReferral(principal);
+  }
+
+  @PostMapping("/billing/referral/invite")
+  @CatalogueRoles(id = "BIL-16", roles = "PAR")
+  public Map<String, Object> referralInvite(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, Object> body) {
+    return billing.inviteReferral(principal, body);
+  }
 }

@@ -3,6 +3,7 @@ package com.karsaaz.studyloop.mastery.application;
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.mastery.domain.BktEngine;
+import com.karsaaz.studyloop.mastery.domain.CohortBenchmarkGate;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -239,5 +240,89 @@ public class MasteryService {
           "—"));
     }
     return Map.of("studentId", sid, "items", items);
+  }
+
+  public Map<String, Object> skillMap(AccountPrincipal principal, UUID studentId) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudent(principal, sid);
+    List<Map<String, Object>> nodes = jdbc.query(
+        """
+        SELECT t.topic_id, t.topic_name, COALESCE(m.mastery_level, 0) AS mastery_level,
+               COALESCE(m.mastery_probability, 0.1) AS mastery_probability,
+               COALESCE(m.attempts_count, 0) AS attempts
+        FROM student_enrolment se
+        JOIN specification s ON s.specification_id = se.specification_id
+        JOIN spec_topic t ON t.specification_id = s.specification_id
+        LEFT JOIN mastery_state m ON m.topic_id = t.topic_id AND m.student_id = se.student_id AND m.model_type = 'BKT'
+        WHERE se.student_id = ? AND se.status = 'ACTIVE'
+        ORDER BY t.topic_id
+        LIMIT 200
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("topicId", rs.getLong("topic_id"));
+          m.put("label", rs.getString("topic_name"));
+          m.put("masteryLevel", rs.getShort("mastery_level"));
+          m.put("masteryProbability", rs.getBigDecimal("mastery_probability"));
+          m.put("attempts", rs.getInt("attempts"));
+          return m;
+        },
+        sid);
+    return Map.of("studentId", sid, "nodes", nodes, "edges", List.of());
+  }
+
+  public Map<String, Object> cohortBenchmark(AccountPrincipal principal, UUID studentId) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudent(principal, sid);
+    boolean optedIn = Boolean.TRUE.equals(jdbc.query(
+        "SELECT cohort_benchmark_opt_in FROM privacy_settings WHERE student_id = ?",
+        rs -> rs.next() && rs.getBoolean(1),
+        sid));
+    int minSample = jdbc.query(
+        "SELECT COALESCE((SELECT value_json::text FROM app_config WHERE config_key = 'cohort.min_sample_size'), '50')",
+        rs -> {
+          rs.next();
+          String raw = rs.getString(1).replace("\"", "").trim();
+          try {
+            return Integer.parseInt(raw);
+          } catch (Exception e) {
+            return CohortBenchmarkGate.DEFAULT_MIN_SAMPLE;
+          }
+        });
+    Map<String, Object> snap = jdbc.query(
+        """
+        SELECT sample_size, percentile_edges_json::text, period, computed_at
+        FROM cohort_benchmark_snapshot
+        ORDER BY computed_at DESC LIMIT 1
+        """,
+        rs -> {
+          if (!rs.next()) {
+            return null;
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("sampleSize", rs.getInt("sample_size"));
+          m.put("percentileEdgesJson", rs.getString("percentile_edges_json"));
+          m.put("period", rs.getString("period"));
+          m.put("computedAt", rs.getTimestamp("computed_at"));
+          return m;
+        });
+    int sampleSize = snap == null ? 0 : ((Number) snap.get("sampleSize")).intValue();
+    String reason = CohortBenchmarkGate.honestEmptyReason(optedIn, sampleSize, minSample);
+    Map<String, Object> out = new HashMap<>();
+    out.put("studentId", sid);
+    out.put("optedIn", optedIn);
+    out.put("sampleSize", sampleSize);
+    out.put("minSampleSize", minSample);
+    out.put("available", CohortBenchmarkGate.canShow(optedIn, sampleSize, minSample));
+    out.put("emptyReason", reason);
+    if (CohortBenchmarkGate.canShow(optedIn, sampleSize, minSample) && snap != null) {
+      out.put("benchmark", snap);
+      out.put("message", "Anonymised cohort percentile (no identifiable peers).");
+    } else if (!optedIn) {
+      out.put("message", "Cohort benchmark is off until you opt in under privacy settings.");
+    } else {
+      out.put("message", "Not enough learners in this cohort yet (need at least " + minSample + ").");
+    }
+    return out;
   }
 }

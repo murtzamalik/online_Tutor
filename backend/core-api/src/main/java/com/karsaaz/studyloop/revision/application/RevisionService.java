@@ -4,6 +4,9 @@ import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.gatewayclient.api.GatewayClient;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -305,5 +308,100 @@ public class RevisionService {
             "version", rs.getInt("version"),
             "status", rs.getString("status"),
             "createdAt", rs.getTimestamp("created_at").toInstant().toString()));
+  }
+
+  @Transactional
+  public Map<String, Object> shareDeck(AccountPrincipal principal, UUID deckId, Map<String, Object> body) {
+    access.requireStudent(principal);
+    UUID studentId = principal.studentId();
+    // Under-13: disabled unless parent allows (share_allowed in accessibility_json or privacy)
+    String ageBand = jdbc.query(
+        "SELECT age_band FROM student_profile WHERE student_id = ?",
+        rs -> rs.next() ? rs.getString(1) : null,
+        studentId);
+    if ("UNDER_13".equals(ageBand) || "U13".equals(ageBand)) {
+      String a11y = jdbc.query(
+          "SELECT accessibility_json::text FROM student_profile WHERE student_id = ?",
+          rs -> rs.next() ? rs.getString(1) : "{}",
+          studentId);
+      if (a11y == null || !a11y.contains("\"parentAllowsShare\":true")) {
+        throw AppException.forbidden("Sharing disabled for under-13 unless parent allows");
+      }
+    }
+    Integer owned = jdbc.queryForObject(
+        "SELECT COUNT(*) FROM flashcard_deck WHERE deck_id = ? AND owner_student_id = ?",
+        Integer.class,
+        deckId,
+        studentId);
+    if (owned == null || owned == 0) {
+      throw AppException.forbidden("Not your deck");
+    }
+    int hours = body.get("expiresInHours") instanceof Number n ? n.intValue() : 168;
+    String code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    Instant expires = Instant.now().plus(hours, ChronoUnit.HOURS);
+    jdbc.update(
+        """
+        INSERT INTO deck_share (share_code, deck_id, created_by, expires_at, moderation_status)
+        VALUES (?, ?, ?, ?, 'PENDING')
+        """,
+        code, deckId, studentId, Timestamp.from(expires));
+    // Demo: auto-approve after insert (moderated before visible to others)
+    jdbc.update(
+        "UPDATE deck_share SET moderation_status = 'APPROVED', moderated_at = now() WHERE share_code = ?",
+        code);
+    return Map.of(
+        "shareCode", code,
+        "deckId", deckId.toString(),
+        "expiresAt", expires.toString(),
+        "moderationStatus", "APPROVED",
+        "message", "Share link created; revoke anytime.");
+  }
+
+  public Map<String, Object> openShared(AccountPrincipal principal, String shareCode) {
+    access.requireStudent(principal);
+    return jdbc.query(
+        """
+        SELECT s.share_code, s.deck_id, s.expires_at, s.revoked_at, s.moderation_status, d.title
+        FROM deck_share s
+        JOIN flashcard_deck d ON d.deck_id = s.deck_id
+        WHERE s.share_code = ?
+        """,
+        rs -> {
+          if (!rs.next()) {
+            throw AppException.notFound("Share not found");
+          }
+          if (rs.getTimestamp("revoked_at") != null) {
+            throw AppException.forbidden("Share revoked");
+          }
+          if (rs.getTimestamp("expires_at").toInstant().isBefore(Instant.now())) {
+            throw AppException.forbidden("Share expired");
+          }
+          if (!"APPROVED".equals(rs.getString("moderation_status"))) {
+            throw AppException.forbidden("Share pending moderation");
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("shareCode", rs.getString("share_code"));
+          m.put("deckId", rs.getObject("deck_id").toString());
+          m.put("title", rs.getString("title"));
+          m.put("readOnly", true);
+          m.put("expiresAt", rs.getTimestamp("expires_at").toInstant().toString());
+          return m;
+        },
+        shareCode);
+  }
+
+  @Transactional
+  public Map<String, Object> revokeShare(AccountPrincipal principal, String shareCode) {
+    access.requireStudent(principal);
+    int n = jdbc.update(
+        """
+        UPDATE deck_share SET revoked_at = now()
+        WHERE share_code = ? AND created_by = ? AND revoked_at IS NULL
+        """,
+        shareCode, principal.studentId());
+    if (n == 0) {
+      throw AppException.notFound("Share not found");
+    }
+    return Map.of("shareCode", shareCode, "revoked", true);
   }
 }
