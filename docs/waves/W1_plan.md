@@ -91,16 +91,16 @@
 - [x] T10.1 JobRunr nightly GEN-01..04; C1–C10 code gates; P-QG-* via gateway
 - [x] T10.2 Minimal CNT approve path for NEEDS_REVIEW → APPROVED
 - [x] T10.3 AIO eval harness + synthetic gold until P-2
-- [ ] T10.4 Q-01/02/03 minimal read UIs
+- [x] T10.4 Q-01/02/03 minimal read UIs
 
 ### S11 — Marketing & settings
 - [x] T11.1 A-01/02/03/05/08 CMS-backed or static content APIs
-- [ ] T11.2 Shell-06 settings; Shell-10 legal + cookies
-- [ ] T11.3 B-05 goals; B-08 target grade
+- [x] T11.2 Shell-06 settings; Shell-10 legal + cookies
+- [x] T11.3 B-05 goals; B-08 target grade
 
 ### S12 — Staff content consoles
-- [ ] T12.1 E-01 QC exceptions; E-02 authoring/import (ingestion PF-08)
-- [ ] T12.2 M-01 spec tree; M-02 style profiles; M-04 tagging progress
+- [x] T12.1 E-01 QC exceptions; E-02 authoring/import (ingestion PF-08)
+- [x] T12.2 M-01 spec tree; M-02 style profiles; M-04 tagging progress
 
 ## Standing rules reminder
 - AI only via `ai-gateway`; `tutor_gateway` cannot read learner tables
