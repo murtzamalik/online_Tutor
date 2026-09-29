@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qc_result",
+  "title": "qc_result",
+  "oneOf": [
+    {
+      "required": [
+        "status",
+        "verdict",
+        "issues"
+      ],
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "check",
+              "severity",
+              "text",
+              "reason"
+            ],
+            "properties": {
+              "check": {
+                "type": "string",
+                "pattern": "^[A-I]$"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "BLOCKER",
+                  "MAJOR",
+                  "MINOR"
+                ]
+              },
+              "text": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

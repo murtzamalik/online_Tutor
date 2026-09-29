@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "flashcards",
+  "title": "flashcards",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "topic_ref": {
+          "type": "string"
+        },
+        "cards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "front": {
+                "type": "string"
+              },
+              "back": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "DEFINITION",
+                  "PROCESS",
+                  "EQUATION",
+                  "COMPARE",
+                  "CAUSE_EFFECT"
+                ]
+              },
+              "spec_ref": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "front",
+              "back",
+              "type",
+              "spec_ref"
+            ]
+          }
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "topic_ref",
+        "cards"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

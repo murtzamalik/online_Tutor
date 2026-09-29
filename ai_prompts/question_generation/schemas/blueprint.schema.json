@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "blueprint",
+  "title": "blueprint (built by code, input to P-QG-02/03)",
+  "type": "object",
+  "required": [
+    "blueprint_id",
+    "board",
+    "qualification",
+    "spec_code",
+    "spec_point_ref",
+    "spec_point_text",
+    "objective_id",
+    "objective_text",
+    "assessment_objective",
+    "tier",
+    "question_type",
+    "command_word",
+    "marks",
+    "target_grade_band",
+    "variant_kind",
+    "misconceptions",
+    "is_numeric"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "blueprint_id": {
+      "type": "string"
+    },
+    "board": {
+      "type": "string"
+    },
+    "qualification": {
+      "type": "string",
+      "enum": [
+        "GCSE",
+        "IGCSE"
+      ]
+    },
+    "spec_code": {
+      "type": "string"
+    },
+    "spec_point_ref": {
+      "type": "string"
+    },
+    "spec_point_text": {
+      "type": "string"
+    },
+    "objective_id": {
+      "type": "string"
+    },
+    "objective_text": {
+      "type": "string"
+    },
+    "assessment_objective": {
+      "type": "string",
+      "enum": [
+        "AO1",
+        "AO2",
+        "AO3"
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "FOUNDATION",
+        "HIGHER",
+        "BOTH"
+      ]
+    },
+    "question_type": {
+      "type": "string",
+      "enum": [
+        "MULTIPLE_CHOICE",
+        "SHORT_ANSWER",
+        "CALCULATION",
+        "EXTENDED_WRITTEN",
+        "PRACTICAL_BASED"
+      ]
+    },
+    "command_word": {
+      "type": "string"
+    },
+    "marks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9
+    },
+    "target_grade_band": {
+      "type": "string",
+      "pattern": "^[1-9]-[1-9]$",
+      "description": "grade band e.g. 4-5"
+    },
+    "variant_kind": {
+      "type": "string",
+      "enum": [
+        "CONTEXT_TRANSFER",
+        "NOVEL",
+        "PARAMETRIC"
+      ]
+    },
+    "context_hint": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "misconceptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_numeric": {
+      "type": "boolean"
+    },
+    "allow_diagram": {
+      "type": "boolean"
+    },
+    "exemplar_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

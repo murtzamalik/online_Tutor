@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ingest_metadata",
+  "title": "ingest_metadata",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "board": {
+          "type": "string"
+        },
+        "qualification": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "spec_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "paper_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "FOUNDATION",
+            "HIGHER",
+            "NONE",
+            "UNKNOWN"
+          ]
+        },
+        "series": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "year": {
+          "type": "integer"
+        },
+        "duration_minutes": {
+          "type": "integer"
+        },
+        "total_marks": {
+          "type": "integer"
+        },
+        "calculator_allowed": {
+          "type": "string",
+          "enum": [
+            "YES",
+            "NO",
+            "UNKNOWN"
+          ]
+        },
+        "evidence": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "needs_human_verification": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "board",
+        "qualification",
+        "subject",
+        "spec_code",
+        "paper_code",
+        "tier",
+        "series",
+        "year",
+        "duration_minutes",
+        "total_marks",
+        "calculator_allowed",
+        "evidence",
+        "confidence",
+        "needs_human_verification"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

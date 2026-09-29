@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tutor_turn",
+  "title": "tutor_turn",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reply_text": {
+          "type": "string"
+        },
+        "pedagogy_move": {
+          "type": "string",
+          "enum": [
+            "ASK_PROBING",
+            "GIVE_HINT",
+            "WORKED_STEP",
+            "CHECK_UNDERSTANDING",
+            "CORRECT_MISCONCEPTION",
+            "ENCOURAGE",
+            "SUMMARISE",
+            "REDIRECT_TO_TOPIC",
+            "DECLINE_ANSWER_REQUEST"
+          ]
+        },
+        "reveals_final_answer": {
+          "type": "boolean"
+        },
+        "topic_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suggested_next": {
+          "type": "string",
+          "enum": [
+            "CONTINUE",
+            "TRY_QUESTION",
+            "END_SESSION",
+            "OFFER_BREAK"
+          ]
+        },
+        "needs_safety_review": {
+          "type": "boolean"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "reply_text",
+        "pedagogy_move",
+        "reveals_final_answer",
+        "topic_ref",
+        "suggested_next",
+        "needs_safety_review"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

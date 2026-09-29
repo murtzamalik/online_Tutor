@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "chem_assist_result",
+  "title": "chem_assist_result",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "equations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "as_written": {
+                "type": "string"
+              },
+              "balanced": {
+                "type": "boolean"
+              },
+              "state_symbols_ok": {
+                "type": "boolean"
+              },
+              "issue": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "as_written",
+              "balanced",
+              "state_symbols_ok",
+              "issue"
+            ]
+          }
+        },
+        "method_steps_detected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "step_ref": {
+                "type": "string"
+              },
+              "present": {
+                "type": "boolean"
+              },
+              "value_written": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "unit_ok": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "step_ref",
+              "present",
+              "value_written",
+              "unit_ok"
+            ]
+          }
+        },
+        "ecf_chain": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "from_step": {
+                "type": "string"
+              },
+              "wrong_value": {
+                "type": "string"
+              },
+              "carried_value": {
+                "type": "string"
+              },
+              "consistent": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "from_step",
+              "wrong_value",
+              "carried_value",
+              "consistent"
+            ]
+          }
+        },
+        "sig_fig_check": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "given": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "ok": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "required",
+            "given",
+            "ok"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "equations",
+        "method_steps_detected",
+        "ecf_chain",
+        "sig_fig_check",
+        "notes"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

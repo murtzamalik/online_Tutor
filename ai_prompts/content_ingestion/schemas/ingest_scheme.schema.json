@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ingest_scheme",
+  "title": "ingest_scheme",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paper_ref": {
+          "type": "string"
+        },
+        "schemes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "item_ref": {
+                "type": "string"
+              },
+              "part_ref": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "scheme_type": {
+                "type": "string",
+                "enum": [
+                  "POINTS",
+                  "LEVELS"
+                ]
+              },
+              "marks": {
+                "type": "integer"
+              },
+              "marking_points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "marks": {
+                      "type": "integer"
+                    },
+                    "point": {
+                      "type": "string"
+                    },
+                    "accept": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "reject": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "ignore": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "marks",
+                    "point",
+                    "accept",
+                    "reject",
+                    "ignore"
+                  ]
+                }
+              },
+              "levels": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "type": "integer"
+                    },
+                    "marks_from": {
+                      "type": "integer"
+                    },
+                    "marks_to": {
+                      "type": "integer"
+                    },
+                    "descriptor": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "level",
+                    "marks_from",
+                    "marks_to",
+                    "descriptor"
+                  ]
+                }
+              },
+              "indicative_content": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "notes": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "item_ref",
+              "part_ref",
+              "scheme_type",
+              "marks",
+              "marking_points",
+              "levels",
+              "indicative_content",
+              "notes",
+              "confidence"
+            ]
+          }
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "paper_ref",
+        "schemes"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

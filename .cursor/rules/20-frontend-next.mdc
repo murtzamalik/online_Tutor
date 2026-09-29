@@ -1,0 +1,11 @@
+---
+description: Next.js/TypeScript/Tailwind standards
+globs: web/**/*.ts,web/**/*.tsx,web/**/*.css
+alwaysApply: false
+---
+- Next.js 15 App Router, TypeScript strict, Tailwind from `tokens.json`. Route groups: (public) (auth) (parent) (student) (school) (staff). Routes/endpoints per `api/screens.json`.
+- API via generated typed client + Zod validation; TanStack Query; SSE hook for marking/tutor. Never fetch inside presentational components.
+- Every screen implements loading/empty/error/offline/forbidden using Shell-07 patterns. WCAG 2.2 AA; keyboard-first; aria-live for async results.
+- Chemistry via KaTeX + mhchem. Sanitise all user text. No third-party trackers in learner areas; gate non-essential scripts on cookie consent.
+- Storybook story + Vitest test per component; Playwright for flows.
+- Role/flag/entitlement checks server-side in layouts; the client never decides access.

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reexplain",
+  "title": "reexplain",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": [
+            "ANALOGY",
+            "WORKED_EXAMPLE",
+            "DIAGRAM_REQUEST",
+            "SIMPLER_WORDS",
+            "STEP_BY_STEP"
+          ]
+        },
+        "explanation_md": {
+          "type": "string"
+        },
+        "diagram_request": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "LIBRARY",
+                "CHART",
+                "NONE"
+              ]
+            },
+            "library_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "library_id"
+          ]
+        },
+        "check_question": {
+          "type": "string"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "format",
+        "explanation_md",
+        "diagram_request",
+        "check_question"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

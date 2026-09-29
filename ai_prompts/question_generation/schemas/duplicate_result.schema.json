@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "duplicate_result",
+  "title": "duplicate_result",
+  "oneOf": [
+    {
+      "required": [
+        "status",
+        "verdicts"
+      ],
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "verdicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "neighbour_id",
+              "kind",
+              "verdict",
+              "reason"
+            ],
+            "properties": {
+              "neighbour_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "BANK",
+                  "PAST_PAPER"
+                ]
+              },
+              "verdict": {
+                "type": "string",
+                "enum": [
+                  "DUPLICATE",
+                  "NEAR_COPY",
+                  "DISTINCT"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

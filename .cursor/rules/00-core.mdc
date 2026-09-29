@@ -1,0 +1,10 @@
+---
+description: Core project rules — always apply
+alwaysApply: true
+---
+- Read `AGENTS.md` and `00_START_HERE.md` before any task; specs live in `docs/`, `api/`, `ai_prompts/`, `db/`.
+- Do not change decisions in `docs/02_decisions_register.md`. Record questions in `docs/CURSOR_UNDERSTANDING.md`.
+- No personal data to AI (D-15). AI only through `ai-gateway`/`gatewayclient`. Numbers/totals/money computed in code.
+- Every endpoint must match `api/endpoints.json` (path, method, roles). Every screen must match `api/screens.json` (route, endpoints).
+- Forward-only Flyway migrations. Logs contain ids only.
+- Vertical slices with tests; update `docs/traceability/traceability_matrix.csv`.

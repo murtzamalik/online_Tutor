@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "examiner_report",
+  "title": "examiner_report",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paper_ref": {
+          "type": "string"
+        },
+        "insights": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "item_ref": {
+                "type": "string"
+              },
+              "topic_hint": {
+                "type": "string"
+              },
+              "common_error": {
+                "type": "string"
+              },
+              "frequency_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "advice": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "item_ref",
+              "topic_hint",
+              "common_error",
+              "frequency_note",
+              "advice"
+            ]
+          }
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "paper_ref",
+        "insights"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

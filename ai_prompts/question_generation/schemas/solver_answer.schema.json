@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "solver_answer",
+  "title": "solver_answer",
+  "oneOf": [
+    {
+      "required": [
+        "status",
+        "answer_text",
+        "final_value",
+        "final_unit",
+        "problems"
+      ],
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "answer_text": {
+          "type": "string"
+        },
+        "final_value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "final_unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "selected_option": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D",
+            null
+          ]
+        },
+        "problems": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

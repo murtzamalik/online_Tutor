@@ -1,0 +1,3758 @@
+[
+ {
+  "id": "A-01",
+  "name": "Homepage",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-001"
+  ],
+  "prio": "Must",
+  "phase": "Ongoing",
+  "notes": "Includes the live try-it sample question widget (US-003).",
+  "v1": "",
+  "route": "/",
+  "eps": [
+   "CAT-01",
+   "CAT-07",
+   "MKT-07",
+   "MKT-08",
+   "MKT-05",
+   "CON-06",
+   "MKT-09"
+  ],
+  "prompts": [],
+  "spec": "Hero + qualification tiles; live sample-question widget (anonymous, rate-limited, no PII); outcomes strip; pricing teaser; cookie banner; SEO metadata + JSON-LD; loading/error skeletons; AC: renders from CMS/catalog data only, no hard-coded copy",
+  "tables": [
+   "cookie_consent",
+   "lead_capture",
+   "mark_scheme",
+   "marking_result",
+   "outcome_stat",
+   "pricing_plan",
+   "pricing_price",
+   "qualification",
+   "question"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "A-02",
+  "name": "Qualification / Subject Landing Page",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-001"
+  ],
+  "prio": "Must",
+  "phase": "Ongoing",
+  "notes": "One template, parametrised by qualification (11+/GCSE/iGCSE/A-Level) and subject.",
+  "v1": "",
+  "route": "/[qualification]/[subject]",
+  "eps": [
+   "CAT-01",
+   "CAT-02",
+   "CAT-03",
+   "CAT-04",
+   "CAT-05",
+   "MKT-10",
+   "CAT-07"
+  ],
+  "prompts": [],
+  "spec": "One template parametrised by qualification+subject slug; board list; topic tree preview; CTA to sign-up; 404 for unknown slug; AC: unlaunched subjects show 'coming soon' + lead capture",
+  "tables": [
+   "app_config",
+   "exam_board",
+   "pricing_plan",
+   "pricing_price",
+   "qualification",
+   "spec_topic",
+   "spec_unit",
+   "specification",
+   "subject"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "A-03",
+  "name": "FAQ Page",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-002"
+  ],
+  "prio": "Must",
+  "phase": "Ongoing",
+  "notes": "Min. 11 Q&As per brief.",
+  "v1": "",
+  "route": "/faq",
+  "eps": [
+   "MKT-01"
+  ],
+  "prompts": [],
+  "spec": "Accordion FAQ (>=11 Q&As), search filter, FAQPage JSON-LD; AC: content editable via CMS-02",
+  "tables": [
+   "faq_item"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "A-04",
+  "name": "Live Sample Question (Try Before Signup)",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-003"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Embedded widget, reuses the Practice Question screen's marking result component.",
+  "v1": "",
+  "route": "/try",
+  "eps": [
+   "MKT-07",
+   "MKT-08"
+  ],
+  "prompts": [],
+  "spec": "Anonymous sample question, answer box, instant deterministic feedback (MCQ/numeric only, no AI cost); sign-up CTA; AC: no cookies beyond consent, IP rate limit 10/h",
+  "tables": [
+   "mark_scheme",
+   "marking_result",
+   "question"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "A-05",
+  "name": "Lead Magnet Download / Email-Gate Modal",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-004"
+  ],
+  "prio": "Should",
+  "phase": "Ongoing",
+  "notes": "",
+  "v1": "",
+  "route": "/resources/[slug]",
+  "eps": [
+   "MKT-03",
+   "MKT-02"
+  ],
+  "prompts": [],
+  "spec": "Email-gate modal, consent checkbox (marketing), double opt-in email via Postmark; download link expires; AC: lead stored in lead_capture with consent flag",
+  "tables": [
+   "lead_capture",
+   "marketing_resource",
+   "past_paper"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "A-06",
+  "name": "Trust & Outcomes Page",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-005"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Transparent, methodology-explained stats \u2014 ties to Section 6 AADC trust positioning.",
+  "v1": "",
+  "route": "/results",
+  "eps": [
+   "MKT-05",
+   "MKT-04"
+  ],
+  "prompts": [],
+  "spec": "Outcome stats with data-as-of date and method note; no unverifiable claims; AC: every stat has source + date",
+  "tables": [
+   "case_study",
+   "outcome_stat"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "A-07",
+  "name": "Case Studies / Testimonials Page",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-006"
+  ],
+  "prio": "Could",
+  "phase": "Phase 2",
+  "notes": "Requires a consent-collection workflow (Content Admin side, not in this inventory yet).",
+  "v1": "",
+  "route": "/case-studies",
+  "eps": [
+   "MKT-04"
+  ],
+  "prompts": [],
+  "spec": "Case study cards, consent-verified only; AC: only rows with consent_verified=true are returned",
+  "tables": [
+   "case_study"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "A-08",
+  "name": "Exam Date Calendar",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-007"
+  ],
+  "prio": "Could",
+  "phase": "Ongoing",
+  "notes": "Filterable by region.",
+  "v1": "",
+  "route": "/exam-dates",
+  "eps": [
+   "CAT-06",
+   "CAT-03"
+  ],
+  "prompts": [],
+  "spec": "Filter by board/subject, add-to-calendar (.ics), countdown; AC: dates flagged 'provisional' until confirmed",
+  "tables": [
+   "exam_date",
+   "subject"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "A-09",
+  "name": "\"Which Plan Is Right for Us\" Quiz",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-008"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Short branching quiz, ends on Pricing Page (C-01) pre-filtered.",
+  "v1": "",
+  "route": "/plan-quiz",
+  "eps": [
+   "MKT-06",
+   "CAT-07"
+  ],
+  "prompts": [],
+  "spec": "3-5 question quiz -> recommended plan; result deep-links to C-02; AC: no account required",
+  "tables": [
+   "pricing_plan",
+   "pricing_price"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "A-10",
+  "name": "Free Resource Library",
+  "epic": "A. Marketing & Discovery",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-009"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "No email gate.",
+  "v1": "",
+  "route": "/library",
+  "eps": [
+   "MKT-03"
+  ],
+  "prompts": [],
+  "spec": "Free resource grid with filters; AC: gated items route to A-05",
+  "tables": [
+   "marketing_resource",
+   "past_paper"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "B-01",
+  "name": "Parent Sign-Up",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-010"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "",
+  "v1": "",
+  "route": "/signup",
+  "eps": [
+   "AUTH-01",
+   "AGE-01",
+   "AGE-02",
+   "AGE-03",
+   "CON-05",
+   "CON-06"
+  ],
+  "prompts": [],
+  "spec": "Parent email/password + OIDC (Google/Apple); T&C + privacy consent; age assurance step (adult) ; password strength meter; AC: parent must be 18+ via age assurance before child creation",
+  "tables": [
+   "account",
+   "account_role",
+   "age_assurance_record",
+   "consent_record",
+   "cookie_consent",
+   "email_verification",
+   "legal_document",
+   "sub_processor"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "B-02",
+  "name": "Add Child Profile",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-011"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Multi-child, one parent login.",
+  "v1": "",
+  "route": "/parent/children/new",
+  "eps": [
+   "STU-01",
+   "STU-02",
+   "STU-04",
+   "CON-02",
+   "AGE-01"
+  ],
+  "prompts": [],
+  "spec": "Child name, year group, DOB->under-13 detection, picture-PIN chooser for 11+ learners, standalone email for 13+; AC: <13 triggers L-01 before profile is active; no child email for <13",
+  "tables": [
+   "age_assurance_record",
+   "consent_record",
+   "daily_goal",
+   "parent_ai_controls",
+   "parent_student_link",
+   "privacy_settings",
+   "student_credential",
+   "student_enrolment",
+   "student_profile"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "B-03",
+  "name": "Student Standalone Sign-Up",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-012"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "No parent account required.",
+  "v1": "",
+  "route": "/student/signup",
+  "eps": [
+   "AUTH-16",
+   "AGE-01",
+   "AGE-02",
+   "AGE-03",
+   "CON-05"
+  ],
+  "prompts": [],
+  "spec": "Student 13+ self sign-up, age assurance, parent-email request for 13-15 (configurable); AC: <13 blocked with parent-flow redirect",
+  "tables": [
+   "account",
+   "age_assurance_record",
+   "legal_document",
+   "student_profile",
+   "sub_processor"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "B-04",
+  "name": "Qualification / Board / Subject Selector",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-013"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Data model = qualification x board x subject. Must support 7 board-tracks including both iGCSE boards.",
+  "v1": "",
+  "route": "/onboarding/subjects",
+  "eps": [
+   "CAT-01",
+   "CAT-02",
+   "CAT-03",
+   "CAT-04",
+   "CAT-05",
+   "STU-06",
+   "STU-07"
+  ],
+  "prompts": [],
+  "spec": "Qualification -> board -> subject -> spec tiles; multi-select subject; tier (Foundation/Higher) choice; AC: only launched specs selectable",
+  "tables": [
+   "entitlement",
+   "exam_board",
+   "qualification",
+   "spec_topic",
+   "spec_unit",
+   "specification",
+   "student_enrolment",
+   "subject"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "B-05",
+  "name": "Study Goal Setter",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-014"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Exam prep / general study / target score / weak-area focus.",
+  "v1": "",
+  "route": "/onboarding/goals",
+  "eps": [
+   "STU-14",
+   "STU-08",
+   "CAT-06"
+  ],
+  "prompts": [],
+  "spec": "Target grade, exam date, weekly hours; AC: exam date defaults from CAT-06",
+  "tables": [
+   "daily_goal",
+   "exam_date",
+   "student_enrolment"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "B-06",
+  "name": "Adaptive Diagnostic / Baseline Test",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-015",
+   "US-059"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Multi-screen flow: intro, IRT-adaptive question sequence, results. No skip/back once started.",
+  "v1": "",
+  "route": "/onboarding/diagnostic",
+  "eps": [
+   "DIA-01",
+   "DIA-02",
+   "DIA-03",
+   "DIA-04",
+   "MOC-09"
+  ],
+  "prompts": [
+   "P-RP-04"
+  ],
+  "spec": "Adaptive 15-25 question baseline; progress; pause/resume; result maps to mastery seeds; AC: mastery_state seeded for all level-1 topics touched",
+  "tables": [
+   "diagnostic_run",
+   "mastery_state",
+   "mock_paper",
+   "practice_session",
+   "question",
+   "student_response"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "B-07",
+  "name": "Personalised Weekly Plan Reveal",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-016"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Generated from subject/board/target exam date.",
+  "v1": "",
+  "route": "/onboarding/plan",
+  "eps": [
+   "PLN-01",
+   "PLN-02",
+   "PLN-03"
+  ],
+  "prompts": [
+   "P-RP-04"
+  ],
+  "spec": "Weekly plan reveal with rationale, editable items; AC: plan built by code, rationale text by AI (no PII)",
+  "tables": [
+   "weekly_plan",
+   "weekly_plan_item"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "B-08",
+  "name": "Parent Sets Target Grade",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-017"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Per subject.",
+  "v1": "",
+  "route": "/parent/children/[id]/target",
+  "eps": [
+   "STU-03",
+   "STU-08",
+   "MAS-02"
+  ],
+  "prompts": [],
+  "spec": "Parent target grade with realism indicator vs predicted grade; AC: change audited",
+  "tables": [
+   "grade_boundary",
+   "predicted_grade_snapshot",
+   "student_enrolment",
+   "student_profile"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "B-09",
+  "name": "Accessibility Preferences (Onboarding)",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-018"
+  ],
+  "prio": "Should",
+  "phase": "Phase 3",
+  "notes": "Dyslexia font, text size, TTS toggle. Links to Settings > Accessibility (J-03).",
+  "v1": "",
+  "route": "/onboarding/accessibility",
+  "eps": [
+   "STU-10",
+   "STU-11"
+  ],
+  "prompts": [],
+  "spec": "Font, spacing, contrast, reduce motion, TTS, extra-time preference; AC: applied immediately via CSS tokens and persisted",
+  "tables": [
+   "student_profile"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "B-10",
+  "name": "Email Verification",
+  "epic": "B. Registration & Onboarding",
+  "roles": "Parent",
+  "platform": "Web",
+  "stories": [
+   "US-100"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "6-digit code, resend with cooldown. Blocks Add Child (B-02) until verified.",
+  "v1": "NEW in v1.0",
+  "route": "/verify-email",
+  "eps": [
+   "AUTH-02",
+   "AUTH-03"
+  ],
+  "prompts": [],
+  "spec": "Token landing, resend with cooldown, expired-link state; AC: unverified parents cannot start trial",
+  "tables": [
+   "account",
+   "email_verification"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "B-11",
+  "name": "Child Login \u2014 Picture PIN",
+  "epic": "B. Registration & Onboarding",
+  "roles": "11+ learner",
+  "platform": "Web",
+  "stories": [
+   "US-101"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Tier 1 (11+). Parent sets the picture PIN in B-02; lockout after repeated failures notifies the parent.",
+  "v1": "NEW in v1.0",
+  "route": "/child-login",
+  "eps": [
+   "AUTH-15",
+   "SUP-07"
+  ],
+  "prompts": [],
+  "spec": "Child picks avatar/picture sequence PIN; lockout after 5 tries -> parent unlock; AC: no child email or free-text password for <13",
+  "tables": [
+   "audit_log",
+   "auth_session",
+   "notification",
+   "student_credential"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "C-01",
+  "name": "Pricing Page",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-019"
+  ],
+  "prio": "Must",
+  "phase": "Phase 2",
+  "notes": "Segmented by age/qualification/tier, monthly/yearly toggle.",
+  "v1": "",
+  "route": "/pricing",
+  "eps": [
+   "CAT-07",
+   "CAT-08",
+   "BIL-13"
+  ],
+  "prompts": [],
+  "spec": "Plan cards, monthly/annual toggle, GBP incl./excl. VAT per config, promo field; AC: prices from pricing_price only",
+  "tables": [
+   "pricing_plan",
+   "pricing_price",
+   "promo_code"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "C-02",
+  "name": "Plan Subject Selector",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-020"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Includes Combined Science as alt to 3 separate sciences.",
+  "v1": "",
+  "route": "/parent/plan/subjects",
+  "eps": [
+   "CAT-07",
+   "STU-06",
+   "BIL-18"
+  ],
+  "prompts": [],
+  "spec": "Choose children x subjects, live price preview; AC: total computed server-side",
+  "tables": [
+   "pricing_plan",
+   "pricing_price",
+   "student_enrolment"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "C-03",
+  "name": "Free Trial Sign-Up / Card Capture",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-021",
+   "US-022"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Stripe.",
+  "v1": "",
+  "route": "/parent/checkout",
+  "eps": [
+   "BIL-01",
+   "BIL-02",
+   "BIL-13",
+   "BIL-18"
+  ],
+  "prompts": [],
+  "spec": "Stripe Elements card capture, SCA/3DS, 'trial ends on' date, consent to recurring; AC: no card data touches our servers; trial requires verified email",
+  "tables": [
+   "billing_customer",
+   "entitlement",
+   "pricing_price",
+   "promo_code",
+   "subscription",
+   "subscription_item"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "C-04",
+  "name": "Plan Comparison (What's Included)",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-025"
+  ],
+  "prio": "Must",
+  "phase": "Phase 2",
+  "notes": "",
+  "v1": "",
+  "route": "/pricing/compare",
+  "eps": [
+   "CAT-08"
+  ],
+  "prompts": [],
+  "spec": "Feature comparison table; AC: driven by entitlement matrix",
+  "tables": [
+   "pricing_plan"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "C-05",
+  "name": "Upgrade / Downgrade / Change Subjects",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-023",
+   "US-022"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "",
+  "v1": "",
+  "route": "/parent/billing/change",
+  "eps": [
+   "BIL-03",
+   "BIL-04",
+   "BIL-18",
+   "STU-09"
+  ],
+  "prompts": [],
+  "spec": "Upgrade/downgrade/subjects with proration preview; AC: preview matches Stripe invoice preview",
+  "tables": [
+   "entitlement",
+   "pricing_price",
+   "student_enrolment",
+   "subscription",
+   "subscription_item"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "C-06",
+  "name": "Micro-Subscription Purchase",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-024"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "Single subject/board.",
+  "v1": "",
+  "route": "/parent/billing/micro",
+  "eps": [
+   "BIL-14",
+   "BIL-01"
+  ],
+  "prompts": [],
+  "spec": "One-off exam-window micro-subscription; AC: expires by date",
+  "tables": [
+   "billing_customer",
+   "subscription",
+   "subscription_item"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "C-07",
+  "name": "Referral Page",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-026"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "Sibling discount (US-022) is an automatic banner on this or the billing summary, not a separate screen.",
+  "v1": "",
+  "route": "/parent/referral",
+  "eps": [
+   "BIL-15",
+   "BIL-16"
+  ],
+  "prompts": [],
+  "spec": "Referral code, invite by email, reward status; AC: reward only after referee's first paid invoice",
+  "tables": [
+   "referral"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "C-08",
+  "name": "Manage Subscription & Cancel",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent",
+  "platform": "Web",
+  "stories": [
+   "US-106"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "DMCC Act 2024: trial-end reminder and two-click cancel; no retention dark patterns.",
+  "v1": "NEW in v1.0",
+  "route": "/parent/billing",
+  "eps": [
+   "BIL-03",
+   "BIL-05",
+   "BIL-06",
+   "BIL-07",
+   "BIL-10",
+   "BIL-11"
+  ],
+  "prompts": [],
+  "spec": "Current plan, next charge, cancel flow with preview + reason, reactivate; AC: cancel effective end of period; no dark patterns",
+  "tables": [
+   "audit_log",
+   "billing_customer",
+   "payment_attempt",
+   "subscription",
+   "subscription_item"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "C-09",
+  "name": "Payment Failed / Dunning",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent",
+  "platform": "Web",
+  "stories": [
+   "US-107"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Stripe dunning. Child keeps access during the grace period; parent updates the card in place.",
+  "v1": "NEW in v1.0",
+  "route": "/parent/billing/payment-failed",
+  "eps": [
+   "BIL-12",
+   "BIL-10",
+   "BIL-11"
+  ],
+  "prompts": [],
+  "spec": "Dunning banner + update-card flow, grace period countdown; AC: grace 14 days (billing.dunning_grace_days); access retained during grace",
+  "tables": [
+   "billing_customer",
+   "payment_attempt",
+   "subscription"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "C-10",
+  "name": "Billing History & Family Billing",
+  "epic": "C. Subscription & Billing",
+  "roles": "Parent with more than one child",
+  "platform": "Web",
+  "stories": [
+   "US-108",
+   "US-022"
+  ],
+  "prio": "Should",
+  "phase": "Pilot",
+  "notes": "One bill across children; invoice PDFs; sibling discount shown as a line item.",
+  "v1": "NEW in v1.0",
+  "route": "/parent/billing/history",
+  "eps": [
+   "BIL-08",
+   "BIL-09",
+   "BIL-03"
+  ],
+  "prompts": [],
+  "spec": "Per-child breakdown, invoice list + PDF; AC: PDF via signed URL",
+  "tables": [
+   "invoice",
+   "subscription",
+   "subscription_item"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "D-01",
+  "name": "Practice Question Screen",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-027",
+   "US-029",
+   "US-032",
+   "US-060",
+   "US-083"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Core screen. Input-mode toggle: type / speak (auto-transcribed) / photograph. Real past-paper questions clearly labelled vs AI-generated.",
+  "v1": "",
+  "route": "/practice/[sessionId]",
+  "eps": [
+   "PRA-01",
+   "PRA-02",
+   "PRA-03",
+   "PRA-04",
+   "PRA-05",
+   "PRA-07",
+   "PRA-08",
+   "PRA-09",
+   "PRA-17",
+   "ENG-01",
+   "MRK-01",
+   "STU-13",
+   "VOX-04"
+  ],
+  "prompts": [
+   "P-MK-01",
+   "P-MK-03",
+   "P-MK-05",
+   "P-TU-02",
+   "P-MK-07"
+  ],
+  "spec": "Question renderer (MCQ, numeric+unit, short, extended, chemistry structured); KaTeX/mhchem; hint ladder; skip; confidence prompt hook; timer optional; save-on-blur; states: loading/marking/queued/error/offline; AC: p95 mark for GCSE <8s; answer never lost on refresh",
+  "tables": [
+   "daily_goal",
+   "daily_goal_progress",
+   "engagement_event",
+   "hint_event",
+   "mark_scheme",
+   "marking_result",
+   "mastery_state",
+   "nudge",
+   "outbox_event",
+   "practice_session",
+   "question",
+   "question_embedding",
+   "session_question",
+   "student_response",
+   "voice_session"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "D-02",
+  "name": "Mock Paper Setup",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-028"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Matches real exam structure/timing/weighting.",
+  "v1": "",
+  "route": "/mock/new",
+  "eps": [
+   "MOC-01",
+   "CAT-05",
+   "STU-06"
+  ],
+  "prompts": [],
+  "spec": "Choose board/paper/tier/duration, extra-time multiplier; AC: paper structure from board_style_profile",
+  "tables": [
+   "mock_paper",
+   "mock_paper_item",
+   "spec_topic",
+   "spec_unit",
+   "student_enrolment"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "D-03",
+  "name": "Mock Paper Sitting (Timed, Exam-Authentic Layout)",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-028",
+   "US-043"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Official-look cover/numbering per board style profile.",
+  "v1": "",
+  "route": "/mock/[mockId]/sit",
+  "eps": [
+   "MOC-02",
+   "MOC-03",
+   "MOC-04",
+   "MOC-05",
+   "MOC-07",
+   "ENG-01"
+  ],
+  "prompts": [],
+  "spec": "Exam-authentic layout, countdown, question navigator, flag-for-review, autosave every 10s, no hints, no AI; AC: submission on timeout; resume after disconnect",
+  "tables": [
+   "answer_photo",
+   "engagement_event",
+   "mock_paper",
+   "mock_paper_item",
+   "nudge",
+   "past_paper_item",
+   "question",
+   "student_response"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "D-04",
+  "name": "11+ Adaptive Entrance Test (No Skip/Back)",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-030"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "Distinct locked-down exam mode.",
+  "v1": "",
+  "route": "/entrance/[runId]",
+  "eps": [
+   "ENT-01",
+   "ENT-02",
+   "ENT-03",
+   "ENT-04"
+  ],
+  "prompts": [],
+  "spec": "11+ adaptive test, no skip/back, ends on quota; AC: server decides next item",
+  "tables": [
+   "entrance_test_run",
+   "practice_session",
+   "question",
+   "student_response"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "D-05",
+  "name": "Multi-Version Drill Request",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-031"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Numbers re-randomised for maths.",
+  "v1": "",
+  "route": "/practice/multi-version",
+  "eps": [
+   "PRA-10",
+   "PRA-01"
+  ],
+  "prompts": [
+   "P-QG-03"
+  ],
+  "spec": "N-variant drill of same skill using calc templates; AC: numbers computed by code, distinct per variant",
+  "tables": [
+   "calc_instance",
+   "practice_session",
+   "question"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "D-06",
+  "name": "Photograph Completed Paper \u2192 Instant Score",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Mobile (camera-first)",
+  "stories": [
+   "US-033"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Mobile-native; web fallback = file upload.",
+  "v1": "",
+  "route": "/practice/photo",
+  "eps": [
+   "PRA-06",
+   "PRA-04",
+   "MOC-07"
+  ],
+  "prompts": [
+   "P-MK-06",
+   "P-MK-01",
+   "P-MK-03"
+  ],
+  "spec": "Camera capture (mobile-first, web upload), crop/rotate, transcript confirm/edit BEFORE marking, low-confidence flag; AC: image stripped of EXIF, PII scan, deleted per retention",
+  "tables": [
+   "answer_photo",
+   "mark_scheme",
+   "marking_result",
+   "mastery_state",
+   "outbox_event",
+   "student_response"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "D-07",
+  "name": "Custom Mixed-Topic Quiz Builder",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-034"
+  ],
+  "prio": "Could",
+  "phase": "Phase 2",
+  "notes": "",
+  "v1": "",
+  "route": "/practice/custom",
+  "eps": [
+   "PRA-13",
+   "PRA-14",
+   "PRA-12",
+   "PRA-01"
+  ],
+  "prompts": [],
+  "spec": "Pick topics/count/difficulty -> saved quiz set; AC: quiz composed by bank selection only",
+  "tables": [
+   "mastery_state",
+   "practice_session",
+   "saved_quiz_set",
+   "spec_topic"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "D-08",
+  "name": "Daily Micro-Goal Widget (Home Dashboard Tile)",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-035",
+   "US-130"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Default rhythm; lives on Student Home (Shell-01). Shows goal progress only \u2014 no streak counter in the MVP.",
+  "v1": "REVISED \u2014 Streak element removed; goal progress kept (D-21).",
+  "route": "/home (widget)",
+  "eps": [
+   "STU-13",
+   "STU-14",
+   "ENG-01"
+  ],
+  "prompts": [],
+  "spec": "Daily goal ring, adjust goal; AC: no streak-loss mechanics (gamification Phase 2)",
+  "tables": [
+   "daily_goal",
+   "daily_goal_progress",
+   "engagement_event",
+   "nudge"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "D-09",
+  "name": "Wrong-Answers-Only Redrill Mode",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-036",
+   "US-058"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Filter on D-01.",
+  "v1": "",
+  "route": "/practice/redrill",
+  "eps": [
+   "PRA-11",
+   "PRA-01"
+  ],
+  "prompts": [],
+  "spec": "Redrill previously wrong answers; AC: spaced by review-due",
+  "tables": [
+   "practice_session",
+   "question",
+   "student_response"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "D-10",
+  "name": "Target-Grade Adaptive Drill (\"Keep Going Till Consistent\")",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-042",
+   "US-060"
+  ],
+  "prio": "Should",
+  "phase": "Phase 3",
+  "notes": "Mode setting on D-01, not a new layout.",
+  "v1": "",
+  "route": "/practice/keep-going",
+  "eps": [
+   "PRA-01",
+   "PRA-17",
+   "MAS-01"
+  ],
+  "prompts": [],
+  "spec": "Target-grade adaptive drill; strategy controller picks next; AC: stops on fatigue signal",
+  "tables": [
+   "mastery_state",
+   "practice_session",
+   "session_question",
+   "spec_topic"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "D-11",
+  "name": "Mock Paper Results & Review",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Student",
+  "platform": "Web",
+  "stories": [
+   "US-109"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Topic-by-topic breakdown of lost marks with a one-tap targeted drill (feeds D-01).",
+  "v1": "NEW in v1.0",
+  "route": "/mock/[mockId]/results",
+  "eps": [
+   "MOC-06",
+   "MOC-08",
+   "MRK-01",
+   "MRK-02"
+  ],
+  "prompts": [
+   "P-MK-07"
+  ],
+  "spec": "Per-question marks, grade estimate, topic breakdown, PDF; A-Level shows provisional state; AC: grade boundary from grade_boundary table",
+  "tables": [
+   "mark_scheme",
+   "marking_result",
+   "mock_paper",
+   "student_response"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "D-12",
+  "name": "Chemistry Structured Answer Input",
+  "epic": "D. Practice & Question Delivery",
+  "roles": "Chemistry student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-110"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Chemistry input kit: equations with state symbols, numeric answer + units + significant figures, periodic table drawer. Pilot-critical for \u226595% accuracy.",
+  "v1": "NEW in v1.0",
+  "route": "/practice/[sessionId] (input mode)",
+  "eps": [
+   "PRA-04",
+   "PRA-05"
+  ],
+  "prompts": [
+   "P-MK-05"
+  ],
+  "spec": "Structured input: equation builder, state symbols, units, sig figs, working lines; AC: method marks & ECF handled by P-MK-05",
+  "tables": [
+   "mark_scheme",
+   "marking_result",
+   "mastery_state",
+   "outbox_event",
+   "student_response"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "E-01",
+  "name": "AI Question QC \u2014 Exceptions",
+  "epic": "E. AI Question Generation",
+  "roles": "Content Admin",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-041",
+   "US-089",
+   "US-112",
+   "US-037",
+   "US-039"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Automated checks: grounding in a real past-paper source, spec-point tag, mark-scheme consistency, duplicate detection, answerability by the marking model. Passing questions publish automatically; only failures appear here. US-037/038/039/040 are backend pipeline behaviour.",
+  "v1": "REVISED \u2014 was \"AI Question QC Review Queue\". Every question reviewed by a human \u2192 automated 5-check QC; only failures reach a human (D-18).",
+  "route": "/staff/content/qc",
+  "eps": [
+   "CNT-01",
+   "CNT-02",
+   "CNT-03",
+   "CNT-04",
+   "CNT-05",
+   "CNT-06",
+   "CNT-11",
+   "GEN-04",
+   "GEN-01",
+   "GEN-02",
+   "GEN-03",
+   "RVC-01",
+   "RVC-02"
+  ],
+  "prompts": [
+   "P-QG-04",
+   "P-QG-05",
+   "P-QG-06",
+   "P-QG-07",
+   "P-QG-08a",
+   "P-QG-08b",
+   "P-QG-09"
+  ],
+  "spec": "Exceptions queue (only failed QC), side-by-side question/mark-scheme/QC results, edit, rerun, approve/reject; AC: approved item gets published_at + audit",
+  "tables": [
+   "audit_log",
+   "blueprint",
+   "cheat_sheet",
+   "flashcard",
+   "flashcard_deck",
+   "generation_run",
+   "mark_scheme",
+   "qc_check_result",
+   "question",
+   "question_generation_log",
+   "revision_note",
+   "spec_point_objective"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "E-02",
+  "name": "Question Authoring & Past-Paper Import",
+  "epic": "E. AI Question Generation",
+  "roles": "Content team member",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-111",
+   "US-037",
+   "US-040"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Author questions with mark schemes; import past papers with spec-point tags and licence status (no PMT material).",
+  "v1": "NEW in v1.0",
+  "route": "/staff/content/authoring",
+  "eps": [
+   "CNT-10",
+   "CNT-11",
+   "CNT-12",
+   "CNT-13",
+   "CNT-14",
+   "CNT-15",
+   "CNT-16",
+   "CNT-17",
+   "CNT-18",
+   "CNT-19",
+   "CNT-20",
+   "DGM-01",
+   "DGM-02",
+   "CMS-01",
+   "CMS-02",
+   "CMS-03",
+   "CMS-04"
+  ],
+  "prompts": [
+   "P-IN-01",
+   "P-IN-02",
+   "P-IN-03",
+   "P-IN-06",
+   "P-QG-05"
+  ],
+  "spec": "Manual authoring + past-paper import wizard, licence flag, ingest status, per-item approve; AC: no item published without licence status set",
+  "tables": [
+   "audit_log",
+   "case_study",
+   "diagram_asset",
+   "faq_item",
+   "help_article",
+   "ingestion_job",
+   "mark_scheme",
+   "outcome_stat",
+   "past_paper",
+   "past_paper_item",
+   "question",
+   "question_embedding"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "F-01",
+  "name": "Instant Marking Result",
+  "epic": "F. Marking & Feedback",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-044",
+   "US-049"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Per-question right/wrong + explanation. GCSE/iGCSE marks are instant and final; A-Level marks route to F-09 (provisional, in review).",
+  "v1": "UPDATED \u2014 A-Level disclaimer replaced by the provisional-mark flow (F-09).",
+  "route": "/practice/[sessionId]/result/[responseId]",
+  "eps": [
+   "MRK-01",
+   "MRK-04",
+   "MRK-05",
+   "TUT-05"
+  ],
+  "prompts": [
+   "P-MK-07",
+   "P-MK-01",
+   "P-MK-03"
+  ],
+  "spec": "Mark awarded per point, rationale, next action; dispute link; AC: student text is generated only from validated mark result",
+  "tables": [
+   "dispute",
+   "hint_event",
+   "marking_exception",
+   "marking_result",
+   "marking_review_queue",
+   "student_response",
+   "tutor_message"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "F-02",
+  "name": "Full Mark Scheme Reveal",
+  "epic": "F. Marking & Feedback",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-045"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Point-by-point.",
+  "v1": "",
+  "route": "/practice/[sessionId]/scheme/[questionId]",
+  "eps": [
+   "MRK-02",
+   "MRK-01"
+  ],
+  "prompts": [
+   "P-MK-07"
+  ],
+  "spec": "Full mark scheme reveal after attempt; AC: hidden until answered/skip",
+  "tables": [
+   "mark_scheme",
+   "marking_result",
+   "student_response"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "F-03",
+  "name": "Self-Mark Mode",
+  "epic": "F. Marking & Feedback",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-046"
+  ],
+  "prio": "Could",
+  "phase": "Phase 2",
+  "notes": "Alternative to AI marking.",
+  "v1": "",
+  "route": "/practice/[sessionId]/self-mark",
+  "eps": [
+   "MRK-03",
+   "MRK-06",
+   "MRK-02"
+  ],
+  "prompts": [],
+  "spec": "Self-mark ticks vs points, compare with system; AC: informational only, does not change official mark",
+  "tables": [
+   "mark_scheme",
+   "marking_result",
+   "student_response"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "F-04",
+  "name": "\"Disagree With This Mark\" Flag",
+  "epic": "F. Marking & Feedback",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-047"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Modal from F-01; sends the answer to F-10 Marking Exceptions and aggregates in M-03.",
+  "v1": "UPDATED \u2014 Now Must/Pilot: a student dispute is one of the three triggers for F-10 (D-17).",
+  "route": "/practice/[sessionId]/dispute/[responseId]",
+  "eps": [
+   "MRK-04",
+   "MRK-05"
+  ],
+  "prompts": [],
+  "spec": "Reason chips + free text (redacted), submit; status; AC: creates dispute + marking_exception for GCSE, review item for A-Level",
+  "tables": [
+   "dispute",
+   "marking_exception",
+   "marking_review_queue",
+   "student_response"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "F-05",
+  "name": "A-Level Review Workbench",
+  "epic": "F. Marking & Feedback",
+  "roles": "A-Level Reviewer",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-048",
+   "US-114"
+  ],
+  "prio": "Must",
+  "phase": "Phase 2 (A-Level go-live)",
+  "notes": "Every A-Level long answer is reviewed (client Round 1). Reviewer never sees the student's identity. Confirmed/adjusted marks feed the gold set (Q-01). GCSE/iGCSE exceptions are handled separately in F-10.",
+  "v1": "REVISED \u2014 was \"Marking Reviewer Queue\". Mixed-level queue \u2192 A-Level only, anonymised, with AI marking trail, adjust/confirm and 48h SLA tracking (D-16).",
+  "route": "/staff/review",
+  "eps": [
+   "REV-01",
+   "REV-02",
+   "REV-03",
+   "REV-04",
+   "REV-05",
+   "REV-06",
+   "REV-07"
+  ],
+  "prompts": [
+   "P-MK-04"
+  ],
+  "spec": "Split view: answer, scheme, marking trail; confirm/adjust/release; SLA timers; AC: release requires reviewer MFA session; audit on adjust",
+  "tables": [
+   "audit_log",
+   "gold_set_item",
+   "mark_scheme",
+   "marking_result",
+   "marking_review_queue",
+   "mastery_state",
+   "student_response"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "F-06",
+  "name": "Re-Explain Concept (Diagram / Worked Example)",
+  "epic": "F. Marking & Feedback",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-050"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Triggered on 2nd wrong attempt.",
+  "v1": "",
+  "route": "/tutor/reexplain/[questionId]",
+  "eps": [
+   "TUT-05",
+   "TUT-01"
+  ],
+  "prompts": [
+   "P-TU-03",
+   "P-TU-07",
+   "P-SF-01",
+   "P-SF-02"
+  ],
+  "spec": "Choose format (diagram/worked example/analogy/simpler); AC: all output passes safety classifier",
+  "tables": [
+   "hint_event",
+   "parent_ai_controls",
+   "tutor_message",
+   "tutor_session"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "F-07",
+  "name": "Socratic Explain-Back Chat",
+  "epic": "F. Marking & Feedback",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-051",
+   "US-060",
+   "US-083"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Chat-style component, reused by Voice Tutor (J-01).",
+  "v1": "",
+  "route": "/tutor/[tutorSessionId]",
+  "eps": [
+   "TUT-01",
+   "TUT-02",
+   "TUT-03",
+   "TUT-04",
+   "TUT-07",
+   "ENG-01"
+  ],
+  "prompts": [
+   "P-TU-00",
+   "P-TU-01",
+   "P-TU-04",
+   "P-TU-07",
+   "P-SF-01",
+   "P-SF-02"
+  ],
+  "spec": "Chat UI, Socratic turns, explain-back check, end session summary; streaming; AC: parent-visible transcript (H-09); crisis path -> scripted response",
+  "tables": [
+   "engagement_event",
+   "nudge",
+   "parent_ai_controls",
+   "safety_classification",
+   "safety_flag",
+   "tutor_message",
+   "tutor_session"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "F-08",
+  "name": "Photo-of-Stuck-Question Walkthrough",
+  "epic": "F. Marking & Feedback",
+  "roles": "Student",
+  "platform": "Mobile (camera-first)",
+  "stories": [
+   "US-052"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "Distinct from D-06 \u2014 question not yet attempted.",
+  "v1": "",
+  "route": "/tutor/photo",
+  "eps": [
+   "TUT-06",
+   "PRA-06"
+  ],
+  "prompts": [
+   "P-TU-06",
+   "P-MK-06",
+   "P-SF-01",
+   "P-SF-02"
+  ],
+  "spec": "Photo of stuck question -> guided walkthrough; AC: no full answer given, hint ladder logic",
+  "tables": [
+   "answer_photo",
+   "tutor_session"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "F-09",
+  "name": "A-Level Provisional Mark / In Review",
+  "epic": "F. Marking & Feedback",
+  "roles": "A-Level student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-113"
+  ],
+  "prio": "Must",
+  "phase": "Phase 2 (A-Level go-live)",
+  "notes": "AI mark shown immediately, labelled PROVISIONAL, with review status and 48h expected turnaround. Counts toward progress only once confirmed in F-05.",
+  "v1": "NEW in v1.0",
+  "route": "/practice/[sessionId]/provisional/[responseId]",
+  "eps": [
+   "MRK-01",
+   "MRK-05",
+   "MRK-04"
+  ],
+  "prompts": [
+   "P-MK-04"
+  ],
+  "spec": "'Provisional mark - in human review' banner, ETA, final on release; AC: provisional never shown as final",
+  "tables": [
+   "dispute",
+   "marking_exception",
+   "marking_result",
+   "marking_review_queue",
+   "student_response"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "F-10",
+  "name": "Marking Exceptions \u2014 GCSE/iGCSE",
+  "epic": "F. Marking & Feedback",
+  "roles": "Operations reviewer",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-115"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "GCSE/iGCSE only. Triggers: low AI confidence, two marking passes disagree, or student dispute (F-04). Resolved items join the gold set.",
+  "v1": "NEW in v1.0",
+  "route": "/staff/marking/exceptions",
+  "eps": [
+   "EXC-01",
+   "EXC-02",
+   "EXC-03",
+   "EXC-04",
+   "EXC-05"
+  ],
+  "prompts": [
+   "P-MK-02",
+   "P-MK-09"
+  ],
+  "spec": "Queue of Pass A/B disagreements & low confidence & disputes; resolve with reason; AC: resolution feeds gold set candidate",
+  "tables": [
+   "audit_log",
+   "dispute",
+   "gold_set_item",
+   "mark_scheme",
+   "marking_exception",
+   "marking_result",
+   "mastery_state",
+   "student_response"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "G-01",
+  "name": "Surprise Micro-Quiz Pop-Up",
+  "epic": "G. Engagement Intelligence",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-055"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "On topics not touched recently.",
+  "v1": "",
+  "route": "(overlay)",
+  "eps": [
+   "ENG-03",
+   "ENG-04",
+   "ENG-01"
+  ],
+  "prompts": [],
+  "spec": "Surprise 3-question micro-quiz pop-up, dismissable, cooldown; AC: parent can disable via H-09/K-02",
+  "tables": [
+   "engagement_event",
+   "mastery_state",
+   "nudge",
+   "surprise_quiz"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "G-02",
+  "name": "Confidence Check Prompt",
+  "epic": "G. Engagement Intelligence",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-056"
+  ],
+  "prio": "Should",
+  "phase": "Pilot",
+  "notes": "In-context on D-01, before answer reveal.",
+  "v1": "",
+  "route": "(overlay)",
+  "eps": [
+   "ENG-01",
+   "MAS-06"
+  ],
+  "prompts": [],
+  "spec": "Confidence 1-5 before reveal; calibration feed; AC: stored in student_response",
+  "tables": [
+   "engagement_event",
+   "mastery_state",
+   "nudge"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "G-03",
+  "name": "Hint / Switch-Topic Nudge",
+  "epic": "G. Engagement Intelligence",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-053"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "In-context on D-01, triggered by stall detection.",
+  "v1": "",
+  "route": "(overlay)",
+  "eps": [
+   "PRA-07",
+   "ENG-01",
+   "ENG-02"
+  ],
+  "prompts": [
+   "P-TU-02"
+  ],
+  "spec": "Hint ladder step-up or switch topic suggestion; AC: hint count capped; nudge response stored",
+  "tables": [
+   "engagement_event",
+   "hint_event",
+   "nudge"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "G-04",
+  "name": "Frustration-Aware Tutor Response",
+  "epic": "G. Engagement Intelligence",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-054"
+  ],
+  "prio": "Should",
+  "phase": "Pilot",
+  "notes": "Tone-shift in the chat/tutor component, not a new screen.",
+  "v1": "",
+  "route": "(overlay)",
+  "eps": [
+   "TUT-08",
+   "ENG-02"
+  ],
+  "prompts": [
+   "P-TU-05",
+   "P-SF-01"
+  ],
+  "spec": "Frustration detected by rules (rapid wrong, idle) -> gentle rescue; AC: tone friendly, offers break",
+  "tables": [
+   "nudge",
+   "tutor_session"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "H-01",
+  "name": "Parent Progress Dashboard",
+  "epic": "H. Progress & Reporting",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-061",
+   "US-057"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Longitudinal, topic-level mastery + trend.",
+  "v1": "",
+  "route": "/parent/children/[id]",
+  "eps": [
+   "MAS-01",
+   "MAS-02",
+   "MAS-03",
+   "RPT-05",
+   "RPT-04",
+   "STU-12"
+  ],
+  "prompts": [],
+  "spec": "Mastery by topic, trend, time-on-task, alerts; AC: teacher-visible flag respected",
+  "tables": [
+   "alert",
+   "assignment_target",
+   "daily_goal_progress",
+   "grade_boundary",
+   "mastery_state",
+   "misconception_observation",
+   "predicted_grade_snapshot",
+   "spec_topic",
+   "student_enrolment",
+   "student_response"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "H-02",
+  "name": "Misconception Detail View",
+  "epic": "H. Progress & Reporting",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-062"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Plain-English, per wrong answer.",
+  "v1": "",
+  "route": "/parent/children/[id]/misconceptions",
+  "eps": [
+   "MAS-04",
+   "TRN-01"
+  ],
+  "prompts": [
+   "P-MK-08",
+   "P-RP-03"
+  ],
+  "spec": "Top misconceptions with plain-English explanation and suggested action; AC: explanation generated w/o child name",
+  "tables": [
+   "misconception_observation",
+   "tutor_session",
+   "voice_session"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "H-03",
+  "name": "Weekly AI Narrative Report",
+  "epic": "H. Progress & Reporting",
+  "roles": "Parent",
+  "platform": "Web + Mobile + Email",
+  "stories": [
+   "US-063"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Parent version + a more direct student version.",
+  "v1": "",
+  "route": "/parent/children/[id]/reports/[reportId]",
+  "eps": [
+   "RPT-02",
+   "RPT-03",
+   "RPT-10"
+  ],
+  "prompts": [
+   "P-RP-01",
+   "P-RP-02"
+  ],
+  "spec": "Weekly narrative; email + in-app; AC: facts_json deterministic; text validated against facts",
+  "tables": [
+   "notification_preference",
+   "weekly_report"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "H-04",
+  "name": "Predicted Grade Band",
+  "epic": "H. Progress & Reporting",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-064"
+  ],
+  "prio": "Could",
+  "phase": "Phase 2",
+  "notes": "Shown with an honest confidence interval, not a single number.",
+  "v1": "",
+  "route": "/parent/children/[id]/predicted",
+  "eps": [
+   "MAS-02"
+  ],
+  "prompts": [],
+  "spec": "Predicted grade band with confidence and 'what would move it'; AC: labelled estimate, not a guarantee",
+  "tables": [
+   "grade_boundary",
+   "predicted_grade_snapshot"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "H-05",
+  "name": "Early-Warning Drift Alert",
+  "epic": "H. Progress & Reporting",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-065"
+  ],
+  "prio": "Should",
+  "phase": "Phase 3",
+  "notes": "Push notification + detail screen.",
+  "v1": "",
+  "route": "/parent/children/[id]/alerts",
+  "eps": [
+   "RPT-05",
+   "RPT-06"
+  ],
+  "prompts": [],
+  "spec": "Drift/inactivity/calibration alerts with ack; AC: max 1 alert per kind per 7 days",
+  "tables": [
+   "alert"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "H-06",
+  "name": "Student Knowledge Map / Skill Tree",
+  "epic": "H. Progress & Reporting",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-066",
+   "US-057"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "Shared visual language with K-01 (badges).",
+  "v1": "",
+  "route": "/student/map",
+  "eps": [
+   "MAS-08",
+   "MAS-01",
+   "PRA-15"
+  ],
+  "prompts": [],
+  "spec": "Skill tree/knowledge map by topic mastery; AC: keyboard accessible",
+  "tables": [
+   "mastery_state",
+   "spec_topic",
+   "student_response"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "H-07",
+  "name": "Anonymised Cohort Benchmark",
+  "epic": "H. Progress & Reporting",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-067"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "e.g. \"top 20% this month\", no other student identifiable.",
+  "v1": "",
+  "route": "/student/benchmark",
+  "eps": [
+   "MAS-05"
+  ],
+  "prompts": [],
+  "spec": "Anonymised cohort benchmark; AC: hidden if cohort < cohort.min_sample_size (50)",
+  "tables": [
+   "cohort_benchmark_snapshot",
+   "privacy_settings"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "H-08",
+  "name": "Printable Action-Plan Checklist",
+  "epic": "H. Progress & Reporting",
+  "roles": "Parent",
+  "platform": "Web (print view)",
+  "stories": [
+   "US-068"
+  ],
+  "prio": "Could",
+  "phase": "Phase 2",
+  "notes": "Export/print stylesheet of H-01/H-02.",
+  "v1": "",
+  "route": "/parent/children/[id]/action-plan/print",
+  "eps": [
+   "RPT-04"
+  ],
+  "prompts": [],
+  "spec": "Print stylesheet checklist; AC: A4 print CSS",
+  "tables": [
+   "mastery_state",
+   "misconception_observation"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "H-09",
+  "name": "Parent Controls & AI Transcripts",
+  "epic": "H. Progress & Reporting",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-116"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Voice/chat on-off, time limits, quiet hours, and read-only AI tutor transcripts (voice transcripts kept 30 days).",
+  "v1": "NEW in v1.0",
+  "route": "/parent/children/[id]/controls",
+  "eps": [
+   "PCT-01",
+   "PCT-02",
+   "PCT-03",
+   "TRN-01",
+   "TRN-02",
+   "CON-03",
+   "CON-04"
+  ],
+  "prompts": [
+   "P-VO-02"
+  ],
+  "spec": "AI on/off, voice on/off, transcripts, time limits, teacher visibility; AC: changes effective on next request",
+  "tables": [
+   "audit_log",
+   "parent_ai_controls",
+   "tutor_message",
+   "tutor_session",
+   "voice_consent",
+   "voice_session"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "H-10",
+  "name": "Parent Home (mobile)",
+  "epic": "H. Progress & Reporting",
+  "roles": "Parent",
+  "platform": "Mobile",
+  "stories": [
+   "US-117"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Mobile-native parent home: per-child progress cards, reports, alerts.",
+  "v1": "NEW in v1.0",
+  "route": "(mobile) Parent Home",
+  "eps": [
+   "RPT-01",
+   "RPT-05",
+   "RPT-07"
+  ],
+  "prompts": [],
+  "spec": "Mobile only; API contract + spec (mobile phase)",
+  "tables": [
+   "alert",
+   "mastery_state",
+   "notification",
+   "student_profile",
+   "weekly_report"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "I-01",
+  "name": "Flashcard Study Mode",
+  "epic": "I. Revision Content",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-069",
+   "US-058"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Auto-generated per topic.",
+  "v1": "",
+  "route": "/revise/decks/[deckId]",
+  "eps": [
+   "RVN-02",
+   "RVN-05",
+   "RVN-06",
+   "MAS-07"
+  ],
+  "prompts": [],
+  "spec": "Flashcard flip, FSRS rating (again/hard/good/easy); AC: schedule by FSRS on server",
+  "tables": [
+   "flashcard",
+   "flashcard_deck",
+   "flashcard_review",
+   "flashcard_state",
+   "mastery_state"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "I-02",
+  "name": "Custom Flashcard Builder",
+  "epic": "I. Revision Content",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-070"
+  ],
+  "prio": "Could",
+  "phase": "Phase 2",
+  "notes": "",
+  "v1": "",
+  "route": "/revise/decks/new",
+  "eps": [
+   "RVN-03",
+   "RVN-04"
+  ],
+  "prompts": [],
+  "spec": "Card editor, KaTeX preview; AC: user content moderated (P-SF-03) only when shared",
+  "tables": [
+   "flashcard",
+   "flashcard_deck",
+   "safety_classification"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "I-03",
+  "name": "Revision Notes Reader",
+  "epic": "I. Revision Content",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-071"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "AI-rewritten, original.",
+  "v1": "",
+  "route": "/revise/notes/[topicId]",
+  "eps": [
+   "RVN-01"
+  ],
+  "prompts": [
+   "P-RC-01",
+   "P-RC-04"
+  ],
+  "spec": "Notes reader, headings, glossary, diagrams; AC: only QC-approved notes served",
+  "tables": [
+   "revision_note"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "I-04",
+  "name": "One-Page Cheat Sheet",
+  "epic": "I. Revision Content",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-072"
+  ],
+  "prio": "Could",
+  "phase": "Phase 2",
+  "notes": "Print/export friendly.",
+  "v1": "",
+  "route": "/revise/cheat-sheet/[topicId]",
+  "eps": [
+   "RVN-07",
+   "RVN-08"
+  ],
+  "prompts": [
+   "P-RC-03"
+  ],
+  "spec": "One-page cheat sheet + PDF; AC: print CSS",
+  "tables": [
+   "cheat_sheet"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "I-05",
+  "name": "2-Minute Knowledge-Check Quiz",
+  "epic": "I. Revision Content",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-073"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Short-form, between longer sessions.",
+  "v1": "",
+  "route": "/revise/check/[topicId]",
+  "eps": [
+   "PRA-01",
+   "PRA-03",
+   "PRA-04"
+  ],
+  "prompts": [],
+  "spec": "2-minute 5-question check; AC: bank items only",
+  "tables": [
+   "mark_scheme",
+   "marking_result",
+   "mastery_state",
+   "outbox_event",
+   "practice_session",
+   "question",
+   "question_embedding",
+   "session_question",
+   "student_response"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "I-06",
+  "name": "Share Deck / Quiz Set",
+  "epic": "I. Revision Content",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-074"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "To classmates/study group \u2014 needs a lightweight sharing/safety check.",
+  "v1": "",
+  "route": "/revise/share",
+  "eps": [
+   "RVN-09",
+   "RVN-10",
+   "RVN-11"
+  ],
+  "prompts": [
+   "P-SF-03"
+  ],
+  "spec": "Share code, import shared deck, revoke; AC: shared content moderated before visible; disabled for <13 unless parent allows",
+  "tables": [
+   "deck_share",
+   "flashcard",
+   "safety_classification"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "J-01",
+  "name": "Voice Tutor Conversation",
+  "epic": "J. Voice & Accessibility",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-075",
+   "US-083"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "The single biggest UI departure \u2014 waveform/listening states, live transcript, Socratic scaffolding. See design system doc.",
+  "v1": "UPDATED \u2014 Priority aligned to client Round 1 (voice from day 1). Consent/errors in J-06.",
+  "route": "/voice/[voiceSessionId]",
+  "eps": [
+   "VOX-01",
+   "VOX-02",
+   "VOX-03",
+   "VOX-04",
+   "VOX-05",
+   "CON-03",
+   "TUT-01"
+  ],
+  "prompts": [
+   "P-TU-01",
+   "P-VO-01",
+   "P-SF-01",
+   "P-SF-02"
+  ],
+  "spec": "Push-to-talk / continuous, live captions, barge-in, fallback to text; AC: needs voice_consent; audio not stored unless configured; latency budget <1.5s first token",
+  "tables": [
+   "audit_log",
+   "parent_ai_controls",
+   "tutor_message",
+   "tutor_session",
+   "voice_consent",
+   "voice_session"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "J-02",
+  "name": "Verbal Discussion Mode (English Lang/Lit)",
+  "epic": "J. Voice & Accessibility",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-076"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "Variant of J-01 tuned for discussion, not Q&A.",
+  "v1": "",
+  "route": "/voice/discussion",
+  "eps": [
+   "VOX-01",
+   "VOX-02",
+   "VOX-03"
+  ],
+  "prompts": [
+   "P-TU-08",
+   "P-VO-01"
+  ],
+  "spec": "English discussion tutor (verbal); AC: same consent + safety",
+  "tables": [
+   "parent_ai_controls",
+   "tutor_message",
+   "tutor_session",
+   "voice_consent",
+   "voice_session"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "J-03",
+  "name": "Accessibility Settings Panel",
+  "epic": "J. Voice & Accessibility",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-077"
+  ],
+  "prio": "Should",
+  "phase": "Phase 3",
+  "notes": "Dyslexia font, spacing, contrast. Also reachable from onboarding (B-09).",
+  "v1": "",
+  "route": "/settings/accessibility",
+  "eps": [
+   "STU-10",
+   "STU-11"
+  ],
+  "prompts": [],
+  "spec": "Full accessibility panel; AC: persists per student",
+  "tables": [
+   "student_profile"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "J-04",
+  "name": "Extended-Time Exam Simulation",
+  "epic": "J. Voice & Accessibility",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-078"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "Mode toggle on D-03.",
+  "v1": "",
+  "route": "/mock/[mockId]/sit (extra time)",
+  "eps": [
+   "MOC-01",
+   "STU-10"
+  ],
+  "prompts": [],
+  "spec": "Extra-time multiplier 25/50/100%; AC: applied from accessibility profile",
+  "tables": [
+   "mock_paper",
+   "mock_paper_item",
+   "student_profile"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "J-05",
+  "name": "Simplified-Language Toggle",
+  "epic": "J. Voice & Accessibility",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-079"
+  ],
+  "prio": "Could",
+  "phase": "Phase 3",
+  "notes": "In-context on D-01, not a new screen.",
+  "v1": "",
+  "route": "(toggle)",
+  "eps": [
+   "TUT-05",
+   "RVN-01"
+  ],
+  "prompts": [
+   "P-RC-05"
+  ],
+  "spec": "Simplified-language rewrite of notes/explanations; AC: never alters marks or facts",
+  "tables": [
+   "hint_event",
+   "revision_note",
+   "tutor_message"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "J-06",
+  "name": "Voice Consent & Error States",
+  "epic": "J. Voice & Accessibility",
+  "roles": "Parent / student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-118"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Separate parent consent for voice (audio goes to Google Cloud Speech \u2014 the one vendor path with personal data, D-20). Mic/network errors always offer a text fallback.",
+  "v1": "NEW in v1.0",
+  "route": "/voice/consent",
+  "eps": [
+   "CON-03",
+   "CON-04",
+   "VOX-04",
+   "VOX-05"
+  ],
+  "prompts": [],
+  "spec": "Parental voice consent screen, mic permission errors, connectivity check; AC: voice off until consent",
+  "tables": [
+   "audit_log",
+   "tutor_session",
+   "voice_consent",
+   "voice_session"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "K-01",
+  "name": "Badges & Streaks (Mastery-Based)",
+  "epic": "K. Motivation & Gamification",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-080",
+   "US-130"
+  ],
+  "prio": "Won't (MVP)",
+  "phase": "Phase 2",
+  "notes": "Held back per client Round 1 and removed from MVP screens. Kept in the prototype labelled \"Phase 2\" so the design is not lost.",
+  "v1": "REVISED \u2014 Could \u2192 Won't (MVP); labelled Phase 2 per client Round 1 (D-21).",
+  "route": "(flag off) /student/rewards",
+  "eps": [],
+  "prompts": [],
+  "spec": "Specced only; feature_flag gamification_phase2=off; Phase 2",
+  "tables": [],
+  "wave": "DEFERRED"
+ },
+ {
+  "id": "K-02",
+  "name": "Daily Micro-Goal Opt-In Toggle",
+  "epic": "K. Motivation & Gamification",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-081"
+  ],
+  "prio": "Should",
+  "phase": "Phase 3",
+  "notes": "Parent-enabled opt-in, not default-on.",
+  "v1": "",
+  "route": "/parent/children/[id]/controls#goals",
+  "eps": [
+   "STU-14",
+   "PCT-02"
+  ],
+  "prompts": [],
+  "spec": "Parent opt-in toggle for daily micro-goals",
+  "tables": [
+   "daily_goal",
+   "parent_ai_controls"
+  ],
+  "wave": "W4"
+ },
+ {
+  "id": "L-01",
+  "name": "Under-13 Parental Consent Flow",
+  "epic": "L. Safety & Compliance",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-084"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Explicit consent capture.",
+  "v1": "",
+  "route": "/parent/children/[id]/consent",
+  "eps": [
+   "CON-01",
+   "CON-02",
+   "AGE-01",
+   "AGE-02",
+   "AGE-03"
+  ],
+  "prompts": [],
+  "spec": "Verifiable parental consent (age-assured adult + card micro-check or ID per D-11); AC: child profile locked until consent_record exists",
+  "tables": [
+   "age_assurance_record",
+   "consent_record",
+   "voice_consent"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "L-02",
+  "name": "Data Deletion Request",
+  "epic": "L. Safety & Compliance",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-086"
+  ],
+  "prio": "Must",
+  "phase": "Phase 2",
+  "notes": "Right-to-erasure self-service.",
+  "v1": "",
+  "route": "/parent/children/[id]/privacy/delete",
+  "eps": [
+   "PRV-03",
+   "PRV-04",
+   "PRV-05",
+   "PRV-06",
+   "PRV-07"
+  ],
+  "prompts": [],
+  "spec": "Delete/export request, cooling-off, confirm; AC: SLA 30 days; hard delete job proves completion",
+  "tables": [
+   "data_export_request",
+   "deletion_request"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "L-03",
+  "name": "Privacy / Data Settings (High-Privacy Defaults)",
+  "epic": "L. Safety & Compliance",
+  "roles": "Parent + Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-085"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Engagement-telemetry opt-out defaults shown explicitly, not buried.",
+  "v1": "",
+  "route": "/parent/children/[id]/privacy",
+  "eps": [
+   "PRV-01",
+   "PRV-02",
+   "CON-06"
+  ],
+  "prompts": [],
+  "spec": "High-privacy defaults, data-sharing toggles; AC: defaults most-private",
+  "tables": [
+   "cookie_consent",
+   "privacy_settings"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "L-04",
+  "name": "Safeguarding Disclosure \u2014 Internal Ops View",
+  "epic": "L. Safety & Compliance",
+  "roles": "Safeguarding Lead (internal)",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-082"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Not in the original catalogue \u2014 added because the locked architecture requires a human-facing screen for the Safeguarding/Disclosure Escalation service.",
+  "v1": "",
+  "route": "/staff/safeguarding",
+  "eps": [
+   "SAF-06",
+   "SAF-07",
+   "SAF-08",
+   "SAF-09",
+   "SAF-10",
+   "SAF-02",
+   "SAF-03",
+   "SAF-04",
+   "SAF-05"
+  ],
+  "prompts": [
+   "P-SF-04"
+  ],
+  "spec": "Disclosure list, detail, actions log, close; DSL only + MFA; AC: every view audited; scripted response templates",
+  "tables": [
+   "audit_log",
+   "safeguarding_action",
+   "safeguarding_contact",
+   "safeguarding_disclosure_log",
+   "safety_classification",
+   "safety_flag",
+   "school"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "L-05",
+  "name": "Age Assurance",
+  "epic": "L. Safety & Compliance",
+  "roles": "Platform",
+  "platform": "Web",
+  "stories": [
+   "US-105"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Adult check on the paying account holder, behind a swappable interface (Decision 9) pending the OSA legal opinion.",
+  "v1": "NEW in v1.0",
+  "route": "/age-check",
+  "eps": [
+   "AGE-01",
+   "AGE-02",
+   "AGE-03"
+  ],
+  "prompts": [],
+  "spec": "Swappable age assurance provider adapter, result screen; AC: only outcome + method stored",
+  "tables": [
+   "age_assurance_record"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "M-01",
+  "name": "Spec / Topic Tree Manager",
+  "epic": "M. Content Administration",
+  "roles": "Content Admin",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-087",
+   "US-039"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Per qualification/board/subject, all 7 board-tracks.",
+  "v1": "",
+  "route": "/staff/spec",
+  "eps": [
+   "SPC-01",
+   "SPC-02",
+   "SPC-03",
+   "SPC-04",
+   "SPC-05",
+   "SPC-06",
+   "SPC-07",
+   "CAT-05"
+  ],
+  "prompts": [
+   "P-IN-04",
+   "P-QG-01"
+  ],
+  "spec": "Tree editor, import spec doc, decompose to objectives; AC: changes versioned",
+  "tables": [
+   "board_style_profile",
+   "spec_document",
+   "spec_point_objective",
+   "spec_topic",
+   "spec_unit",
+   "specification"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "M-02",
+  "name": "Board Style Profile Manager",
+  "epic": "M. Content Administration",
+  "roles": "Content Admin",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-088",
+   "US-038"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Question wording, mark scheme format per board.",
+  "v1": "",
+  "route": "/staff/style",
+  "eps": [
+   "STY-01",
+   "STY-02",
+   "STY-03",
+   "STY-04"
+  ],
+  "prompts": [
+   "P-IN-05"
+  ],
+  "spec": "Edit board style profile, derive from papers; AC: profile version pinned into generation runs",
+  "tables": [
+   "board_style_profile"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "M-03",
+  "name": "Marking-Flag Systemic Issue Dashboard",
+  "epic": "M. Content Administration",
+  "roles": "Content Admin",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-090"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Aggregates F-04 disputes and F-10 outcomes to spot systemic marking issues.",
+  "v1": "UPDATED \u2014 Individual disputes resolved in F-10; this is the aggregate view.",
+  "route": "/staff/marking/systemic",
+  "eps": [
+   "EXC-05",
+   "MRK-04"
+  ],
+  "prompts": [],
+  "spec": "Systemic-issue dashboard by question/topic/board; AC: threshold configurable",
+  "tables": [
+   "dispute",
+   "marking_exception"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "M-04",
+  "name": "Spec-Point Tagging Progress Tracker",
+  "epic": "M. Content Administration",
+  "roles": "Content Admin",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-091",
+   "US-039"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Which subjects/boards still need tagging completed.",
+  "v1": "",
+  "route": "/staff/spec/tagging",
+  "eps": [
+   "SPC-08"
+  ],
+  "prompts": [],
+  "spec": "Tagging progress by spec/topic; AC: coverage % vs target",
+  "tables": [
+   "spec_topic"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "N-01",
+  "name": "Tutor Browse & Book",
+  "epic": "N. Tutor Marketplace",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-092"
+  ],
+  "prio": "Won't (yet)",
+  "phase": "Deferred",
+  "notes": "Not part of the current locked scope \u2014 included in this inventory only so nothing is silently missing.",
+  "v1": "",
+  "route": "(flag off) /tutors",
+  "eps": [],
+  "prompts": [],
+  "spec": "Won't (yet); not built",
+  "tables": [],
+  "wave": "DEFERRED"
+ },
+ {
+  "id": "N-02",
+  "name": "Tutor Profile & Availability Editor",
+  "epic": "N. Tutor Marketplace",
+  "roles": "Tutor",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-093"
+  ],
+  "prio": "Won't (yet)",
+  "phase": "Deferred",
+  "notes": "",
+  "v1": "",
+  "route": "(flag off) /tutor/profile",
+  "eps": [],
+  "prompts": [],
+  "spec": "Won't (yet); not built",
+  "tables": [],
+  "wave": "DEFERRED"
+ },
+ {
+  "id": "N-03",
+  "name": "Tutor's View of Student Mastery Data",
+  "epic": "N. Tutor Marketplace",
+  "roles": "Tutor",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-094"
+  ],
+  "prio": "Won't (yet)",
+  "phase": "Deferred",
+  "notes": "Permissioned.",
+  "v1": "",
+  "route": "(flag off) /tutor/students",
+  "eps": [],
+  "prompts": [],
+  "spec": "Won't (yet); not built",
+  "tables": [],
+  "wave": "DEFERRED"
+ },
+ {
+  "id": "O-01",
+  "name": "Teacher Class Management",
+  "epic": "O. School / B2B Channel",
+  "roles": "Teacher",
+  "platform": "Web (+ Mobile view)",
+  "stories": [
+   "US-095"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Catalogue lists this as \"Deferred (B2B)\"; superseded by Arshad's locked decision to launch schools in parallel with consumer. Assign topics/homework to a class.",
+  "v1": "UPDATED \u2014 Phase label normalised to Pilot (D-23).",
+  "route": "/school/classes",
+  "eps": [
+   "SCH-01",
+   "SCH-02",
+   "SCH-03",
+   "SCH-04",
+   "SCH-05",
+   "SCH-06",
+   "SCH-07",
+   "INS-01",
+   "INS-02"
+  ],
+  "prompts": [],
+  "spec": "Class list, add pupils, engagement; AC: RLS proves teacher sees own school only",
+  "tables": [
+   "class_pupil",
+   "class_teacher",
+   "engagement_daily",
+   "mastery_state",
+   "school",
+   "school_class",
+   "school_dpa_status",
+   "student_profile"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "O-02",
+  "name": "School Admin Class Dashboard",
+  "epic": "O. School / B2B Channel",
+  "roles": "School Admin",
+  "platform": "Web (+ Mobile view)",
+  "stories": [
+   "US-096"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Class-level mastery/engagement \u2014 matches the Teacher/School Admin Console in the locked architecture doc.",
+  "v1": "UPDATED \u2014 Phase label normalised to Pilot (D-23).",
+  "route": "/school/dashboard",
+  "eps": [
+   "INS-04",
+   "INS-07",
+   "SCH-02"
+  ],
+  "prompts": [],
+  "spec": "School KPIs, class comparison, CSV export; AC: aggregate only, no AI transcripts",
+  "tables": [
+   "class_teacher",
+   "engagement_daily",
+   "mastery_state",
+   "school_class"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "O-03",
+  "name": "KCSIE Compliance Confirmation",
+  "epic": "O. School / B2B Channel",
+  "roles": "School Admin",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-097"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Confirms filtering/monitoring alignment before school-premises use \u2014 ties to the Safeguarding Note already delivered.",
+  "v1": "UPDATED \u2014 Phase label normalised to Pilot (D-23).",
+  "route": "/school/kcsie",
+  "eps": [
+   "KCS-01",
+   "KCS-02",
+   "KCS-03"
+  ],
+  "prompts": [],
+  "spec": "KCSIE pack, confirmation with named signatory, safeguarding contacts; AC: confirmation immutable + audited",
+  "tables": [
+   "kcsie_confirmation",
+   "safeguarding_contact"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "O-04",
+  "name": "Teacher Homework / Assignment Builder",
+  "epic": "O. School / B2B Channel",
+  "roles": "Teacher",
+  "platform": "Web",
+  "stories": [
+   "US-119"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Adaptive homework per class with due dates and completion tracking.",
+  "v1": "NEW in v1.0",
+  "route": "/school/classes/[classId]/assignments/new",
+  "eps": [
+   "ASG-01",
+   "ASG-02",
+   "ASG-03",
+   "ASG-04",
+   "ASG-06",
+   "CAT-05"
+  ],
+  "prompts": [],
+  "spec": "Builder: topics/questions, due date, targets; AC: publish notifies pupils",
+  "tables": [
+   "assignment",
+   "assignment_target",
+   "notification",
+   "spec_topic",
+   "spec_unit"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "O-05",
+  "name": "Class Misconception Heatmap & Pupil Drill-Down",
+  "epic": "O. School / B2B Channel",
+  "roles": "Teacher",
+  "platform": "Web",
+  "stories": [
+   "US-120"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Class misconception heatmap by spec point; drill into any pupil.",
+  "v1": "NEW in v1.0",
+  "route": "/school/classes/[classId]/insights",
+  "eps": [
+   "INS-03",
+   "INS-05",
+   "INS-06"
+  ],
+  "prompts": [
+   "P-RP-05",
+   "P-MK-08"
+  ],
+  "spec": "Heatmap topic x pupil, drill-down, AI class insight summary; AC: summary generated from aggregates only",
+  "tables": [
+   "mastery_state",
+   "misconception_observation",
+   "student_response"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "O-06",
+  "name": "School Onboarding \u2014 Rostering & SSO",
+  "epic": "O. School / B2B Channel",
+  "roles": "School admin",
+  "platform": "Web",
+  "stories": [
+   "US-121"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "MIS or CSV rostering; Google/Microsoft SSO for pupils and staff.",
+  "v1": "NEW in v1.0",
+  "route": "/school/onboarding",
+  "eps": [
+   "ONB-01",
+   "ONB-02",
+   "ONB-03",
+   "ONB-04",
+   "ONB-05",
+   "ONB-06",
+   "ONB-07",
+   "ONB-08"
+  ],
+  "prompts": [],
+  "spec": "Roster CSV/MIS (Wonde) import, SSO, staff invites, pupil login cards; AC: dry-run diff before commit",
+  "tables": [
+   "account",
+   "class_pupil",
+   "mis_connection",
+   "roster_import",
+   "roster_import_row",
+   "school_class",
+   "school_member",
+   "sso_connection",
+   "student_credential",
+   "student_profile"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "O-07",
+  "name": "School DPA & Invoice Billing",
+  "epic": "O. School / B2B Channel",
+  "roles": "School business manager",
+  "platform": "Web",
+  "stories": [
+   "US-122"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Online DPA signature (template pending legal review, P-5); invoice + purchase-order billing at the same per-pupil price.",
+  "v1": "NEW in v1.0",
+  "route": "/school/billing",
+  "eps": [
+   "DPA-01",
+   "DPA-02",
+   "DPA-03",
+   "SCB-01",
+   "SCB-02",
+   "SCB-03",
+   "SCB-04"
+  ],
+  "prompts": [],
+  "spec": "DPA e-sign, PO upload, invoices; AC: DPA signed before pupil data enabled",
+  "tables": [
+   "audit_log",
+   "purchase_order",
+   "school_dpa_signature",
+   "school_dpa_status",
+   "school_invoice",
+   "sub_processor"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "P-01",
+  "name": "Help Centre / FAQ Search",
+  "epic": "P. Support",
+  "roles": "Parent + Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-098"
+  ],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "",
+  "v1": "",
+  "route": "/help",
+  "eps": [
+   "HLP-01",
+   "HLP-02",
+   "HLP-03"
+  ],
+  "prompts": [],
+  "spec": "Search, categories, article, feedback; AC: content via CMS-03",
+  "tables": [
+   "help_article"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "P-02",
+  "name": "Live Chat Widget",
+  "epic": "P. Support",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-099"
+  ],
+  "prio": "Could",
+  "phase": "Phase 2",
+  "notes": "Account/billing quick answers.",
+  "v1": "",
+  "route": "(widget)",
+  "eps": [
+   "HLP-04",
+   "HLP-05"
+  ],
+  "prompts": [],
+  "spec": "In-house live chat (no third-party); AC: business-hours banner",
+  "tables": [
+   "support_chat_message",
+   "support_chat_session"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "P-03",
+  "name": "Support Admin Console",
+  "epic": "P. Support",
+  "roles": "Support agent",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-123"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Account lookup, refunds, password reset \u2014 no access to learning content. Every action written to P-04.",
+  "v1": "NEW in v1.0",
+  "route": "/staff/support",
+  "eps": [
+   "SUP-01",
+   "SUP-02",
+   "SUP-03",
+   "SUP-04",
+   "SUP-05",
+   "SUP-06",
+   "SUP-07",
+   "HLP-06",
+   "SCH-10",
+   "SCH-11"
+  ],
+  "prompts": [],
+  "spec": "Account lookup (no learning content), reset, refund, notes, trial extend, unlock PIN; AC: every action audited; refund limit + 2nd approver above threshold",
+  "tables": [
+   "account",
+   "audit_log",
+   "invoice",
+   "password_reset",
+   "refund",
+   "school",
+   "school_dpa_status",
+   "student_credential",
+   "student_profile",
+   "subscription",
+   "support_chat_session",
+   "support_note"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "P-04",
+  "name": "Audit Log",
+  "epic": "P. Support",
+  "roles": "Compliance lead",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-124"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Append-only log of every privileged action; 7-year retention.",
+  "v1": "NEW in v1.0",
+  "route": "/staff/audit",
+  "eps": [
+   "AUD-01",
+   "AUD-02",
+   "AUD-03",
+   "PLT-04",
+   "PLT-05"
+  ],
+  "prompts": [],
+  "spec": "Filter, export, verify hash chain; AC: read-only",
+  "tables": [
+   "account",
+   "account_role",
+   "audit_log",
+   "staff_vetting_record"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "Q-01",
+  "name": "Marking Accuracy Eval Dashboard",
+  "epic": "Q. AI Operations & Quality",
+  "roles": "Product owner",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-125"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Accuracy vs examiner-marked gold set, per marking point, by board and question type; also exact-total agreement and over-marking rate.",
+  "v1": "NEW in v1.0",
+  "route": "/staff/ai/eval",
+  "eps": [
+   "AIO-01",
+   "AIO-02",
+   "AIO-03",
+   "AIO-04",
+   "AIO-05",
+   "AIO-06",
+   "AIO-07"
+  ],
+  "prompts": [],
+  "spec": "Eval dashboard by task/model/prompt, gold-set browser, run eval; AC: promotion blocked if below threshold",
+  "tables": [
+   "audit_log",
+   "eval_result",
+   "eval_run",
+   "gold_set_item"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "Q-02",
+  "name": "AI Gateway \u2014 Privacy Boundary Log",
+  "epic": "Q. AI Operations & Quality",
+  "roles": "Data protection lead",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-126"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Every AI call via the AI Gateway: per-request random token, redaction log, image header masking. Proves no personal data reaches any AI vendor.",
+  "v1": "NEW in v1.0",
+  "route": "/staff/ai/boundary",
+  "eps": [
+   "AIO-10",
+   "AIO-11",
+   "AIO-12",
+   "AIO-13"
+  ],
+  "prompts": [],
+  "spec": "Gateway log, redactions, boundary attestation; AC: no raw PII ever displayed; payload purge 14d",
+  "tables": [
+   "ai_gateway_log",
+   "ai_gateway_payload",
+   "audit_log",
+   "boundary_attestation",
+   "redaction_event"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "Q-03",
+  "name": "Prompt & Model Configuration",
+  "epic": "Q. AI Operations & Quality",
+  "roles": "AI engineer",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-127"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Versioned prompts/models; promotion only if the candidate beats the live version on the gold set and stays \u226595%.",
+  "v1": "NEW in v1.0",
+  "route": "/staff/ai/prompts",
+  "eps": [
+   "AIO-20",
+   "AIO-21",
+   "AIO-22",
+   "AIO-23",
+   "AIO-24",
+   "AIO-25",
+   "AIO-26",
+   "AIO-27",
+   "PLT-01",
+   "PLT-02"
+  ],
+  "prompts": [],
+  "spec": "Prompt versions, diff, evaluate, promote/rollback, model routing; AC: one LIVE per prompt; promotion audited",
+  "tables": [
+   "audit_log",
+   "eval_run",
+   "feature_flag",
+   "model_routing",
+   "prompt_version"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "Q-04",
+  "name": "AI Cost & Usage",
+  "epic": "Q. AI Operations & Quality",
+  "roles": "Business owner",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-128"
+  ],
+  "prio": "Should",
+  "phase": "Pilot",
+  "notes": "AI cost per active student, by task (marking, generation, tutor, voice), against the agreed budget.",
+  "v1": "NEW in v1.0",
+  "route": "/staff/ai/cost",
+  "eps": [
+   "AIO-30",
+   "AIO-31"
+  ],
+  "prompts": [],
+  "spec": "Cost by task/model/day, budgets and alerts",
+  "tables": [
+   "ai_budget",
+   "ai_usage_cost"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "Q-05",
+  "name": "AI Safety Flags Queue",
+  "epic": "Q. AI Operations & Quality",
+  "roles": "Safeguarding lead",
+  "platform": "Web (internal tool)",
+  "stories": [
+   "US-129"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Safety-classifier flags (Decision 8) triaged and escalated to the DSL; links to L-04.",
+  "v1": "NEW in v1.0",
+  "route": "/staff/safety",
+  "eps": [
+   "SAF-02",
+   "SAF-03",
+   "SAF-04",
+   "SAF-05",
+   "SAF-06"
+  ],
+  "prompts": [
+   "P-SF-04"
+  ],
+  "spec": "Flag queue triage, escalate to disclosure; AC: SLA timers, DSL only",
+  "tables": [
+   "audit_log",
+   "safeguarding_disclosure_log",
+   "safety_classification",
+   "safety_flag"
+  ],
+  "wave": "W2"
+ },
+ {
+  "id": "Shell-01",
+  "name": "Student Home Dashboard",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [
+   "US-130",
+   "US-057",
+   "US-058"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Landing screen post-login: today's micro-goal, continue-practice, recent mastery, quick links. Ties together D-08, H-06. No streak/XP elements in the MVP.",
+  "v1": "REVISED \u2014 Streak counter removed from greeting (D-21).",
+  "route": "/home",
+  "eps": [
+   "STU-12",
+   "STU-13",
+   "MAS-07",
+   "ASG-05",
+   "PLN-02",
+   "ENG-03"
+  ],
+  "prompts": [],
+  "spec": "Student home: continue, daily goal, due reviews, assignments, weekly plan",
+  "tables": [
+   "assignment",
+   "assignment_target",
+   "daily_goal",
+   "daily_goal_progress",
+   "flashcard_state",
+   "mastery_state",
+   "student_enrolment",
+   "surprise_quiz",
+   "weekly_plan",
+   "weekly_plan_item"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "Shell-02",
+  "name": "Parent Home Dashboard",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "Parent",
+  "platform": "Web + Mobile",
+  "stories": [],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Landing screen post-login: per-child summary cards, linking to H-01.",
+  "v1": "",
+  "route": "/parent",
+  "eps": [
+   "RPT-01",
+   "STU-01",
+   "RPT-05",
+   "BIL-03"
+  ],
+  "prompts": [],
+  "spec": "Parent home across children; alerts; billing status",
+  "tables": [
+   "alert",
+   "mastery_state",
+   "parent_student_link",
+   "student_enrolment",
+   "student_profile",
+   "subscription",
+   "subscription_item",
+   "weekly_report"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "Shell-03",
+  "name": "Global Navigation / App Shell",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "All",
+  "platform": "Web + Mobile",
+  "stories": [],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Top nav (web) / tab bar (mobile): Home, Practice, Revision, Progress, Voice Tutor, Settings.",
+  "v1": "",
+  "route": "(layout)",
+  "eps": [
+   "AUTH-17",
+   "RPT-07",
+   "PRA-16"
+  ],
+  "prompts": [],
+  "spec": "Role-aware nav, notifications bell, profile menu, feature-flag gating",
+  "tables": [
+   "account",
+   "account_role",
+   "entitlement",
+   "feature_flag",
+   "flashcard_deck",
+   "notification",
+   "past_paper",
+   "revision_note",
+   "spec_topic",
+   "student_profile"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "Shell-04",
+  "name": "Login / Forgot Password / Auth",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "All",
+  "platform": "Web + Mobile",
+  "stories": [],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Standard auth flow, not called out by any user story but required.",
+  "v1": "UPDATED \u2014 Web login, reset and staff MFA are detailed in Shell-09; Shell-04 remains the mobile/app auth flow.",
+  "route": "/login",
+  "eps": [
+   "AUTH-04",
+   "AUTH-09",
+   "AUTH-10",
+   "AUTH-11",
+   "AUTH-12",
+   "AUTH-13",
+   "AUTH-14",
+   "AUTH-15"
+  ],
+  "prompts": [],
+  "spec": "Parent/student/child login, forgot/reset; AC: generic errors, rate limits",
+  "tables": [
+   "account",
+   "auth_session",
+   "notification",
+   "oidc_identity",
+   "password_reset",
+   "sso_connection",
+   "student_credential",
+   "student_profile"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "Shell-05",
+  "name": "Notifications Centre",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "Parent + Student",
+  "platform": "Web + Mobile",
+  "stories": [],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Surfaces H-05 alerts, weekly report ready, homework due (O-04).",
+  "v1": "UPDATED \u2014 Streak reminders removed (D-21).",
+  "route": "/notifications",
+  "eps": [
+   "RPT-07",
+   "RPT-08",
+   "RPT-09",
+   "RPT-10",
+   "RPT-11",
+   "RPT-12"
+  ],
+  "prompts": [],
+  "spec": "List, read state, preferences, device registration",
+  "tables": [
+   "device_registration",
+   "notification",
+   "notification_preference"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "Shell-06",
+  "name": "Account & Profile Settings",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "All",
+  "platform": "Web + Mobile",
+  "stories": [],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Name, child switcher, subscription link (C-04), accessibility link (J-03), privacy link (L-03).",
+  "v1": "",
+  "route": "/settings",
+  "eps": [
+   "AUTH-17",
+   "AUTH-18",
+   "AUTH-19",
+   "AUTH-20",
+   "AUTH-21",
+   "STU-03",
+   "RPT-10",
+   "RPT-11",
+   "STU-05"
+  ],
+  "prompts": [],
+  "spec": "Profile, password, sessions, notification prefs",
+  "tables": [
+   "account",
+   "account_role",
+   "auth_session",
+   "entitlement",
+   "feature_flag",
+   "notification_preference",
+   "student_profile"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "Shell-07",
+  "name": "Empty / Loading / Error States",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "All",
+  "platform": "Web + Mobile",
+  "stories": [],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Not a single screen \u2014 a required state-set for every list/dashboard screen above. Called out separately so it isn't silently skipped.",
+  "v1": "",
+  "route": "(components)",
+  "eps": [],
+  "prompts": [],
+  "spec": "Shared empty/loading/error/offline/maintenance/403/404/500 patterns; AC: all pages use these",
+  "tables": [],
+  "wave": "W1"
+ },
+ {
+  "id": "Shell-08",
+  "name": "In-App Search",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "Student",
+  "platform": "Web + Mobile",
+  "stories": [],
+  "prio": "Should",
+  "phase": "Phase 2",
+  "notes": "Topic/subject search across practice, revision, past papers.",
+  "v1": "",
+  "route": "/search",
+  "eps": [
+   "PRA-16"
+  ],
+  "prompts": [],
+  "spec": "Topic/notes/deck search; AC: scoped to entitlements",
+  "tables": [
+   "flashcard_deck",
+   "past_paper",
+   "revision_note",
+   "spec_topic"
+  ],
+  "wave": "W3"
+ },
+ {
+  "id": "Shell-09",
+  "name": "Web Login, Reset & Staff MFA",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "All (MFA: staff, reviewers, school admins)",
+  "platform": "Web",
+  "stories": [
+   "US-102",
+   "US-103"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Web login, password reset, Google/Microsoft sign-in; two-step verification enforced for staff, reviewers and school admins.",
+  "v1": "NEW in v1.0",
+  "route": "/staff/login",
+  "eps": [
+   "AUTH-04",
+   "AUTH-05",
+   "AUTH-06",
+   "AUTH-07",
+   "AUTH-08",
+   "AUTH-11",
+   "AUTH-12"
+  ],
+  "prompts": [],
+  "spec": "Staff login + TOTP MFA enrol/verify + recovery codes; AC: MFA mandatory for staff/reviewer/school admin",
+  "tables": [
+   "account",
+   "audit_log",
+   "auth_session",
+   "mfa_factor",
+   "mfa_recovery_code",
+   "password_reset"
+  ],
+  "wave": "W1"
+ },
+ {
+  "id": "Shell-10",
+  "name": "Legal Pages & Cookie Consent",
+  "epic": "Foundational (not in catalogue)",
+  "roles": "Visitor",
+  "platform": "Web",
+  "stories": [
+   "US-104"
+  ],
+  "prio": "Must",
+  "phase": "Pilot",
+  "notes": "Plain-English terms, privacy and AI-data pages; PECR cookie consent with non-essential cookies off by default.",
+  "v1": "NEW in v1.0",
+  "route": "/legal/[slug]",
+  "eps": [
+   "CON-05",
+   "CON-06",
+   "CON-07"
+  ],
+  "prompts": [],
+  "spec": "Terms, privacy, cookies, sub-processors; versioned legal_document",
+  "tables": [
+   "cookie_consent",
+   "legal_document",
+   "sub_processor"
+  ],
+  "wave": "W1"
+ }
+]

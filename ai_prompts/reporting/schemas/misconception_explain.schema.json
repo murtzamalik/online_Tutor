@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "misconception_explain",
+  "title": "misconception_explain",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "plain_explanation": {
+          "type": "string"
+        },
+        "why_it_matters": {
+          "type": "string"
+        },
+        "what_to_do_at_home": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "example_wrong_thinking": {
+          "type": "string"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "title",
+        "plain_explanation",
+        "why_it_matters",
+        "what_to_do_at_home",
+        "example_wrong_thinking"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

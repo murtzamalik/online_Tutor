@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qc_mark_result",
+  "title": "qc_mark_result",
+  "oneOf": [
+    {
+      "required": [
+        "status",
+        "points",
+        "level_awarded",
+        "total_marks",
+        "scheme_gap",
+        "scheme_gap_quote"
+      ],
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "awarded",
+              "evidence",
+              "note"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "awarded": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "evidence": {
+                "type": "string"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "level_awarded": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "total_marks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scheme_gap": {
+          "type": "boolean"
+        },
+        "scheme_gap_quote": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

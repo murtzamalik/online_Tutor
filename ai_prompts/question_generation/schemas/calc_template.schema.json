@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "calc_template",
+  "title": "calc_template",
+  "oneOf": [
+    {
+      "required": [
+        "status",
+        "blueprint_id",
+        "question_text",
+        "ar_line",
+        "equation_text",
+        "variables",
+        "constants",
+        "method_steps",
+        "answer_rule",
+        "marking_points",
+        "full_marks_for_correct_answer_alone",
+        "constraints",
+        "misconception_paths",
+        "self_estimate"
+      ],
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "blueprint_id": {
+          "type": "string"
+        },
+        "context_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "question_text": {
+          "type": "string"
+        },
+        "ar_line": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "equation_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "min",
+              "max",
+              "step",
+              "unit"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "step": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "unit": {
+                "type": "string"
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "constants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "value",
+              "unit"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "value": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "method_steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "description",
+              "expression"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^S[0-9]+$"
+              },
+              "description": {
+                "type": "string"
+              },
+              "expression": {
+                "type": "string"
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "answer_rule": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "rounding",
+            "places",
+            "unit"
+          ],
+          "properties": {
+            "rounding": {
+              "type": "string",
+              "enum": [
+                "SF",
+                "DP"
+              ]
+            },
+            "places": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6
+            },
+            "unit": {
+              "type": "string"
+            }
+          }
+        },
+        "marking_points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "marks",
+              "step_ref",
+              "point",
+              "ecf"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^M[0-9]+$"
+              },
+              "marks": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "step_ref": {
+                "type": "string"
+              },
+              "point": {
+                "type": "string"
+              },
+              "ecf": {
+                "type": "boolean"
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "full_marks_for_correct_answer_alone": {
+          "type": "boolean"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "misconception_paths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "error",
+              "expression"
+            ],
+            "properties": {
+              "error": {
+                "type": "string"
+              },
+              "expression": {
+                "type": "string"
+              }
+            }
+          },
+          "maxItems": 3
+        },
+        "diagram_request": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "library_id",
+                "labels"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "LIBRARY"
+                },
+                "library_id": {
+                  "type": "string"
+                },
+                "labels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "chart_type",
+                "x_label",
+                "y_label",
+                "data_source"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "CHART"
+                },
+                "chart_type": {
+                  "type": "string",
+                  "enum": [
+                    "LINE",
+                    "SCATTER",
+                    "BAR",
+                    "TABLE"
+                  ]
+                },
+                "x_label": {
+                  "type": "string"
+                },
+                "y_label": {
+                  "type": "string"
+                },
+                "data_source": {
+                  "type": "string",
+                  "description": "'template_variables' for calc items, otherwise 'inline'"
+                },
+                "inline_data": {
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "self_estimate": {
+          "type": "object",
+          "required": [
+            "difficulty_grade_band",
+            "time_seconds"
+          ],
+          "properties": {
+            "difficulty_grade_band": {
+              "type": "string",
+              "pattern": "^[1-9]-[1-9]$",
+              "description": "grade band e.g. 4-5"
+            },
+            "time_seconds": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 1200
+            }
+          },
+          "additionalProperties": false
+        },
+        "repair_log": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "disclosure_summary",
+  "title": "disclosure_summary",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "type": "string"
+        },
+        "what_was_said": {
+          "type": "string"
+        },
+        "risk_indicators": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "context_before_after": {
+          "type": "string"
+        },
+        "recommended_dsl_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "urgency": {
+          "type": "string",
+          "enum": [
+            "ROUTINE",
+            "SAME_DAY",
+            "IMMEDIATE"
+          ]
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "headline",
+        "what_was_said",
+        "risk_indicators",
+        "context_before_after",
+        "recommended_dsl_actions",
+        "urgency"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

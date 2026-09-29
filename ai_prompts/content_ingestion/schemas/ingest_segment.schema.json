@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ingest_segment",
+  "title": "ingest_segment",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paper_ref": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "item_ref": {
+                "type": "string"
+              },
+              "page_from": {
+                "type": "integer"
+              },
+              "page_to": {
+                "type": "integer"
+              },
+              "question_no": {
+                "type": "string"
+              },
+              "marks": {
+                "type": "integer"
+              },
+              "stem_text": {
+                "type": "string"
+              },
+              "parts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "part_ref": {
+                      "type": "string"
+                    },
+                    "marks": {
+                      "type": "integer"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "part_ref",
+                    "marks",
+                    "text"
+                  ]
+                }
+              },
+              "has_diagram": {
+                "type": "boolean"
+              },
+              "has_table": {
+                "type": "boolean"
+              },
+              "is_calculation": {
+                "type": "boolean"
+              },
+              "command_word": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "confidence": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "item_ref",
+              "page_from",
+              "page_to",
+              "question_no",
+              "marks",
+              "stem_text",
+              "parts",
+              "has_diagram",
+              "has_table",
+              "is_calculation",
+              "command_word",
+              "confidence"
+            ]
+          }
+        },
+        "unassigned_pages": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "paper_ref",
+        "items",
+        "unassigned_pages"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

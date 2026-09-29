@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "style_profile",
+  "title": "style_profile",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "board": {
+          "type": "string"
+        },
+        "paper_types": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "duration_minutes": {
+                "type": "integer"
+              },
+              "marks": {
+                "type": "integer"
+              },
+              "structure": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "duration_minutes",
+              "marks",
+              "structure"
+            ]
+          }
+        },
+        "command_word_usage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "word": {
+                "type": "string"
+              },
+              "typical_marks": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "example_phrasing": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "word",
+              "typical_marks",
+              "example_phrasing"
+            ]
+          }
+        },
+        "notation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "volume_unit": {
+              "type": "string"
+            },
+            "concentration_unit": {
+              "type": "string"
+            },
+            "decimal_style": {
+              "type": "string"
+            },
+            "state_symbols_required": {
+              "type": "boolean"
+            },
+            "spelling_notes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "volume_unit",
+            "concentration_unit",
+            "decimal_style",
+            "state_symbols_required",
+            "spelling_notes"
+          ]
+        },
+        "ar_values_source": {
+          "type": "string"
+        },
+        "typical_context_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "six_mark_scheme_format": {
+          "type": "string"
+        },
+        "fixed_phrases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence_papers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "board",
+        "paper_types",
+        "command_word_usage",
+        "notation",
+        "ar_values_source",
+        "typical_context_types",
+        "six_mark_scheme_format",
+        "fixed_phrases",
+        "evidence_papers",
+        "confidence"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

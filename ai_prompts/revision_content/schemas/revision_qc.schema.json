@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "revision_qc",
+  "title": "revision_qc",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "CHEM_ERROR",
+                  "OUT_OF_SPEC",
+                  "STYLE",
+                  "TOO_LONG",
+                  "AMBIGUOUS",
+                  "UNSAFE",
+                  "COPYRIGHT_RISK"
+                ]
+              },
+              "where": {
+                "type": "string"
+              },
+              "evidence": {
+                "type": "string"
+              },
+              "suggested_fix": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "where",
+              "evidence",
+              "suggested_fix"
+            ]
+          }
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "verdict",
+        "issues"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "exception_assist",
+  "title": "exception_assist",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "agreement": {
+          "type": "string",
+          "enum": [
+            "AGREE",
+            "DISAGREE_ON_POINTS",
+            "DISAGREE_ON_TOTAL"
+          ]
+        },
+        "points_in_conflict": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "pass_a": {
+                "type": "integer"
+              },
+              "pass_b": {
+                "type": "integer"
+              },
+              "key_evidence": {
+                "type": "string"
+              },
+              "recommendation": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "pass_a",
+              "pass_b",
+              "key_evidence",
+              "recommendation"
+            ]
+          }
+        },
+        "possible_scheme_issue": {
+          "type": "boolean"
+        },
+        "recommended_action": {
+          "type": "string",
+          "enum": [
+            "ACCEPT_A",
+            "ACCEPT_B",
+            "ADJUST",
+            "ESCALATE_CONTENT"
+          ]
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "summary",
+        "agreement",
+        "points_in_conflict",
+        "possible_scheme_issue",
+        "recommended_action"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

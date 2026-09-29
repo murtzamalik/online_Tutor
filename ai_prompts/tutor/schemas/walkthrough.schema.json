@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "walkthrough",
+  "title": "walkthrough",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "question_understood_as": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "step_no": {
+                "type": "integer"
+              },
+              "guidance": {
+                "type": "string"
+              },
+              "prompt_to_student": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "step_no",
+              "guidance",
+              "prompt_to_student"
+            ]
+          }
+        },
+        "reveals_final_answer": {
+          "type": "boolean"
+        },
+        "transcription_confidence": {
+          "type": "number"
+        },
+        "ask_student_to_confirm": {
+          "type": "boolean"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "question_understood_as",
+        "steps",
+        "reveals_final_answer",
+        "transcription_confidence",
+        "ask_student_to_confirm"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

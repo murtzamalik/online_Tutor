@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spec_extract",
+  "title": "spec_extract",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "spec_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "units": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "topics": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "ref": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "level": {
+                      "type": "integer"
+                    },
+                    "statement": {
+                      "type": "string"
+                    },
+                    "tier": {
+                      "type": "string",
+                      "enum": [
+                        "FOUNDATION",
+                        "HIGHER",
+                        "BOTH"
+                      ]
+                    },
+                    "maths_skills": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "required_practical": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "children": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "title",
+                    "level",
+                    "statement",
+                    "tier",
+                    "maths_skills",
+                    "required_practical",
+                    "children"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "ref",
+              "title",
+              "topics"
+            ]
+          }
+        },
+        "command_words": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "word": {
+                "type": "string"
+              },
+              "definition": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "word",
+              "definition"
+            ]
+          }
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "spec_code",
+        "units",
+        "command_words",
+        "confidence"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

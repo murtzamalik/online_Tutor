@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "alevel_marking_result",
+  "title": "alevel_marking_result",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "question_id": {
+          "type": "string"
+        },
+        "provisional_marks": {
+          "type": "integer"
+        },
+        "max_marks": {
+          "type": "integer"
+        },
+        "marking_trail": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "step": {
+                "type": "string"
+              },
+              "ao": {
+                "type": "string",
+                "enum": [
+                  "AO1",
+                  "AO2",
+                  "AO3"
+                ]
+              },
+              "evidence": {
+                "type": "string"
+              },
+              "credit": {
+                "type": "string"
+              },
+              "marks": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "step",
+              "ao",
+              "evidence",
+              "credit",
+              "marks"
+            ]
+          }
+        },
+        "level_or_points_reasoning": {
+          "type": "string"
+        },
+        "uncertainty": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "range_low": {
+              "type": "integer"
+            },
+            "range_high": {
+              "type": "integer"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "range_low",
+            "range_high",
+            "why"
+          ]
+        },
+        "review_focus": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "question_id",
+        "provisional_marks",
+        "max_marks",
+        "marking_trail",
+        "level_or_points_reasoning",
+        "uncertainty",
+        "review_focus",
+        "confidence",
+        "flags"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

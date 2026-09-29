@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "revision_notes",
+  "title": "revision_notes",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "topic_ref": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "heading": {
+                "type": "string"
+              },
+              "body_md": {
+                "type": "string"
+              },
+              "key_terms": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "term": {
+                      "type": "string"
+                    },
+                    "definition": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "term",
+                    "definition"
+                  ]
+                }
+              },
+              "diagram_request": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "LIBRARY",
+                      "CHART",
+                      "NONE"
+                    ]
+                  },
+                  "library_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "library_id"
+                ]
+              }
+            },
+            "required": [
+              "heading",
+              "body_md",
+              "key_terms",
+              "diagram_request"
+            ]
+          }
+        },
+        "common_mistakes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exam_tips": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "grounding": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "spec_phrases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "spec_phrases"
+          ]
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "topic_ref",
+        "title",
+        "sections",
+        "common_mistakes",
+        "exam_tips",
+        "grounding"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

@@ -285,3 +285,13 @@ Only items that change behaviour or compliance if answered wrong. **None of thes
 - Prompt changes only via eval gate; one LIVE version per prompt_id.
 - Forward-only migrations from V012+.
 - Update this file at each wave end.
+
+---
+
+## 9. Wave status (living)
+
+### W0 — Foundation (29 Sep 2026)
+- **Status:** Gate **PASS** with documented deviations — see `docs/waves/W0_plan.md`, `docs/waves/W0_gate_report.md`.
+- **Delivered:** monorepo, Compose stack, Flyway V001–V012, `common` + identity skeleton, `ai-gateway` stub, embedding stub service, Next.js Shell-03/04/07/09, CI + DB boundary/RLS gate script.
+- **Local note:** Testcontainers may fail on Docker Desktop API mismatch; use `./infra/scripts/verify_db_gate.sh` as the authoritative local boundary/RLS/migrate gate.
+- **Do not start W1** until architect signs the gate report.

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spec_tag_result",
+  "title": "spec_tag_result",
+  "oneOf": [
+    {
+      "required": [
+        "status",
+        "best",
+        "runner_up",
+        "tier",
+        "secondary_refs"
+      ],
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "best": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "spec_point_ref",
+            "confidence"
+          ],
+          "properties": {
+            "spec_point_ref": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        },
+        "runner_up": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "spec_point_ref",
+                "confidence"
+              ],
+              "properties": {
+                "spec_point_ref": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "FOUNDATION",
+            "HIGHER",
+            "BOTH"
+          ]
+        },
+        "secondary_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

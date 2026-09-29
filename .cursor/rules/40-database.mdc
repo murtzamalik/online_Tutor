@@ -1,0 +1,10 @@
+---
+description: Database and migrations
+globs: db/**/*.sql
+alwaysApply: false
+---
+- PostgreSQL 16 + pgvector. Forward-only Flyway; never edit applied migrations; add `V012+` with a header comment (stories/screens).
+- TEXT+CHECK enums, TIMESTAMPTZ, UUID (gen_random_uuid) for external ids, pence for money.
+- Learner data cascades on student delete; `audit_log` is append-only. RLS policies for any new school-tenant table (use `rls_school_ok`).
+- `tutor_gateway` role may only touch AI-ops tables — never grant it learner tables.
+- Add indexes with the query that needs them; explain-analyse critical queries.

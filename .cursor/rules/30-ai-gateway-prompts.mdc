@@ -1,0 +1,12 @@
+---
+description: AI gateway, prompts and safety rules
+globs: ai_prompts/**,backend/ai-gateway/**,backend/**/gatewayclient/**
+alwaysApply: false
+---
+- Prompts in `ai_prompts/**` are source of truth; load into `prompt_version`; variables validated at build time; one LIVE version per prompt.
+- Variables must be de-identified before the gateway; names only as `{{child_name}}` placeholders substituted by code after return.
+- Structured output against `schemas/*.json`; validate in code; retry once; then degrade (queue/exception) — never fabricate.
+- Marking totals recomputed in code; numeric correctness from `calc_instance`; Pass A and Pass B are separate calls.
+- Safety: P-SF-01 on every learner message, P-SF-02 on every tutor reply, fail closed; scripted responses only for sensitive categories.
+- Model IDs are config in `model_routing`; never hard-code a model name in feature code.
+- Any prompt change needs eval results attached to the PR.

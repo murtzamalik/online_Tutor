@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spec_point_objectives",
+  "title": "spec_point_objectives",
+  "oneOf": [
+    {
+      "required": [
+        "status",
+        "spec_point_ref",
+        "objectives"
+      ],
+      "properties": {
+        "status": {
+          "const": "ok"
+        },
+        "spec_point_ref": {
+          "type": "string"
+        },
+        "objectives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "objective_id",
+              "objective_text",
+              "assessment_objective",
+              "tier",
+              "allowed_question_types",
+              "allowed_command_words",
+              "mark_range",
+              "is_numeric",
+              "misconceptions",
+              "prerequisites"
+            ],
+            "properties": {
+              "objective_id": {
+                "type": "string",
+                "pattern": "^O[0-9]+$"
+              },
+              "objective_text": {
+                "type": "string"
+              },
+              "assessment_objective": {
+                "type": "string",
+                "enum": [
+                  "AO1",
+                  "AO2",
+                  "AO3"
+                ]
+              },
+              "tier": {
+                "type": "string",
+                "enum": [
+                  "FOUNDATION",
+                  "HIGHER",
+                  "BOTH"
+                ]
+              },
+              "allowed_question_types": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "MULTIPLE_CHOICE",
+                    "SHORT_ANSWER",
+                    "CALCULATION",
+                    "EXTENDED_WRITTEN",
+                    "PRACTICAL_BASED"
+                  ]
+                },
+                "minItems": 1
+              },
+              "allowed_command_words": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              },
+              "mark_range": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "is_numeric": {
+                "type": "boolean"
+              },
+              "misconceptions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 5
+              },
+              "prerequisites": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "minItems": 2,
+          "maxItems": 12
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

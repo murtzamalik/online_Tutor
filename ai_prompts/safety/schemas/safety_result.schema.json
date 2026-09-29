@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "safety_result",
+  "title": "safety_result",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "SELF_HARM",
+            "ABUSE_OR_NEGLECT",
+            "BULLYING",
+            "SEXUAL_CONTENT",
+            "GROOMING_RISK",
+            "VIOLENCE_OR_WEAPONS",
+            "DRUGS_ALCOHOL",
+            "EATING_DISORDER",
+            "EXTREMISM",
+            "PERSONAL_DATA_OFFERED",
+            "ACADEMIC_DISHONESTY",
+            "JAILBREAK",
+            "OFF_TOPIC_BENIGN",
+            "OTHER_CONCERN"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "IMMEDIATE"
+          ]
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "evidence": {
+          "type": "string"
+        },
+        "recommended_action": {
+          "type": "string",
+          "enum": [
+            "ALLOW",
+            "ALLOW_AND_LOG",
+            "BLOCK_AND_REDIRECT",
+            "SCRIPTED_SUPPORT_AND_ESCALATE",
+            "BLOCK_OUTPUT_REGENERATE"
+          ]
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "category",
+        "severity",
+        "confidence",
+        "evidence",
+        "recommended_action",
+        "rationale"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

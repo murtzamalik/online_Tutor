@@ -1,0 +1,8 @@
+---
+description: Testing and definition of done
+alwaysApply: true
+---
+- Definition of Done per screen: real endpoints, all states, a11y AA, responsive, tests, traceability row updated, RBAC + audit verified.
+- Backend: unit + Testcontainers integration for each endpoint (happy, 401/403/404, validation). Critical modules ≥ 90% branch coverage on decision logic.
+- Mandatory suites: AI-boundary tests, RLS isolation tests, role-map equality, PII-log scrub, OpenAPI-vs-catalogue diff.
+- Use synthetic data only. Gateway stub with recorded fixtures in CI; live model calls only in weekly eval jobs.

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "transcription",
+  "title": "transcription",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "transcript": {
+          "type": "string"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "uncertain_spans": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "text",
+              "confidence",
+              "uncertain_spans"
+            ]
+          }
+        },
+        "diagram_present": {
+          "type": "boolean"
+        },
+        "diagram_description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "overall_confidence": {
+          "type": "number"
+        },
+        "needs_student_confirmation": {
+          "type": "boolean"
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "transcript",
+        "lines",
+        "diagram_present",
+        "diagram_description",
+        "overall_confidence",
+        "needs_student_confirmation"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

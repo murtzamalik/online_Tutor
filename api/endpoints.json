@@ -1,0 +1,4523 @@
+[
+ {
+  "id": "AUTH-01",
+  "method": "POST",
+  "path": "/auth/register-parent",
+  "roles": "PUB",
+  "summary": "Create parent account; sends 6-digit email code; records terms consent",
+  "tables": "account,account_role,email_verification,consent_record",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-01"
+  ]
+ },
+ {
+  "id": "AUTH-02",
+  "method": "POST",
+  "path": "/auth/verify-email",
+  "roles": "PUB",
+  "summary": "Verify code (max 5 attempts, TTL 15 min); activates account",
+  "tables": "email_verification,account",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-10"
+  ]
+ },
+ {
+  "id": "AUTH-03",
+  "method": "POST",
+  "path": "/auth/verify-email/resend",
+  "roles": "PUB",
+  "summary": "Resend code with 60 s cooldown (rate limited)",
+  "tables": "email_verification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-10"
+  ]
+ },
+ {
+  "id": "AUTH-04",
+  "method": "POST",
+  "path": "/auth/login",
+  "roles": "PUB",
+  "summary": "Email+password login; returns tokens or an MFA challenge for MFA-required accounts",
+  "tables": "account,auth_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-04",
+   "Shell-09"
+  ]
+ },
+ {
+  "id": "AUTH-05",
+  "method": "POST",
+  "path": "/auth/mfa/verify",
+  "roles": "PUB",
+  "summary": "Complete MFA challenge (TOTP or recovery code)",
+  "tables": "mfa_factor,mfa_recovery_code,auth_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-09"
+  ]
+ },
+ {
+  "id": "AUTH-06",
+  "method": "POST",
+  "path": "/auth/mfa/enroll/start",
+  "roles": "STAFF",
+  "summary": "Begin TOTP enrolment; returns otpauth URI",
+  "tables": "mfa_factor",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-09"
+  ]
+ },
+ {
+  "id": "AUTH-07",
+  "method": "POST",
+  "path": "/auth/mfa/enroll/confirm",
+  "roles": "STAFF",
+  "summary": "Confirm TOTP; returns 10 recovery codes once",
+  "tables": "mfa_factor,mfa_recovery_code",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-09"
+  ]
+ },
+ {
+  "id": "AUTH-08",
+  "method": "POST",
+  "path": "/auth/mfa/recovery-codes/regenerate",
+  "roles": "STAFF",
+  "summary": "Regenerate recovery codes (requires fresh MFA)",
+  "tables": "mfa_recovery_code,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-09"
+  ]
+ },
+ {
+  "id": "AUTH-09",
+  "method": "POST",
+  "path": "/auth/refresh",
+  "roles": "PUB",
+  "summary": "Rotate refresh token (reuse of a rotated token revokes the family)",
+  "tables": "auth_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-04"
+  ]
+ },
+ {
+  "id": "AUTH-10",
+  "method": "POST",
+  "path": "/auth/logout",
+  "roles": "PAR,STU,TCH,SADM,SBM",
+  "summary": "Revoke current session",
+  "tables": "auth_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-04"
+  ]
+ },
+ {
+  "id": "AUTH-11",
+  "method": "POST",
+  "path": "/auth/password/forgot",
+  "roles": "PUB",
+  "summary": "Send reset link (always 202, no account enumeration)",
+  "tables": "password_reset",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-04",
+   "Shell-09"
+  ]
+ },
+ {
+  "id": "AUTH-12",
+  "method": "POST",
+  "path": "/auth/password/reset",
+  "roles": "PUB",
+  "summary": "Set new password with token; revokes all sessions",
+  "tables": "password_reset,account,auth_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-04",
+   "Shell-09"
+  ]
+ },
+ {
+  "id": "AUTH-13",
+  "method": "GET",
+  "path": "/auth/oidc/{provider}/start",
+  "roles": "PUB",
+  "summary": "Start Google/Microsoft sign-in (PKCE); school SSO uses domain match",
+  "tables": "oidc_identity,sso_connection",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-04"
+  ]
+ },
+ {
+  "id": "AUTH-14",
+  "method": "GET",
+  "path": "/auth/oidc/{provider}/callback",
+  "roles": "PUB",
+  "summary": "Complete OIDC; links or creates account; pupils provisioned only if rostered",
+  "tables": "oidc_identity,account,student_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-04"
+  ]
+ },
+ {
+  "id": "AUTH-15",
+  "method": "POST",
+  "path": "/auth/student/picture-pin",
+  "roles": "PUB",
+  "summary": "Child login by handle + picture sequence; lockout after 5 failures and parent notified",
+  "tables": "student_credential,auth_session,notification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-11",
+   "Shell-04"
+  ]
+ },
+ {
+  "id": "AUTH-16",
+  "method": "POST",
+  "path": "/auth/student/register",
+  "roles": "PUB",
+  "summary": "Standalone student (13+) sign-up; under-13 rejected here",
+  "tables": "account,student_profile,age_assurance_record",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-03"
+  ]
+ },
+ {
+  "id": "AUTH-17",
+  "method": "GET",
+  "path": "/me",
+  "roles": "PAR,STU,TCH,SADM,SBM,STAFF",
+  "summary": "Profile, roles, visual tier, entitlements, feature flags",
+  "tables": "account,account_role,student_profile,entitlement,feature_flag",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-03",
+   "Shell-06"
+  ]
+ },
+ {
+  "id": "AUTH-18",
+  "method": "PATCH",
+  "path": "/me",
+  "roles": "PAR,STU,TCH,SADM,SBM,STAFF",
+  "summary": "Update display name, locale, marketing opt-in",
+  "tables": "account",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-06"
+  ]
+ },
+ {
+  "id": "AUTH-19",
+  "method": "POST",
+  "path": "/me/password/change",
+  "roles": "PAR,TCH,SADM,SBM,STAFF",
+  "summary": "Change password (requires current)",
+  "tables": "account,auth_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-06"
+  ]
+ },
+ {
+  "id": "AUTH-20",
+  "method": "GET",
+  "path": "/me/sessions",
+  "roles": "PAR,STU,TCH,SADM,SBM,STAFF",
+  "summary": "List active sessions",
+  "tables": "auth_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-06"
+  ]
+ },
+ {
+  "id": "AUTH-21",
+  "method": "DELETE",
+  "path": "/me/sessions/{sessionId}",
+  "roles": "PAR,STU,TCH,SADM,SBM,STAFF",
+  "summary": "Revoke a session",
+  "tables": "auth_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-06"
+  ]
+ },
+ {
+  "id": "STU-01",
+  "method": "GET",
+  "path": "/students",
+  "roles": "PAR",
+  "summary": "List the parent's children with tier, enrolments, status",
+  "tables": "student_profile,parent_student_link,student_enrolment",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-02",
+   "Shell-02"
+  ]
+ },
+ {
+  "id": "STU-02",
+  "method": "POST",
+  "path": "/students",
+  "roles": "PAR",
+  "summary": "Add child (email-verified parent only); computes age band/tier; under-13 triggers consent gate",
+  "tables": "student_profile,parent_student_link,parent_ai_controls,privacy_settings,daily_goal",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-02"
+  ]
+ },
+ {
+  "id": "STU-03",
+  "method": "PATCH",
+  "path": "/students/{studentId}",
+  "roles": "PAR",
+  "summary": "Edit first name, year group, avatar",
+  "tables": "student_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-08",
+   "Shell-06"
+  ]
+ },
+ {
+  "id": "STU-04",
+  "method": "PUT",
+  "path": "/students/{studentId}/picture-pin",
+  "roles": "PAR",
+  "summary": "Set/replace picture PIN; returns login handle",
+  "tables": "student_credential",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-02"
+  ]
+ },
+ {
+  "id": "STU-05",
+  "method": "GET",
+  "path": "/students/{studentId}",
+  "roles": "PAR,STU,TCH",
+  "summary": "Single learner summary",
+  "tables": "student_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-06"
+  ]
+ },
+ {
+  "id": "STU-06",
+  "method": "GET",
+  "path": "/students/{studentId}/enrolments",
+  "roles": "PAR,STU",
+  "summary": "List enrolments (board/subject/goal/target grade)",
+  "tables": "student_enrolment",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-04",
+   "C-02",
+   "D-02"
+  ]
+ },
+ {
+  "id": "STU-07",
+  "method": "POST",
+  "path": "/students/{studentId}/enrolments",
+  "roles": "PAR,STU",
+  "summary": "Select qualification/board/subject (checks entitlement)",
+  "tables": "student_enrolment,entitlement",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-04"
+  ]
+ },
+ {
+  "id": "STU-08",
+  "method": "PATCH",
+  "path": "/enrolments/{enrolmentId}",
+  "roles": "PAR,STU",
+  "summary": "Set goal type, weak-area focus, exam date; parent sets target grade",
+  "tables": "student_enrolment",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-05",
+   "B-08"
+  ]
+ },
+ {
+  "id": "STU-09",
+  "method": "DELETE",
+  "path": "/enrolments/{enrolmentId}",
+  "roles": "PAR",
+  "summary": "End an enrolment (keeps history)",
+  "tables": "student_enrolment",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-05"
+  ]
+ },
+ {
+  "id": "STU-10",
+  "method": "GET",
+  "path": "/students/{studentId}/accessibility",
+  "roles": "PAR,STU",
+  "summary": "Read accessibility profile",
+  "tables": "student_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-09",
+   "J-03",
+   "J-04"
+  ]
+ },
+ {
+  "id": "STU-11",
+  "method": "PUT",
+  "path": "/students/{studentId}/accessibility",
+  "roles": "PAR,STU",
+  "summary": "Dyslexia font, text size, TTS, reduced motion, simplified language, extended-time %",
+  "tables": "student_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-09",
+   "J-03"
+  ]
+ },
+ {
+  "id": "STU-12",
+  "method": "GET",
+  "path": "/students/{studentId}/home",
+  "roles": "STU",
+  "summary": "Student home aggregate (goal, continue, due reviews, recent mastery, assignments)",
+  "tables": "daily_goal_progress,mastery_state,student_enrolment,assignment_target",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-01",
+   "Shell-01"
+  ]
+ },
+ {
+  "id": "STU-13",
+  "method": "GET",
+  "path": "/students/{studentId}/daily-goal",
+  "roles": "PAR,STU",
+  "summary": "Goal tile data",
+  "tables": "daily_goal,daily_goal_progress",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "D-08",
+   "Shell-01"
+  ]
+ },
+ {
+  "id": "STU-14",
+  "method": "PUT",
+  "path": "/students/{studentId}/daily-goal",
+  "roles": "PAR,STU",
+  "summary": "Change daily question target",
+  "tables": "daily_goal",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-05",
+   "D-08",
+   "K-02"
+  ]
+ },
+ {
+  "id": "AGE-01",
+  "method": "POST",
+  "path": "/age-assurance/start",
+  "roles": "PAR",
+  "summary": "Start adult check via configured provider (pilot: self-declared + consent)",
+  "tables": "age_assurance_record",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-01",
+   "B-02",
+   "B-03",
+   "L-01",
+   "L-05"
+  ]
+ },
+ {
+  "id": "AGE-02",
+  "method": "POST",
+  "path": "/age-assurance/{recordId}/complete",
+  "roles": "PAR",
+  "summary": "Complete check; sets outcome",
+  "tables": "age_assurance_record",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-01",
+   "B-03",
+   "L-01",
+   "L-05"
+  ]
+ },
+ {
+  "id": "AGE-03",
+  "method": "GET",
+  "path": "/age-assurance/status",
+  "roles": "PAR",
+  "summary": "Current outcome (gates paid features)",
+  "tables": "age_assurance_record",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-01",
+   "B-03",
+   "L-01",
+   "L-05"
+  ]
+ },
+ {
+  "id": "CON-01",
+  "method": "GET",
+  "path": "/consents",
+  "roles": "PAR",
+  "summary": "Consents per child with versions",
+  "tables": "consent_record,voice_consent",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-01"
+  ]
+ },
+ {
+  "id": "CON-02",
+  "method": "POST",
+  "path": "/students/{studentId}/consents/under13",
+  "roles": "PAR",
+  "summary": "Record verifiable parental consent for under-13 data processing",
+  "tables": "consent_record",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-02",
+   "L-01"
+  ]
+ },
+ {
+  "id": "CON-03",
+  "method": "POST",
+  "path": "/students/{studentId}/consents/voice",
+  "roles": "PAR",
+  "summary": "Separate voice consent incl. Google processing acknowledgement",
+  "tables": "voice_consent,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-09",
+   "J-01",
+   "J-06"
+  ]
+ },
+ {
+  "id": "CON-04",
+  "method": "DELETE",
+  "path": "/students/{studentId}/consents/voice",
+  "roles": "PAR",
+  "summary": "Withdraw voice consent (ends live voice sessions)",
+  "tables": "voice_consent",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-09",
+   "J-06"
+  ]
+ },
+ {
+  "id": "CON-05",
+  "method": "GET",
+  "path": "/legal/{slug}",
+  "roles": "PUB",
+  "summary": "Current legal document (terms, privacy, ai-data, cookies, safeguarding)",
+  "tables": "legal_document,sub_processor",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-01",
+   "B-03",
+   "Shell-10"
+  ]
+ },
+ {
+  "id": "CON-06",
+  "method": "POST",
+  "path": "/cookie-consent",
+  "roles": "PUB",
+  "summary": "Store cookie choices; non-essential default off",
+  "tables": "cookie_consent",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-01",
+   "B-01",
+   "L-03",
+   "Shell-10"
+  ]
+ },
+ {
+  "id": "CON-07",
+  "method": "GET",
+  "path": "/legal/sub-processors",
+  "roles": "PUB",
+  "summary": "Public sub-processor list (AI-data page)",
+  "tables": "sub_processor",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-10"
+  ]
+ },
+ {
+  "id": "PRV-01",
+  "method": "GET",
+  "path": "/students/{studentId}/privacy",
+  "roles": "PAR,STU",
+  "summary": "Privacy settings (high-privacy defaults visible)",
+  "tables": "privacy_settings",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-03"
+  ]
+ },
+ {
+  "id": "PRV-02",
+  "method": "PUT",
+  "path": "/students/{studentId}/privacy",
+  "roles": "PAR",
+  "summary": "Change telemetry level, cohort opt-in, teacher visibility",
+  "tables": "privacy_settings",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-03"
+  ]
+ },
+ {
+  "id": "PRV-03",
+  "method": "POST",
+  "path": "/students/{studentId}/deletion-request",
+  "roles": "PAR",
+  "summary": "Request erasure; 14-day cooling-off",
+  "tables": "deletion_request",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-02"
+  ]
+ },
+ {
+  "id": "PRV-04",
+  "method": "GET",
+  "path": "/students/{studentId}/deletion-request",
+  "roles": "PAR",
+  "summary": "Status / cancel window",
+  "tables": "deletion_request",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-02"
+  ]
+ },
+ {
+  "id": "PRV-05",
+  "method": "DELETE",
+  "path": "/students/{studentId}/deletion-request",
+  "roles": "PAR",
+  "summary": "Cancel during cooling-off",
+  "tables": "deletion_request",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-02"
+  ]
+ },
+ {
+  "id": "PRV-06",
+  "method": "POST",
+  "path": "/students/{studentId}/data-export",
+  "roles": "PAR",
+  "summary": "Request data export (async ZIP)",
+  "tables": "data_export_request",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-02"
+  ]
+ },
+ {
+  "id": "PRV-07",
+  "method": "GET",
+  "path": "/students/{studentId}/data-export/{exportId}",
+  "roles": "PAR",
+  "summary": "Download when ready",
+  "tables": "data_export_request",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-02"
+  ]
+ },
+ {
+  "id": "CAT-01",
+  "method": "GET",
+  "path": "/catalog/qualifications",
+  "roles": "PUB",
+  "summary": "Qualifications",
+  "tables": "qualification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-01",
+   "A-02",
+   "B-04"
+  ]
+ },
+ {
+  "id": "CAT-02",
+  "method": "GET",
+  "path": "/catalog/boards",
+  "roles": "PUB",
+  "summary": "Boards (filter by qualification/subject)",
+  "tables": "exam_board,specification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-02",
+   "B-04"
+  ]
+ },
+ {
+  "id": "CAT-03",
+  "method": "GET",
+  "path": "/catalog/subjects",
+  "roles": "PUB",
+  "summary": "Subjects (Combined Science separate)",
+  "tables": "subject",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-02",
+   "A-08",
+   "B-04"
+  ]
+ },
+ {
+  "id": "CAT-04",
+  "method": "GET",
+  "path": "/catalog/specifications",
+  "roles": "PUB",
+  "summary": "Specifications by qualification/board/subject",
+  "tables": "specification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-02",
+   "B-04"
+  ]
+ },
+ {
+  "id": "CAT-05",
+  "method": "GET",
+  "path": "/catalog/specifications/{specificationId}/topics",
+  "roles": "PUB,PAR,STU",
+  "summary": "Topic tree (levels 1\u20133)",
+  "tables": "spec_topic,spec_unit",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-02",
+   "B-04",
+   "D-02",
+   "M-01",
+   "O-04"
+  ]
+ },
+ {
+  "id": "CAT-06",
+  "method": "GET",
+  "path": "/catalog/exam-dates",
+  "roles": "PUB",
+  "summary": "Exam-date calendar, region filter",
+  "tables": "exam_date",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-08",
+   "B-05"
+  ]
+ },
+ {
+  "id": "CAT-07",
+  "method": "GET",
+  "path": "/catalog/pricing",
+  "roles": "PUB",
+  "summary": "Price matrix by tab \u00d7 year group \u00d7 qualification \u00d7 cycle (rules engine over data)",
+  "tables": "pricing_plan,pricing_price",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-01",
+   "A-02",
+   "A-09",
+   "C-01",
+   "C-02"
+  ]
+ },
+ {
+  "id": "CAT-08",
+  "method": "GET",
+  "path": "/catalog/plans/compare",
+  "roles": "PUB,PAR",
+  "summary": "What is included per plan",
+  "tables": "pricing_plan",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-01",
+   "C-04"
+  ]
+ },
+ {
+  "id": "MKT-01",
+  "method": "GET",
+  "path": "/marketing/faq",
+  "roles": "PUB",
+  "summary": "FAQ (11+ Q&As minimum)",
+  "tables": "faq_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-03"
+  ]
+ },
+ {
+  "id": "MKT-02",
+  "method": "POST",
+  "path": "/marketing/leads",
+  "roles": "PUB",
+  "summary": "Email-gate lead capture with consent",
+  "tables": "lead_capture,marketing_resource",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-05"
+  ]
+ },
+ {
+  "id": "MKT-03",
+  "method": "GET",
+  "path": "/marketing/resources",
+  "roles": "PUB",
+  "summary": "Free resource library (glossary, past-paper index)",
+  "tables": "marketing_resource,past_paper",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-05",
+   "A-10"
+  ]
+ },
+ {
+  "id": "MKT-04",
+  "method": "GET",
+  "path": "/marketing/case-studies",
+  "roles": "PUB",
+  "summary": "Approved, consented case studies only",
+  "tables": "case_study",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-06",
+   "A-07"
+  ]
+ },
+ {
+  "id": "MKT-05",
+  "method": "GET",
+  "path": "/marketing/outcomes",
+  "roles": "PUB",
+  "summary": "Outcome statistics with methodology",
+  "tables": "outcome_stat",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-01",
+   "A-06"
+  ]
+ },
+ {
+  "id": "MKT-06",
+  "method": "POST",
+  "path": "/marketing/plan-quiz",
+  "roles": "PUB",
+  "summary": "Branching quiz \u2192 recommended plan (pre-filters C-01)",
+  "tables": "pricing_plan",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-09"
+  ]
+ },
+ {
+  "id": "MKT-07",
+  "method": "GET",
+  "path": "/marketing/sample-question",
+  "roles": "PUB",
+  "summary": "Anonymous sample question for the homepage",
+  "tables": "question,mark_scheme",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-01",
+   "A-04"
+  ]
+ },
+ {
+  "id": "MKT-08",
+  "method": "POST",
+  "path": "/marketing/sample-question/{questionId}/answer",
+  "roles": "PUB",
+  "summary": "Mark a sample answer anonymously (rate-limited, no storage of identity)",
+  "tables": "question,marking_result",
+  "prompts": "P-MK-01",
+  "notes": "",
+  "screens": [
+   "A-01",
+   "A-04"
+  ]
+ },
+ {
+  "id": "MKT-09",
+  "method": "POST",
+  "path": "/marketing/school-demo-request",
+  "roles": "PUB",
+  "summary": "School demo/contact request",
+  "tables": "lead_capture",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-01"
+  ]
+ },
+ {
+  "id": "MKT-10",
+  "method": "GET",
+  "path": "/marketing/pages/{slug}",
+  "roles": "PUB",
+  "summary": "Marketing page content blocks (qualification/subject pages)",
+  "tables": "app_config",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "A-02"
+  ]
+ },
+ {
+  "id": "BIL-01",
+  "method": "POST",
+  "path": "/billing/setup-intent",
+  "roles": "PAR",
+  "summary": "Stripe SetupIntent for trial card capture",
+  "tables": "billing_customer",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-03",
+   "C-06"
+  ]
+ },
+ {
+  "id": "BIL-02",
+  "method": "POST",
+  "path": "/billing/subscriptions",
+  "roles": "PAR",
+  "summary": "Create subscription with trial (plan, cycle, child \u00d7 subject items)",
+  "tables": "subscription,subscription_item,entitlement",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-03"
+  ]
+ },
+ {
+  "id": "BIL-03",
+  "method": "GET",
+  "path": "/billing/subscription",
+  "roles": "PAR",
+  "summary": "Current subscription, trial end, next charge",
+  "tables": "subscription,subscription_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-05",
+   "C-08",
+   "C-10",
+   "Shell-02"
+  ]
+ },
+ {
+  "id": "BIL-04",
+  "method": "PATCH",
+  "path": "/billing/subscription",
+  "roles": "PAR",
+  "summary": "Change plan/subjects/cycle with proration preview",
+  "tables": "subscription,subscription_item,entitlement",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-05"
+  ]
+ },
+ {
+  "id": "BIL-05",
+  "method": "POST",
+  "path": "/billing/subscription/cancel-preview",
+  "roles": "PAR",
+  "summary": "Step 1 of two-click cancel: what ends when",
+  "tables": "subscription",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-08"
+  ]
+ },
+ {
+  "id": "BIL-06",
+  "method": "POST",
+  "path": "/billing/subscription/cancel",
+  "roles": "PAR",
+  "summary": "Step 2: cancel at period end (no dark patterns)",
+  "tables": "subscription,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-08"
+  ]
+ },
+ {
+  "id": "BIL-07",
+  "method": "POST",
+  "path": "/billing/subscription/reactivate",
+  "roles": "PAR",
+  "summary": "Undo cancel before period end",
+  "tables": "subscription",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-08"
+  ]
+ },
+ {
+  "id": "BIL-08",
+  "method": "GET",
+  "path": "/billing/invoices",
+  "roles": "PAR",
+  "summary": "Invoices list (one bill across children)",
+  "tables": "invoice",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-10"
+  ]
+ },
+ {
+  "id": "BIL-09",
+  "method": "GET",
+  "path": "/billing/invoices/{invoiceId}/pdf",
+  "roles": "PAR",
+  "summary": "Invoice PDF (pre-signed URL)",
+  "tables": "invoice",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-10"
+  ]
+ },
+ {
+  "id": "BIL-10",
+  "method": "POST",
+  "path": "/billing/payment-method/setup",
+  "roles": "PAR",
+  "summary": "New SetupIntent to update card",
+  "tables": "billing_customer",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-08",
+   "C-09"
+  ]
+ },
+ {
+  "id": "BIL-11",
+  "method": "POST",
+  "path": "/billing/payment-method/confirm",
+  "roles": "PAR",
+  "summary": "Attach new card and retry the open invoice",
+  "tables": "billing_customer,payment_attempt",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-08",
+   "C-09"
+  ]
+ },
+ {
+  "id": "BIL-12",
+  "method": "GET",
+  "path": "/billing/dunning",
+  "roles": "PAR",
+  "summary": "Dunning state + grace end (child keeps access)",
+  "tables": "subscription,payment_attempt",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-09"
+  ]
+ },
+ {
+  "id": "BIL-13",
+  "method": "POST",
+  "path": "/billing/promo/validate",
+  "roles": "PAR",
+  "summary": "Validate promo code",
+  "tables": "promo_code",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-01",
+   "C-03"
+  ]
+ },
+ {
+  "id": "BIL-14",
+  "method": "POST",
+  "path": "/billing/micro-subscriptions",
+  "roles": "PAR",
+  "summary": "Single-subject plan (Phase 3)",
+  "tables": "subscription,subscription_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-06"
+  ]
+ },
+ {
+  "id": "BIL-15",
+  "method": "GET",
+  "path": "/billing/referral",
+  "roles": "PAR",
+  "summary": "Referral code + status",
+  "tables": "referral",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-07"
+  ]
+ },
+ {
+  "id": "BIL-16",
+  "method": "POST",
+  "path": "/billing/referral/invite",
+  "roles": "PAR",
+  "summary": "Invite friend by email",
+  "tables": "referral",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-07"
+  ]
+ },
+ {
+  "id": "BIL-17",
+  "method": "POST",
+  "path": "/webhooks/stripe",
+  "roles": "SYS",
+  "summary": "Stripe webhooks (signature verified, idempotent)",
+  "tables": "stripe_event,subscription,invoice,payment_attempt,entitlement,notification",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "BIL-18",
+  "method": "POST",
+  "path": "/billing/checkout/plan-preview",
+  "roles": "PAR,PUB",
+  "summary": "Compute price, sibling discount and VAT before payment",
+  "tables": "pricing_price",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "C-02",
+   "C-03",
+   "C-05"
+  ]
+ },
+ {
+  "id": "PRA-01",
+  "method": "POST",
+  "path": "/practice/sessions",
+  "roles": "STU",
+  "summary": "Start session (mode: TOPIC, MIXED, WRONG_ONLY, TARGET_GRADE, QUICK_CHECK, REVIEW_DUE, MULTI_VERSION, ASSIGNMENT)",
+  "tables": "practice_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "D-05",
+   "D-07",
+   "D-09",
+   "D-10",
+   "I-05"
+  ]
+ },
+ {
+  "id": "PRA-02",
+  "method": "GET",
+  "path": "/practice/sessions/{sessionId}",
+  "roles": "STU",
+  "summary": "Session state",
+  "tables": "practice_session,session_question",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01"
+  ]
+ },
+ {
+  "id": "PRA-03",
+  "method": "GET",
+  "path": "/practice/sessions/{sessionId}/next",
+  "roles": "STU",
+  "summary": "Next question (adaptive selection, bank-first; may trigger on-demand top-up)",
+  "tables": "question,session_question,mastery_state,question_embedding",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "I-05"
+  ]
+ },
+ {
+  "id": "PRA-04",
+  "method": "POST",
+  "path": "/practice/sessions/{sessionId}/answers",
+  "roles": "STU",
+  "summary": "Submit answer (typed/spoken/photo ref/structured) + confidence + telemetry summary; returns result or marking ticket",
+  "tables": "student_response,mark_scheme,marking_result,mastery_state,outbox_event",
+  "prompts": "P-MK-01,P-MK-03,P-MK-05",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "D-06",
+   "D-12",
+   "I-05"
+  ]
+ },
+ {
+  "id": "PRA-05",
+  "method": "GET",
+  "path": "/practice/answers/{responseId}/result",
+  "roles": "STU",
+  "summary": "Poll/SSE for marking result",
+  "tables": "student_response,marking_result",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "D-12"
+  ]
+ },
+ {
+  "id": "PRA-06",
+  "method": "POST",
+  "path": "/practice/photos",
+  "roles": "STU",
+  "summary": "Upload a MASKED photo + mask report (client-side masking mandatory)",
+  "tables": "answer_photo",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-06",
+   "F-08"
+  ]
+ },
+ {
+  "id": "PRA-07",
+  "method": "POST",
+  "path": "/practice/sessions/{sessionId}/hint",
+  "roles": "STU",
+  "summary": "Next hint level (1\u20133)",
+  "tables": "hint_event",
+  "prompts": "P-TU-02",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "G-03"
+  ]
+ },
+ {
+  "id": "PRA-08",
+  "method": "POST",
+  "path": "/practice/sessions/{sessionId}/skip",
+  "roles": "STU",
+  "summary": "Skip (not allowed in entrance test/diagnostic)",
+  "tables": "session_question",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01"
+  ]
+ },
+ {
+  "id": "PRA-09",
+  "method": "POST",
+  "path": "/practice/sessions/{sessionId}/end",
+  "roles": "STU",
+  "summary": "End session; returns summary",
+  "tables": "practice_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01"
+  ]
+ },
+ {
+  "id": "PRA-10",
+  "method": "POST",
+  "path": "/practice/multi-version",
+  "roles": "STU",
+  "summary": "Several re-randomised versions of the same topic/difficulty",
+  "tables": "calc_instance,question",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-05"
+  ]
+ },
+ {
+  "id": "PRA-11",
+  "method": "GET",
+  "path": "/students/{studentId}/wrong-answers",
+  "roles": "STU",
+  "summary": "Wrong-answers-only pool",
+  "tables": "student_response,question",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-09"
+  ]
+ },
+ {
+  "id": "PRA-12",
+  "method": "GET",
+  "path": "/students/{studentId}/quiz-sets",
+  "roles": "STU",
+  "summary": "Saved custom quiz sets",
+  "tables": "saved_quiz_set",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-07"
+  ]
+ },
+ {
+  "id": "PRA-13",
+  "method": "POST",
+  "path": "/students/{studentId}/quiz-sets",
+  "roles": "STU",
+  "summary": "Save a custom mixed-topic quiz",
+  "tables": "saved_quiz_set",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-07"
+  ]
+ },
+ {
+  "id": "PRA-14",
+  "method": "GET",
+  "path": "/students/{studentId}/topics",
+  "roles": "STU,PAR,TCH",
+  "summary": "Topic list with mastery ring per topic",
+  "tables": "spec_topic,mastery_state",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-07"
+  ]
+ },
+ {
+  "id": "PRA-15",
+  "method": "GET",
+  "path": "/students/{studentId}/topics/{topicId}",
+  "roles": "STU,PAR,TCH",
+  "summary": "Topic detail + question history",
+  "tables": "spec_topic,student_response,mastery_state",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-06"
+  ]
+ },
+ {
+  "id": "PRA-16",
+  "method": "GET",
+  "path": "/search",
+  "roles": "STU",
+  "summary": "In-app search across topics, notes, decks, past papers",
+  "tables": "spec_topic,revision_note,flashcard_deck,past_paper",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-03",
+   "Shell-08"
+  ]
+ },
+ {
+  "id": "PRA-17",
+  "method": "POST",
+  "path": "/practice/sessions/{sessionId}/mode",
+  "roles": "STU",
+  "summary": "Toggle input mode/simplified language for the current question (no re-marking)",
+  "tables": "session_question",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "D-10"
+  ]
+ },
+ {
+  "id": "DIA-01",
+  "method": "POST",
+  "path": "/diagnostics",
+  "roles": "STU",
+  "summary": "Start adaptive baseline (IRT), no skip/back",
+  "tables": "practice_session,diagnostic_run",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-06"
+  ]
+ },
+ {
+  "id": "DIA-02",
+  "method": "GET",
+  "path": "/diagnostics/{diagnosticId}/next",
+  "roles": "STU",
+  "summary": "Next adaptive item",
+  "tables": "diagnostic_run,question",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-06"
+  ]
+ },
+ {
+  "id": "DIA-03",
+  "method": "POST",
+  "path": "/diagnostics/{diagnosticId}/answers",
+  "roles": "STU",
+  "summary": "Answer; updates theta",
+  "tables": "student_response,diagnostic_run",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-06"
+  ]
+ },
+ {
+  "id": "DIA-04",
+  "method": "GET",
+  "path": "/diagnostics/{diagnosticId}/result",
+  "roles": "STU,PAR",
+  "summary": "Results + starting mastery + recommended tier",
+  "tables": "diagnostic_run,mastery_state",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-06"
+  ]
+ },
+ {
+  "id": "ENT-01",
+  "method": "POST",
+  "path": "/entrance-tests",
+  "roles": "STU",
+  "summary": "Start adaptive 11+ entrance test (locked-down rules)",
+  "tables": "entrance_test_run,practice_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-04"
+  ]
+ },
+ {
+  "id": "ENT-02",
+  "method": "GET",
+  "path": "/entrance-tests/{runId}/next",
+  "roles": "STU",
+  "summary": "Next item (no back)",
+  "tables": "entrance_test_run,question",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-04"
+  ]
+ },
+ {
+  "id": "ENT-03",
+  "method": "POST",
+  "path": "/entrance-tests/{runId}/answers",
+  "roles": "STU",
+  "summary": "Answer (no skip)",
+  "tables": "student_response,entrance_test_run",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-04"
+  ]
+ },
+ {
+  "id": "ENT-04",
+  "method": "GET",
+  "path": "/entrance-tests/{runId}/result",
+  "roles": "STU,PAR",
+  "summary": "Result",
+  "tables": "entrance_test_run",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-04"
+  ]
+ },
+ {
+  "id": "MOC-01",
+  "method": "POST",
+  "path": "/mock-papers",
+  "roles": "STU",
+  "summary": "Assemble mock (GENERATED or REAL_PAPER) with structure/timing/weighting",
+  "tables": "mock_paper,mock_paper_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-02",
+   "J-04"
+  ]
+ },
+ {
+  "id": "MOC-02",
+  "method": "GET",
+  "path": "/mock-papers/{mockId}",
+  "roles": "STU",
+  "summary": "Paper in authentic layout",
+  "tables": "mock_paper,mock_paper_item,question,past_paper_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-03"
+  ]
+ },
+ {
+  "id": "MOC-03",
+  "method": "POST",
+  "path": "/mock-papers/{mockId}/start",
+  "roles": "STU",
+  "summary": "Start clock (extended-time aware)",
+  "tables": "mock_paper",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-03"
+  ]
+ },
+ {
+  "id": "MOC-04",
+  "method": "PUT",
+  "path": "/mock-papers/{mockId}/answers/{seq}",
+  "roles": "STU",
+  "summary": "Autosave an answer",
+  "tables": "student_response",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-03"
+  ]
+ },
+ {
+  "id": "MOC-05",
+  "method": "POST",
+  "path": "/mock-papers/{mockId}/submit",
+  "roles": "STU",
+  "summary": "Submit; queues marking of all answers",
+  "tables": "mock_paper,student_response",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-03"
+  ]
+ },
+ {
+  "id": "MOC-06",
+  "method": "GET",
+  "path": "/mock-papers/{mockId}/results",
+  "roles": "STU,PAR",
+  "summary": "Topic breakdown of lost marks + targeted drill link",
+  "tables": "mock_paper,student_response,marking_result",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-11"
+  ]
+ },
+ {
+  "id": "MOC-07",
+  "method": "POST",
+  "path": "/mock-papers/{mockId}/photo-pages",
+  "roles": "STU",
+  "summary": "Photograph completed printed paper pages (masked) \u2192 answers",
+  "tables": "answer_photo,student_response",
+  "prompts": "P-MK-06",
+  "notes": "",
+  "screens": [
+   "D-03",
+   "D-06"
+  ]
+ },
+ {
+  "id": "MOC-08",
+  "method": "GET",
+  "path": "/mock-papers/{mockId}/pdf",
+  "roles": "STU,PAR",
+  "summary": "Printable paper PDF",
+  "tables": "mock_paper",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-11"
+  ]
+ },
+ {
+  "id": "MOC-09",
+  "method": "GET",
+  "path": "/students/{studentId}/mock-papers",
+  "roles": "STU,PAR",
+  "summary": "History",
+  "tables": "mock_paper",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-06"
+  ]
+ },
+ {
+  "id": "PLN-01",
+  "method": "POST",
+  "path": "/students/{studentId}/weekly-plan/generate",
+  "roles": "STU,PAR",
+  "summary": "Build plan (code) from subject/board/date/mastery; AI writes rationale text only",
+  "tables": "weekly_plan,weekly_plan_item",
+  "prompts": "P-RP-04",
+  "notes": "",
+  "screens": [
+   "B-07"
+  ]
+ },
+ {
+  "id": "PLN-02",
+  "method": "GET",
+  "path": "/students/{studentId}/weekly-plan",
+  "roles": "STU,PAR",
+  "summary": "Current plan",
+  "tables": "weekly_plan,weekly_plan_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-07",
+   "Shell-01"
+  ]
+ },
+ {
+  "id": "PLN-03",
+  "method": "PATCH",
+  "path": "/weekly-plan-items/{itemId}",
+  "roles": "STU",
+  "summary": "Mark complete / move",
+  "tables": "weekly_plan_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-07"
+  ]
+ },
+ {
+  "id": "MRK-01",
+  "method": "GET",
+  "path": "/answers/{responseId}/marking",
+  "roles": "STU,PAR",
+  "summary": "Per-point result, marks, feedback in mark-scheme language",
+  "tables": "marking_result,student_response",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "D-11",
+   "F-01",
+   "F-02",
+   "F-09"
+  ]
+ },
+ {
+  "id": "MRK-02",
+  "method": "GET",
+  "path": "/questions/{questionId}/mark-scheme",
+  "roles": "STU",
+  "summary": "Full scheme reveal (only after an attempt)",
+  "tables": "mark_scheme,student_response",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-11",
+   "F-02",
+   "F-03"
+  ]
+ },
+ {
+  "id": "MRK-03",
+  "method": "POST",
+  "path": "/answers/{responseId}/self-mark",
+  "roles": "STU",
+  "summary": "Self-mark against revealed scheme",
+  "tables": "marking_result",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-03"
+  ]
+ },
+ {
+  "id": "MRK-04",
+  "method": "POST",
+  "path": "/answers/{responseId}/dispute",
+  "roles": "STU",
+  "summary": "\"Disagree with this mark\" \u2192 exception queue",
+  "tables": "dispute,marking_exception",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-01",
+   "F-04",
+   "F-09",
+   "M-03"
+  ]
+ },
+ {
+  "id": "MRK-05",
+  "method": "GET",
+  "path": "/answers/{responseId}/review-status",
+  "roles": "STU",
+  "summary": "A-Level provisional status, ETA (48 h)",
+  "tables": "marking_review_queue,student_response",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-01",
+   "F-04",
+   "F-09"
+  ]
+ },
+ {
+  "id": "MRK-06",
+  "method": "POST",
+  "path": "/answers/{responseId}/self-mark-compare",
+  "roles": "STU",
+  "summary": "Compare self-mark with AI mark (calibration)",
+  "tables": "marking_result",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-03"
+  ]
+ },
+ {
+  "id": "EXC-01",
+  "method": "GET",
+  "path": "/internal/marking/exceptions",
+  "roles": "OPS",
+  "summary": "F-10 queue (filters: trigger, board, status)",
+  "tables": "marking_exception,student_response",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-10"
+  ]
+ },
+ {
+  "id": "EXC-02",
+  "method": "GET",
+  "path": "/internal/marking/exceptions/{exceptionId}",
+  "roles": "OPS",
+  "summary": "Anonymised detail: question, scheme, answer, both passes, dispute reason",
+  "tables": "marking_exception,marking_result,mark_scheme",
+  "prompts": "P-MK-09",
+  "notes": "",
+  "screens": [
+   "F-10"
+  ]
+ },
+ {
+  "id": "EXC-03",
+  "method": "POST",
+  "path": "/internal/marking/exceptions/{exceptionId}/claim",
+  "roles": "OPS",
+  "summary": "Claim",
+  "tables": "marking_exception",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-10"
+  ]
+ },
+ {
+  "id": "EXC-04",
+  "method": "POST",
+  "path": "/internal/marking/exceptions/{exceptionId}/resolve",
+  "roles": "OPS",
+  "summary": "Final marks + note; recompute mastery; optionally add to gold set",
+  "tables": "marking_exception,marking_result,student_response,gold_set_item,mastery_state,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-10"
+  ]
+ },
+ {
+  "id": "EXC-05",
+  "method": "GET",
+  "path": "/internal/marking/systemic-issues",
+  "roles": "CNT,OPS,OWN",
+  "summary": "Aggregate disputes/outcomes by board/topic/question (M-03)",
+  "tables": "marking_exception,dispute",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-10",
+   "M-03"
+  ]
+ },
+ {
+  "id": "REV-01",
+  "method": "GET",
+  "path": "/internal/reviews/queue",
+  "roles": "REV",
+  "summary": "A-Level queue with SLA colours (pseudonymous refs only)",
+  "tables": "marking_review_queue",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-05"
+  ]
+ },
+ {
+  "id": "REV-02",
+  "method": "GET",
+  "path": "/internal/reviews/{reviewId}",
+  "roles": "REV",
+  "summary": "Answer, question, scheme, AI marking trail \u2014 never identity",
+  "tables": "marking_review_queue,marking_result,mark_scheme",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-05"
+  ]
+ },
+ {
+  "id": "REV-03",
+  "method": "POST",
+  "path": "/internal/reviews/{reviewId}/claim",
+  "roles": "REV",
+  "summary": "Claim (prevents double review)",
+  "tables": "marking_review_queue",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-05"
+  ]
+ },
+ {
+  "id": "REV-04",
+  "method": "POST",
+  "path": "/internal/reviews/{reviewId}/confirm",
+  "roles": "REV",
+  "summary": "Confirm AI mark",
+  "tables": "marking_review_queue,student_response,marking_result,mastery_state,gold_set_item,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-05"
+  ]
+ },
+ {
+  "id": "REV-05",
+  "method": "POST",
+  "path": "/internal/reviews/{reviewId}/adjust",
+  "roles": "REV",
+  "summary": "Adjust per-point marks + reason",
+  "tables": "marking_review_queue,student_response,marking_result,mastery_state,gold_set_item,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-05"
+  ]
+ },
+ {
+  "id": "REV-06",
+  "method": "POST",
+  "path": "/internal/reviews/{reviewId}/release",
+  "roles": "REV",
+  "summary": "Release a claim",
+  "tables": "marking_review_queue",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-05"
+  ]
+ },
+ {
+  "id": "REV-07",
+  "method": "GET",
+  "path": "/internal/reviews/sla",
+  "roles": "REV,OWN",
+  "summary": "SLA breach view, throughput, agreement rate",
+  "tables": "marking_review_queue",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-05"
+  ]
+ },
+ {
+  "id": "TUT-01",
+  "method": "POST",
+  "path": "/tutor/sessions",
+  "roles": "STU",
+  "summary": "Start chat tutor session (checks parent AI controls and quiet hours)",
+  "tables": "tutor_session,parent_ai_controls",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-06",
+   "F-07",
+   "J-01"
+  ]
+ },
+ {
+  "id": "TUT-02",
+  "method": "POST",
+  "path": "/tutor/sessions/{tutorSessionId}/messages",
+  "roles": "STU",
+  "summary": "Learner message \u2192 SSE stream of tutor reply (safety-checked before display)",
+  "tables": "tutor_message,safety_classification,safety_flag",
+  "prompts": "P-SF-01,P-TU-01,P-SF-02",
+  "notes": "",
+  "screens": [
+   "F-07"
+  ]
+ },
+ {
+  "id": "TUT-03",
+  "method": "GET",
+  "path": "/tutor/sessions/{tutorSessionId}",
+  "roles": "STU,PAR",
+  "summary": "Session + messages",
+  "tables": "tutor_session,tutor_message",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-07"
+  ]
+ },
+ {
+  "id": "TUT-04",
+  "method": "POST",
+  "path": "/tutor/sessions/{tutorSessionId}/end",
+  "roles": "STU",
+  "summary": "End",
+  "tables": "tutor_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "F-07"
+  ]
+ },
+ {
+  "id": "TUT-05",
+  "method": "POST",
+  "path": "/tutor/reexplain",
+  "roles": "STU",
+  "summary": "Re-explain after 2nd wrong attempt in a different format",
+  "tables": "tutor_message,hint_event",
+  "prompts": "P-TU-03",
+  "notes": "",
+  "screens": [
+   "F-01",
+   "F-06",
+   "J-05"
+  ]
+ },
+ {
+  "id": "TUT-06",
+  "method": "POST",
+  "path": "/tutor/photo-walkthrough",
+  "roles": "STU",
+  "summary": "Photo of a stuck (unattempted) question \u2192 step-by-step (Phase 3)",
+  "tables": "answer_photo,tutor_session",
+  "prompts": "P-TU-06",
+  "notes": "",
+  "screens": [
+   "F-08"
+  ]
+ },
+ {
+  "id": "TUT-07",
+  "method": "POST",
+  "path": "/tutor/sessions/{tutorSessionId}/explain-back",
+  "roles": "STU",
+  "summary": "Submit explanation; get evaluation and next hint",
+  "tables": "tutor_message",
+  "prompts": "P-TU-04",
+  "notes": "",
+  "screens": [
+   "F-07"
+  ]
+ },
+ {
+  "id": "TUT-08",
+  "method": "POST",
+  "path": "/tutor/rescue",
+  "roles": "SYS",
+  "summary": "Engagement service triggers confusion-rescue turn",
+  "tables": "tutor_session,nudge",
+  "prompts": "P-TU-05",
+  "notes": "",
+  "screens": [
+   "G-04"
+  ]
+ },
+ {
+  "id": "VOX-01",
+  "method": "POST",
+  "path": "/voice/sessions",
+  "roles": "STU",
+  "summary": "Create voice session (requires voice_consent, parent voice toggle, quiet hours OK) \u2192 ws URL + short-lived token",
+  "tables": "tutor_session,voice_session,voice_consent,parent_ai_controls",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "J-01",
+   "J-02"
+  ]
+ },
+ {
+  "id": "VOX-02",
+  "method": "WS",
+  "path": "/voice/sessions/{voiceSessionId}/stream",
+  "roles": "STU",
+  "summary": "Bidirectional audio + control frames (see docs/11)",
+  "tables": "tutor_message,voice_session",
+  "prompts": "P-SF-01,P-TU-01,P-VO-01,P-SF-02",
+  "notes": "",
+  "screens": [
+   "J-01",
+   "J-02"
+  ]
+ },
+ {
+  "id": "VOX-03",
+  "method": "POST",
+  "path": "/voice/sessions/{voiceSessionId}/end",
+  "roles": "STU",
+  "summary": "End and finalise metrics",
+  "tables": "voice_session,tutor_session",
+  "prompts": "P-VO-02",
+  "notes": "",
+  "screens": [
+   "J-01",
+   "J-02"
+  ]
+ },
+ {
+  "id": "VOX-04",
+  "method": "POST",
+  "path": "/voice/connectivity-check",
+  "roles": "STU,PAR",
+  "summary": "Mic/network pre-flight (returns error class for J-06)",
+  "tables": "voice_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "J-01",
+   "J-06"
+  ]
+ },
+ {
+  "id": "VOX-05",
+  "method": "POST",
+  "path": "/voice/sessions/{voiceSessionId}/fallback-to-text",
+  "roles": "STU",
+  "summary": "Switch to chat keeping context",
+  "tables": "tutor_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "J-01",
+   "J-06"
+  ]
+ },
+ {
+  "id": "TRN-01",
+  "method": "GET",
+  "path": "/students/{studentId}/ai-transcripts",
+  "roles": "PAR",
+  "summary": "List chat/voice sessions within retention",
+  "tables": "tutor_session,voice_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-02",
+   "H-09"
+  ]
+ },
+ {
+  "id": "TRN-02",
+  "method": "GET",
+  "path": "/students/{studentId}/ai-transcripts/{tutorSessionId}",
+  "roles": "PAR",
+  "summary": "Read-only transcript (audit-logged)",
+  "tables": "tutor_message,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-09"
+  ]
+ },
+ {
+  "id": "PCT-01",
+  "method": "GET",
+  "path": "/students/{studentId}/ai-controls",
+  "roles": "PAR",
+  "summary": "Chat/voice toggles, time limits, quiet hours",
+  "tables": "parent_ai_controls",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-09"
+  ]
+ },
+ {
+  "id": "PCT-02",
+  "method": "PUT",
+  "path": "/students/{studentId}/ai-controls",
+  "roles": "PAR",
+  "summary": "Update controls",
+  "tables": "parent_ai_controls",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-09",
+   "K-02"
+  ]
+ },
+ {
+  "id": "PCT-03",
+  "method": "GET",
+  "path": "/students/{studentId}/ai-usage",
+  "roles": "PAR",
+  "summary": "Minutes used per day",
+  "tables": "tutor_session,voice_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-09"
+  ]
+ },
+ {
+  "id": "ENG-01",
+  "method": "POST",
+  "path": "/engagement/events",
+  "roles": "STU",
+  "summary": "Batch behavioural events (respects telemetry_level)",
+  "tables": "engagement_event,nudge",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-01",
+   "D-03",
+   "D-08",
+   "F-07",
+   "G-01",
+   "G-02",
+   "G-03"
+  ]
+ },
+ {
+  "id": "ENG-02",
+  "method": "POST",
+  "path": "/engagement/nudges/{nudgeId}/respond",
+  "roles": "STU",
+  "summary": "Accept/dismiss a hint/topic-switch/break nudge",
+  "tables": "nudge",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "G-03",
+   "G-04"
+  ]
+ },
+ {
+  "id": "ENG-03",
+  "method": "GET",
+  "path": "/students/{studentId}/surprise-quiz",
+  "roles": "STU",
+  "summary": "Fetch pending surprise quiz",
+  "tables": "surprise_quiz",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "G-01",
+   "Shell-01"
+  ]
+ },
+ {
+  "id": "ENG-04",
+  "method": "POST",
+  "path": "/surprise-quizzes/{quizId}/complete",
+  "roles": "STU",
+  "summary": "Complete/skip and update belief",
+  "tables": "surprise_quiz,mastery_state",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "G-01"
+  ]
+ },
+ {
+  "id": "MAS-01",
+  "method": "GET",
+  "path": "/students/{studentId}/mastery",
+  "roles": "PAR,STU,TCH",
+  "summary": "Mastery tree per enrolment (levels 0\u20133)",
+  "tables": "mastery_state,spec_topic",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "D-10",
+   "H-01",
+   "H-06"
+  ]
+ },
+ {
+  "id": "MAS-02",
+  "method": "GET",
+  "path": "/students/{studentId}/predicted-grades",
+  "roles": "PAR,STU",
+  "summary": "Predicted grade band with interval",
+  "tables": "predicted_grade_snapshot,grade_boundary",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-08",
+   "H-01",
+   "H-04"
+  ]
+ },
+ {
+  "id": "MAS-03",
+  "method": "GET",
+  "path": "/students/{studentId}/progress/timeline",
+  "roles": "PAR,STU",
+  "summary": "Mastery/accuracy trend",
+  "tables": "mastery_state,student_response",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-01"
+  ]
+ },
+ {
+  "id": "MAS-04",
+  "method": "GET",
+  "path": "/students/{studentId}/misconceptions",
+  "roles": "PAR,STU",
+  "summary": "Misconceptions in plain English",
+  "tables": "misconception_observation",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-02"
+  ]
+ },
+ {
+  "id": "MAS-05",
+  "method": "GET",
+  "path": "/students/{studentId}/cohort-benchmark",
+  "roles": "STU,PAR",
+  "summary": "Anonymised percentile (only if opted in, n \u2265 50)",
+  "tables": "cohort_benchmark_snapshot,privacy_settings",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-07"
+  ]
+ },
+ {
+  "id": "MAS-06",
+  "method": "GET",
+  "path": "/students/{studentId}/calibration",
+  "roles": "PAR,STU",
+  "summary": "Over/under-confidence summary",
+  "tables": "mastery_state",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "G-02"
+  ]
+ },
+ {
+  "id": "MAS-07",
+  "method": "GET",
+  "path": "/students/{studentId}/review-due",
+  "roles": "STU",
+  "summary": "FSRS reviews due",
+  "tables": "mastery_state,flashcard_state",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-01",
+   "Shell-01"
+  ]
+ },
+ {
+  "id": "MAS-08",
+  "method": "GET",
+  "path": "/students/{studentId}/skill-map",
+  "roles": "STU",
+  "summary": "Knowledge map graph",
+  "tables": "mastery_state,spec_topic",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-06"
+  ]
+ },
+ {
+  "id": "RPT-01",
+  "method": "GET",
+  "path": "/parents/home",
+  "roles": "PAR",
+  "summary": "Per-child cards (web + mobile)",
+  "tables": "student_profile,mastery_state,alert,weekly_report",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-10",
+   "Shell-02"
+  ]
+ },
+ {
+  "id": "RPT-02",
+  "method": "GET",
+  "path": "/students/{studentId}/reports/weekly",
+  "roles": "PAR,STU",
+  "summary": "Weekly narrative list",
+  "tables": "weekly_report",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-03"
+  ]
+ },
+ {
+  "id": "RPT-03",
+  "method": "GET",
+  "path": "/students/{studentId}/reports/weekly/{reportId}",
+  "roles": "PAR,STU",
+  "summary": "One report (parent or student version by caller)",
+  "tables": "weekly_report",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-03"
+  ]
+ },
+ {
+  "id": "RPT-04",
+  "method": "GET",
+  "path": "/students/{studentId}/action-plan",
+  "roles": "PAR",
+  "summary": "Printable action plan",
+  "tables": "mastery_state,misconception_observation",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-01",
+   "H-08"
+  ]
+ },
+ {
+  "id": "RPT-05",
+  "method": "GET",
+  "path": "/students/{studentId}/alerts",
+  "roles": "PAR",
+  "summary": "Early-warning alerts",
+  "tables": "alert",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-01",
+   "H-05",
+   "H-10",
+   "Shell-02"
+  ]
+ },
+ {
+  "id": "RPT-06",
+  "method": "POST",
+  "path": "/alerts/{alertId}/ack",
+  "roles": "PAR",
+  "summary": "Acknowledge",
+  "tables": "alert",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-05"
+  ]
+ },
+ {
+  "id": "RPT-07",
+  "method": "GET",
+  "path": "/notifications",
+  "roles": "PAR,STU",
+  "summary": "Notification centre",
+  "tables": "notification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-10",
+   "Shell-03",
+   "Shell-05"
+  ]
+ },
+ {
+  "id": "RPT-08",
+  "method": "POST",
+  "path": "/notifications/{notificationId}/read",
+  "roles": "PAR,STU",
+  "summary": "Mark read",
+  "tables": "notification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-05"
+  ]
+ },
+ {
+  "id": "RPT-09",
+  "method": "POST",
+  "path": "/notifications/read-all",
+  "roles": "PAR,STU",
+  "summary": "Mark all read",
+  "tables": "notification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-05"
+  ]
+ },
+ {
+  "id": "RPT-10",
+  "method": "GET",
+  "path": "/notification-preferences",
+  "roles": "PAR",
+  "summary": "Channel \u00d7 kind",
+  "tables": "notification_preference",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "H-03",
+   "Shell-05",
+   "Shell-06"
+  ]
+ },
+ {
+  "id": "RPT-11",
+  "method": "PUT",
+  "path": "/notification-preferences",
+  "roles": "PAR",
+  "summary": "Update",
+  "tables": "notification_preference",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-05",
+   "Shell-06"
+  ]
+ },
+ {
+  "id": "RPT-12",
+  "method": "POST",
+  "path": "/devices",
+  "roles": "PAR,STU",
+  "summary": "Register OneSignal id",
+  "tables": "device_registration",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-05"
+  ]
+ },
+ {
+  "id": "RPT-13",
+  "method": "POST",
+  "path": "/jobs/weekly-reports/run",
+  "roles": "SYS",
+  "summary": "Scheduled generation of weekly reports (Sunday 18:00 Europe/London)",
+  "tables": "weekly_report",
+  "prompts": "P-RP-01,P-RP-02",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "RVN-01",
+  "method": "GET",
+  "path": "/revision/topics/{topicId}/notes",
+  "roles": "STU",
+  "summary": "Revision notes",
+  "tables": "revision_note",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-03",
+   "J-05"
+  ]
+ },
+ {
+  "id": "RVN-02",
+  "method": "GET",
+  "path": "/revision/topics/{topicId}/decks",
+  "roles": "STU",
+  "summary": "System decks for the topic",
+  "tables": "flashcard_deck,flashcard",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-01"
+  ]
+ },
+ {
+  "id": "RVN-03",
+  "method": "POST",
+  "path": "/revision/decks",
+  "roles": "STU",
+  "summary": "Create custom deck",
+  "tables": "flashcard_deck",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-02"
+  ]
+ },
+ {
+  "id": "RVN-04",
+  "method": "PUT",
+  "path": "/revision/decks/{deckId}",
+  "roles": "STU",
+  "summary": "Edit deck/cards (moderation on save)",
+  "tables": "flashcard_deck,flashcard,safety_classification",
+  "prompts": "P-SF-03",
+  "notes": "",
+  "screens": [
+   "I-02"
+  ]
+ },
+ {
+  "id": "RVN-05",
+  "method": "GET",
+  "path": "/revision/decks",
+  "roles": "STU",
+  "summary": "My decks",
+  "tables": "flashcard_deck",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-01"
+  ]
+ },
+ {
+  "id": "RVN-06",
+  "method": "POST",
+  "path": "/revision/cards/{cardId}/review",
+  "roles": "STU",
+  "summary": "Rate a card (FSRS update)",
+  "tables": "flashcard_review,flashcard_state",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-01"
+  ]
+ },
+ {
+  "id": "RVN-07",
+  "method": "GET",
+  "path": "/revision/topics/{topicId}/cheat-sheet",
+  "roles": "STU",
+  "summary": "Cheat sheet JSON",
+  "tables": "cheat_sheet",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-04"
+  ]
+ },
+ {
+  "id": "RVN-08",
+  "method": "GET",
+  "path": "/revision/topics/{topicId}/cheat-sheet/pdf",
+  "roles": "STU",
+  "summary": "Print/export",
+  "tables": "cheat_sheet",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-04"
+  ]
+ },
+ {
+  "id": "RVN-09",
+  "method": "POST",
+  "path": "/revision/decks/{deckId}/share",
+  "roles": "STU",
+  "summary": "Create share code (expiring; moderated)",
+  "tables": "deck_share,safety_classification",
+  "prompts": "P-SF-03",
+  "notes": "",
+  "screens": [
+   "I-06"
+  ]
+ },
+ {
+  "id": "RVN-10",
+  "method": "GET",
+  "path": "/revision/shared/{shareCode}",
+  "roles": "STU",
+  "summary": "Open shared deck (read-only)",
+  "tables": "deck_share,flashcard",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-06"
+  ]
+ },
+ {
+  "id": "RVN-11",
+  "method": "DELETE",
+  "path": "/revision/shares/{shareCode}",
+  "roles": "STU",
+  "summary": "Revoke share",
+  "tables": "deck_share",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "I-06"
+  ]
+ },
+ {
+  "id": "SAF-01",
+  "method": "POST",
+  "path": "/internal-svc/safety/classify",
+  "roles": "SYS",
+  "summary": "Independent safety call for tutor input/output (used by tutor module)",
+  "tables": "safety_classification",
+  "prompts": "P-SF-01,P-SF-02",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "SAF-02",
+  "method": "GET",
+  "path": "/internal/safety/flags",
+  "roles": "DSL,CMP",
+  "summary": "Q-05 queue (pseudonymous refs)",
+  "tables": "safety_flag",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-04",
+   "Q-05"
+  ]
+ },
+ {
+  "id": "SAF-03",
+  "method": "GET",
+  "path": "/internal/safety/flags/{flagId}",
+  "roles": "DSL",
+  "summary": "Redacted excerpt + classifier reasoning",
+  "tables": "safety_flag,safety_classification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-04",
+   "Q-05"
+  ]
+ },
+ {
+  "id": "SAF-04",
+  "method": "POST",
+  "path": "/internal/safety/flags/{flagId}/triage",
+  "roles": "DSL",
+  "summary": "Dismiss / triage with note",
+  "tables": "safety_flag,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-04",
+   "Q-05"
+  ]
+ },
+ {
+  "id": "SAF-05",
+  "method": "POST",
+  "path": "/internal/safety/flags/{flagId}/escalate",
+  "roles": "DSL",
+  "summary": "Escalate \u2192 creates disclosure (identity revealed to DSL only)",
+  "tables": "safety_flag,safeguarding_disclosure_log,audit_log",
+  "prompts": "P-SF-04",
+  "notes": "",
+  "screens": [
+   "L-04",
+   "Q-05"
+  ]
+ },
+ {
+  "id": "SAF-06",
+  "method": "GET",
+  "path": "/internal/safeguarding/disclosures",
+  "roles": "DSL",
+  "summary": "L-04 list",
+  "tables": "safeguarding_disclosure_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-04",
+   "Q-05"
+  ]
+ },
+ {
+  "id": "SAF-07",
+  "method": "GET",
+  "path": "/internal/safeguarding/disclosures/{disclosureId}",
+  "roles": "DSL",
+  "summary": "Detail with contacts (school DSL / parent)",
+  "tables": "safeguarding_disclosure_log,safeguarding_contact,school",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-04"
+  ]
+ },
+ {
+  "id": "SAF-08",
+  "method": "POST",
+  "path": "/internal/safeguarding/disclosures/{disclosureId}/actions",
+  "roles": "DSL",
+  "summary": "Log an action/referral",
+  "tables": "safeguarding_action,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-04"
+  ]
+ },
+ {
+  "id": "SAF-09",
+  "method": "POST",
+  "path": "/internal/safeguarding/disclosures/{disclosureId}/close",
+  "roles": "DSL",
+  "summary": "Close with outcome",
+  "tables": "safeguarding_disclosure_log,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-04"
+  ]
+ },
+ {
+  "id": "SAF-10",
+  "method": "GET",
+  "path": "/internal/safeguarding/metrics",
+  "roles": "DSL,CMP",
+  "summary": "Response times, volumes",
+  "tables": "safeguarding_disclosure_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "L-04"
+  ]
+ },
+ {
+  "id": "CNT-01",
+  "method": "GET",
+  "path": "/internal/qc/exceptions",
+  "roles": "CNT",
+  "summary": "E-01 failed-QC list",
+  "tables": "question,qc_check_result",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "CNT-02",
+  "method": "GET",
+  "path": "/internal/qc/exceptions/{questionId}",
+  "roles": "CNT",
+  "summary": "Item, all five checks, repair log, similar items",
+  "tables": "question,mark_scheme,qc_check_result,question_generation_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "CNT-03",
+  "method": "PUT",
+  "path": "/internal/questions/{questionId}",
+  "roles": "CNT",
+  "summary": "Edit item + scheme (re-runs code checks and QC1,3,5)",
+  "tables": "question,mark_scheme,qc_check_result",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "CNT-04",
+  "method": "POST",
+  "path": "/internal/qc/exceptions/{questionId}/rerun",
+  "roles": "CNT",
+  "summary": "Re-run QC",
+  "tables": "qc_check_result",
+  "prompts": "P-QG-04,P-QG-06,P-QG-08a",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "CNT-05",
+  "method": "POST",
+  "path": "/internal/qc/exceptions/{questionId}/reject",
+  "roles": "CNT",
+  "summary": "Reject with reason",
+  "tables": "question,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "CNT-06",
+  "method": "POST",
+  "path": "/internal/qc/exceptions/{questionId}/approve",
+  "roles": "CNT",
+  "summary": "Approve after passing re-run",
+  "tables": "question,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "CNT-10",
+  "method": "POST",
+  "path": "/internal/questions",
+  "roles": "CNT",
+  "summary": "Author a question + scheme (E-02)",
+  "tables": "question,mark_scheme",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-11",
+  "method": "GET",
+  "path": "/internal/questions",
+  "roles": "CNT",
+  "summary": "Search bank",
+  "tables": "question",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01",
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-12",
+  "method": "POST",
+  "path": "/internal/past-papers",
+  "roles": "CNT",
+  "summary": "Register paper (metadata, official source URL, licence status) + upload PDFs",
+  "tables": "past_paper",
+  "prompts": "P-IN-03",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-13",
+  "method": "GET",
+  "path": "/internal/past-papers",
+  "roles": "CNT",
+  "summary": "List/filter (board, year, licence, ingest status)",
+  "tables": "past_paper",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-14",
+  "method": "GET",
+  "path": "/internal/past-papers/{paperId}",
+  "roles": "CNT",
+  "summary": "Detail with items",
+  "tables": "past_paper,past_paper_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-15",
+  "method": "POST",
+  "path": "/internal/past-papers/{paperId}/ingest",
+  "roles": "CNT",
+  "summary": "Start pipeline (segment \u2192 scheme \u2192 tag \u2192 embed)",
+  "tables": "ingestion_job",
+  "prompts": "P-IN-01,P-IN-02",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-16",
+  "method": "GET",
+  "path": "/internal/past-papers/{paperId}/ingest-status",
+  "roles": "CNT",
+  "summary": "Job stages and stats",
+  "tables": "ingestion_job",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-17",
+  "method": "PATCH",
+  "path": "/internal/past-papers/{paperId}/licence",
+  "roles": "CNT",
+  "summary": "Update licence status/evidence (P-3)",
+  "tables": "past_paper,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-18",
+  "method": "PATCH",
+  "path": "/internal/past-paper-items/{itemId}",
+  "roles": "CNT",
+  "summary": "Fix segmentation/tag",
+  "tables": "past_paper_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-19",
+  "method": "POST",
+  "path": "/internal/past-paper-items/{itemId}/approve",
+  "roles": "CNT",
+  "summary": "Approve into bank",
+  "tables": "past_paper_item,question,mark_scheme,question_embedding",
+  "prompts": "P-QG-05",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CNT-20",
+  "method": "POST",
+  "path": "/internal/questions/{questionId}/retire",
+  "roles": "CNT",
+  "summary": "Retire an item",
+  "tables": "question",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "GEN-01",
+  "method": "GET",
+  "path": "/internal/generation/coverage",
+  "roles": "CNT",
+  "summary": "Bank coverage per objective \u00d7 type \u00d7 band",
+  "tables": "question,spec_point_objective",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "GEN-02",
+  "method": "POST",
+  "path": "/internal/generation/plan",
+  "roles": "CNT,SYS",
+  "summary": "Planner: gaps \u2192 blueprints",
+  "tables": "blueprint",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "GEN-03",
+  "method": "POST",
+  "path": "/internal/generation/runs",
+  "roles": "CNT,SYS",
+  "summary": "Start NIGHTLY/TOPUP/MANUAL run (Batch API)",
+  "tables": "generation_run,blueprint",
+  "prompts": "P-QG-02,P-QG-03",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "GEN-04",
+  "method": "GET",
+  "path": "/internal/generation/runs/{runId}",
+  "roles": "CNT",
+  "summary": "Run stats and cost",
+  "tables": "generation_run",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "SPC-01",
+  "method": "GET",
+  "path": "/internal/specs",
+  "roles": "CNT",
+  "summary": "All specifications and tagging status",
+  "tables": "specification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "M-01"
+  ]
+ },
+ {
+  "id": "SPC-02",
+  "method": "POST",
+  "path": "/internal/specs",
+  "roles": "CNT",
+  "summary": "Create specification row (new board/subject)",
+  "tables": "specification,spec_unit,board_style_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "M-01"
+  ]
+ },
+ {
+  "id": "SPC-03",
+  "method": "GET",
+  "path": "/internal/specs/{specificationId}/tree",
+  "roles": "CNT",
+  "summary": "Full tree for M-01",
+  "tables": "spec_topic",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "M-01"
+  ]
+ },
+ {
+  "id": "SPC-04",
+  "method": "POST",
+  "path": "/internal/specs/{specificationId}/topics",
+  "roles": "CNT",
+  "summary": "Add topic/subtopic/spec point",
+  "tables": "spec_topic",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "M-01"
+  ]
+ },
+ {
+  "id": "SPC-05",
+  "method": "PATCH",
+  "path": "/internal/topics/{topicId}",
+  "roles": "CNT",
+  "summary": "Edit/reorder/tag status",
+  "tables": "spec_topic",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "M-01"
+  ]
+ },
+ {
+  "id": "SPC-06",
+  "method": "POST",
+  "path": "/internal/specs/{specificationId}/import-document",
+  "roles": "CNT",
+  "summary": "Upload spec PDF \u2192 AI extraction \u2192 review",
+  "tables": "spec_document",
+  "prompts": "P-IN-04",
+  "notes": "",
+  "screens": [
+   "M-01"
+  ]
+ },
+ {
+  "id": "SPC-07",
+  "method": "POST",
+  "path": "/internal/topics/{topicId}/decompose",
+  "roles": "CNT",
+  "summary": "Run P-QG-01 for a spec point",
+  "tables": "spec_point_objective",
+  "prompts": "P-QG-01",
+  "notes": "",
+  "screens": [
+   "M-01"
+  ]
+ },
+ {
+  "id": "SPC-08",
+  "method": "GET",
+  "path": "/internal/specs/tagging-progress",
+  "roles": "CNT",
+  "summary": "M-04 progress by board/subject",
+  "tables": "spec_topic",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "M-04"
+  ]
+ },
+ {
+  "id": "STY-01",
+  "method": "GET",
+  "path": "/internal/style-profiles",
+  "roles": "CNT",
+  "summary": "List",
+  "tables": "board_style_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "M-02"
+  ]
+ },
+ {
+  "id": "STY-02",
+  "method": "GET",
+  "path": "/internal/style-profiles/{specificationId}",
+  "roles": "CNT",
+  "summary": "Read",
+  "tables": "board_style_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "M-02"
+  ]
+ },
+ {
+  "id": "STY-03",
+  "method": "PUT",
+  "path": "/internal/style-profiles/{specificationId}",
+  "roles": "CNT",
+  "summary": "Edit",
+  "tables": "board_style_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "M-02"
+  ]
+ },
+ {
+  "id": "STY-04",
+  "method": "POST",
+  "path": "/internal/style-profiles/{specificationId}/derive",
+  "roles": "CNT",
+  "summary": "Derive from ingested papers (proposal only, human accepts)",
+  "tables": "board_style_profile",
+  "prompts": "P-IN-05",
+  "notes": "",
+  "screens": [
+   "M-02"
+  ]
+ },
+ {
+  "id": "DGM-01",
+  "method": "GET",
+  "path": "/internal/diagrams",
+  "roles": "CNT",
+  "summary": "Library",
+  "tables": "diagram_asset",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "DGM-02",
+  "method": "POST",
+  "path": "/internal/diagrams",
+  "roles": "CNT",
+  "summary": "Upload + approve apparatus diagram (alt text mandatory)",
+  "tables": "diagram_asset",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "RVC-01",
+  "method": "POST",
+  "path": "/internal/revision/generate",
+  "roles": "CNT,SYS",
+  "summary": "Generate notes/flashcards/cheat sheets for a topic (batch)",
+  "tables": "revision_note,flashcard_deck,flashcard,cheat_sheet",
+  "prompts": "P-RC-01,P-RC-02,P-RC-03,P-RC-04",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "RVC-02",
+  "method": "GET",
+  "path": "/internal/revision/exceptions",
+  "roles": "CNT",
+  "summary": "Failed revision QC",
+  "tables": "revision_note,cheat_sheet",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "CMS-01",
+  "method": "POST",
+  "path": "/internal/case-studies",
+  "roles": "CNT",
+  "summary": "Create case study with consent evidence",
+  "tables": "case_study",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CMS-02",
+  "method": "PUT",
+  "path": "/internal/faq/{faqId}",
+  "roles": "CNT",
+  "summary": "Edit FAQ",
+  "tables": "faq_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CMS-03",
+  "method": "PUT",
+  "path": "/internal/help-articles/{articleId}",
+  "roles": "CNT,SUP",
+  "summary": "Edit help article",
+  "tables": "help_article",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "CMS-04",
+  "method": "PUT",
+  "path": "/internal/outcome-stats/{statId}",
+  "roles": "OWN",
+  "summary": "Edit outcome stat + methodology",
+  "tables": "outcome_stat",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-02"
+  ]
+ },
+ {
+  "id": "SCH-01",
+  "method": "GET",
+  "path": "/schools/{schoolId}",
+  "roles": "TCH,SADM,SBM",
+  "summary": "School overview, seats, DPA state",
+  "tables": "school,school_dpa_status",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-01"
+  ]
+ },
+ {
+  "id": "SCH-02",
+  "method": "GET",
+  "path": "/schools/{schoolId}/classes",
+  "roles": "TCH,SADM",
+  "summary": "Classes",
+  "tables": "school_class,class_teacher",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-01",
+   "O-02"
+  ]
+ },
+ {
+  "id": "SCH-03",
+  "method": "POST",
+  "path": "/schools/{schoolId}/classes",
+  "roles": "TCH,SADM",
+  "summary": "Create class",
+  "tables": "school_class,class_teacher",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-01"
+  ]
+ },
+ {
+  "id": "SCH-04",
+  "method": "PATCH",
+  "path": "/classes/{classId}",
+  "roles": "TCH,SADM",
+  "summary": "Rename/archive",
+  "tables": "school_class",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-01"
+  ]
+ },
+ {
+  "id": "SCH-05",
+  "method": "GET",
+  "path": "/classes/{classId}/pupils",
+  "roles": "TCH,SADM",
+  "summary": "Roster",
+  "tables": "class_pupil,student_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-01"
+  ]
+ },
+ {
+  "id": "SCH-06",
+  "method": "POST",
+  "path": "/classes/{classId}/pupils",
+  "roles": "TCH,SADM",
+  "summary": "Add rostered pupils",
+  "tables": "class_pupil",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-01"
+  ]
+ },
+ {
+  "id": "SCH-07",
+  "method": "DELETE",
+  "path": "/classes/{classId}/pupils/{studentId}",
+  "roles": "TCH,SADM",
+  "summary": "Remove",
+  "tables": "class_pupil",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-01"
+  ]
+ },
+ {
+  "id": "ASG-01",
+  "method": "POST",
+  "path": "/classes/{classId}/assignments",
+  "roles": "TCH",
+  "summary": "Create adaptive homework (topics, count, due date)",
+  "tables": "assignment,assignment_target",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-04"
+  ]
+ },
+ {
+  "id": "ASG-02",
+  "method": "GET",
+  "path": "/classes/{classId}/assignments",
+  "roles": "TCH",
+  "summary": "List with completion",
+  "tables": "assignment,assignment_target",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-04"
+  ]
+ },
+ {
+  "id": "ASG-03",
+  "method": "GET",
+  "path": "/assignments/{assignmentId}",
+  "roles": "TCH",
+  "summary": "Completion tracker per pupil",
+  "tables": "assignment_target",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-04"
+  ]
+ },
+ {
+  "id": "ASG-04",
+  "method": "PATCH",
+  "path": "/assignments/{assignmentId}",
+  "roles": "TCH",
+  "summary": "Edit/extend/close",
+  "tables": "assignment",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-04"
+  ]
+ },
+ {
+  "id": "ASG-05",
+  "method": "GET",
+  "path": "/students/{studentId}/assignments",
+  "roles": "STU",
+  "summary": "Pupil's assignments",
+  "tables": "assignment,assignment_target",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Shell-01"
+  ]
+ },
+ {
+  "id": "ASG-06",
+  "method": "POST",
+  "path": "/assignments/{assignmentId}/publish",
+  "roles": "TCH",
+  "summary": "Publish + notify pupils",
+  "tables": "assignment,notification",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-04"
+  ]
+ },
+ {
+  "id": "INS-01",
+  "method": "GET",
+  "path": "/classes/{classId}/mastery",
+  "roles": "TCH,SADM",
+  "summary": "Class \u00d7 topic heatmap",
+  "tables": "mastery_state,class_pupil",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-01"
+  ]
+ },
+ {
+  "id": "INS-02",
+  "method": "GET",
+  "path": "/classes/{classId}/engagement",
+  "roles": "TCH,SADM",
+  "summary": "Time-on-task, participation",
+  "tables": "engagement_daily,class_pupil",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-01"
+  ]
+ },
+ {
+  "id": "INS-03",
+  "method": "GET",
+  "path": "/classes/{classId}/pupils/{studentId}/drilldown",
+  "roles": "TCH",
+  "summary": "Pupil detail (respects teacher_visibility)",
+  "tables": "mastery_state,student_response,misconception_observation",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-05"
+  ]
+ },
+ {
+  "id": "INS-04",
+  "method": "GET",
+  "path": "/schools/{schoolId}/dashboard",
+  "roles": "SADM",
+  "summary": "School-level dashboard",
+  "tables": "mastery_state,engagement_daily",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-02"
+  ]
+ },
+ {
+  "id": "INS-05",
+  "method": "GET",
+  "path": "/classes/{classId}/misconceptions",
+  "roles": "TCH",
+  "summary": "Top misconceptions for the class",
+  "tables": "misconception_observation",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-05"
+  ]
+ },
+ {
+  "id": "INS-06",
+  "method": "GET",
+  "path": "/classes/{classId}/insight-summary",
+  "roles": "TCH",
+  "summary": "AI narrative over the heatmap (statistics only)",
+  "tables": "mastery_state",
+  "prompts": "P-RP-05",
+  "notes": "",
+  "screens": [
+   "O-05"
+  ]
+ },
+ {
+  "id": "INS-07",
+  "method": "GET",
+  "path": "/classes/{classId}/export.csv",
+  "roles": "TCH,SADM",
+  "summary": "CSV export",
+  "tables": "mastery_state",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-02"
+  ]
+ },
+ {
+  "id": "ONB-01",
+  "method": "POST",
+  "path": "/schools/{schoolId}/roster-imports",
+  "roles": "SADM",
+  "summary": "Upload CSV",
+  "tables": "roster_import,roster_import_row",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-06"
+  ]
+ },
+ {
+  "id": "ONB-02",
+  "method": "GET",
+  "path": "/schools/{schoolId}/roster-imports/{importId}",
+  "roles": "SADM",
+  "summary": "Validation preview (new / moved / errors)",
+  "tables": "roster_import,roster_import_row",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-06"
+  ]
+ },
+ {
+  "id": "ONB-03",
+  "method": "POST",
+  "path": "/schools/{schoolId}/roster-imports/{importId}/commit",
+  "roles": "SADM",
+  "summary": "Create pupils/classes; issue credentials",
+  "tables": "roster_import,student_profile,school_class,class_pupil",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-06"
+  ]
+ },
+ {
+  "id": "ONB-04",
+  "method": "POST",
+  "path": "/schools/{schoolId}/mis-connection",
+  "roles": "SADM",
+  "summary": "Connect MIS (Wonde adapter)",
+  "tables": "mis_connection",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-06"
+  ]
+ },
+ {
+  "id": "ONB-05",
+  "method": "GET",
+  "path": "/schools/{schoolId}/sso",
+  "roles": "SADM",
+  "summary": "SSO config",
+  "tables": "sso_connection",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-06"
+  ]
+ },
+ {
+  "id": "ONB-06",
+  "method": "PUT",
+  "path": "/schools/{schoolId}/sso",
+  "roles": "SADM",
+  "summary": "Enable Google/Microsoft SSO for domain",
+  "tables": "sso_connection",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-06"
+  ]
+ },
+ {
+  "id": "ONB-07",
+  "method": "POST",
+  "path": "/schools/{schoolId}/staff-invites",
+  "roles": "SADM",
+  "summary": "Invite teachers (MFA enforced for admins)",
+  "tables": "account,school_member",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-06"
+  ]
+ },
+ {
+  "id": "ONB-08",
+  "method": "POST",
+  "path": "/schools/{schoolId}/pupil-login-cards",
+  "roles": "SADM",
+  "summary": "Printable pupil credential cards",
+  "tables": "student_profile,student_credential",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-06"
+  ]
+ },
+ {
+  "id": "DPA-01",
+  "method": "GET",
+  "path": "/schools/{schoolId}/dpa",
+  "roles": "SADM,SBM",
+  "summary": "DPA text/status/sub-processors",
+  "tables": "school_dpa_status,sub_processor",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-07"
+  ]
+ },
+ {
+  "id": "DPA-02",
+  "method": "POST",
+  "path": "/schools/{schoolId}/dpa/sign",
+  "roles": "SADM,SBM",
+  "summary": "Sign online (typed signature, role, IP hash) \u2192 PDF",
+  "tables": "school_dpa_signature,school_dpa_status,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-07"
+  ]
+ },
+ {
+  "id": "DPA-03",
+  "method": "GET",
+  "path": "/schools/{schoolId}/dpa/pdf",
+  "roles": "SADM,SBM",
+  "summary": "Countersigned PDF",
+  "tables": "school_dpa_signature",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-07"
+  ]
+ },
+ {
+  "id": "SCB-01",
+  "method": "GET",
+  "path": "/schools/{schoolId}/billing",
+  "roles": "SBM",
+  "summary": "Seats, price, PO status, invoices",
+  "tables": "school_invoice,purchase_order",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-07"
+  ]
+ },
+ {
+  "id": "SCB-02",
+  "method": "POST",
+  "path": "/schools/{schoolId}/purchase-orders",
+  "roles": "SBM",
+  "summary": "Submit PO",
+  "tables": "purchase_order",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-07"
+  ]
+ },
+ {
+  "id": "SCB-03",
+  "method": "GET",
+  "path": "/schools/{schoolId}/invoices",
+  "roles": "SBM",
+  "summary": "Invoices",
+  "tables": "school_invoice",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-07"
+  ]
+ },
+ {
+  "id": "SCB-04",
+  "method": "GET",
+  "path": "/schools/{schoolId}/invoices/{invoiceId}/pdf",
+  "roles": "SBM",
+  "summary": "Invoice PDF",
+  "tables": "school_invoice",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-07"
+  ]
+ },
+ {
+  "id": "KCS-01",
+  "method": "GET",
+  "path": "/schools/{schoolId}/kcsie-pack",
+  "roles": "SADM",
+  "summary": "Downloadable KCSIE-mapped policy pack + questionnaire",
+  "tables": "kcsie_confirmation",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-03"
+  ]
+ },
+ {
+  "id": "KCS-02",
+  "method": "POST",
+  "path": "/schools/{schoolId}/kcsie-confirmation",
+  "roles": "SADM",
+  "summary": "Confirm filtering/monitoring alignment",
+  "tables": "kcsie_confirmation",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-03"
+  ]
+ },
+ {
+  "id": "KCS-03",
+  "method": "GET",
+  "path": "/schools/{schoolId}/safeguarding-contacts",
+  "roles": "SADM",
+  "summary": "Our DSL + school DSL contacts",
+  "tables": "safeguarding_contact",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "O-03"
+  ]
+ },
+ {
+  "id": "SCH-10",
+  "method": "POST",
+  "path": "/internal/schools",
+  "roles": "OWN,SUP",
+  "summary": "Create school tenant (sales-led)",
+  "tables": "school,school_dpa_status",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-03"
+  ]
+ },
+ {
+  "id": "SCH-11",
+  "method": "GET",
+  "path": "/internal/schools",
+  "roles": "OWN,SUP,CMP",
+  "summary": "List schools, DPA state",
+  "tables": "school",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-03"
+  ]
+ },
+ {
+  "id": "SUP-01",
+  "method": "GET",
+  "path": "/internal/support/accounts",
+  "roles": "SUP",
+  "summary": "Search accounts by email/handle (no learning content)",
+  "tables": "account",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-03"
+  ]
+ },
+ {
+  "id": "SUP-02",
+  "method": "GET",
+  "path": "/internal/support/accounts/{accountId}",
+  "roles": "SUP",
+  "summary": "Account, subscription, invoices, children names \u2014 no answers/transcripts",
+  "tables": "account,subscription,invoice,student_profile",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-03"
+  ]
+ },
+ {
+  "id": "SUP-03",
+  "method": "POST",
+  "path": "/internal/support/accounts/{accountId}/password-reset",
+  "roles": "SUP",
+  "summary": "Send reset",
+  "tables": "password_reset,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-03"
+  ]
+ },
+ {
+  "id": "SUP-04",
+  "method": "POST",
+  "path": "/internal/support/accounts/{accountId}/refund",
+  "roles": "SUP",
+  "summary": "Refund invoice via Stripe",
+  "tables": "refund,invoice,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-03"
+  ]
+ },
+ {
+  "id": "SUP-05",
+  "method": "POST",
+  "path": "/internal/support/accounts/{accountId}/notes",
+  "roles": "SUP",
+  "summary": "Add note",
+  "tables": "support_note,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-03"
+  ]
+ },
+ {
+  "id": "SUP-06",
+  "method": "POST",
+  "path": "/internal/support/accounts/{accountId}/extend-trial",
+  "roles": "SUP",
+  "summary": "Extend trial (bounded)",
+  "tables": "subscription,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-03"
+  ]
+ },
+ {
+  "id": "SUP-07",
+  "method": "POST",
+  "path": "/internal/support/students/{studentId}/unlock-pin",
+  "roles": "SUP",
+  "summary": "Unlock picture PIN",
+  "tables": "student_credential,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "B-11",
+   "P-03"
+  ]
+ },
+ {
+  "id": "AUD-01",
+  "method": "GET",
+  "path": "/internal/audit-log",
+  "roles": "CMP",
+  "summary": "Search/filter",
+  "tables": "audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-04"
+  ]
+ },
+ {
+  "id": "AUD-02",
+  "method": "GET",
+  "path": "/internal/audit-log/export",
+  "roles": "CMP",
+  "summary": "CSV export (itself audited)",
+  "tables": "audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-04"
+  ]
+ },
+ {
+  "id": "AUD-03",
+  "method": "GET",
+  "path": "/internal/audit-log/verify-chain",
+  "roles": "CMP",
+  "summary": "Verify hash chain integrity",
+  "tables": "audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-04"
+  ]
+ },
+ {
+  "id": "HLP-01",
+  "method": "GET",
+  "path": "/help/articles",
+  "roles": "PUB,PAR,STU",
+  "summary": "Search (Postgres full-text)",
+  "tables": "help_article",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-01"
+  ]
+ },
+ {
+  "id": "HLP-02",
+  "method": "GET",
+  "path": "/help/articles/{slug}",
+  "roles": "PUB,PAR,STU",
+  "summary": "Article",
+  "tables": "help_article",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-01"
+  ]
+ },
+ {
+  "id": "HLP-03",
+  "method": "POST",
+  "path": "/help/articles/{articleId}/feedback",
+  "roles": "PUB,PAR,STU",
+  "summary": "Helpful yes/no",
+  "tables": "help_article",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-01"
+  ]
+ },
+ {
+  "id": "HLP-04",
+  "method": "POST",
+  "path": "/support/chat",
+  "roles": "PAR",
+  "summary": "Start in-house chat (Phase 2)",
+  "tables": "support_chat_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-02"
+  ]
+ },
+ {
+  "id": "HLP-05",
+  "method": "POST",
+  "path": "/support/chat/{chatId}/messages",
+  "roles": "PAR,SUP",
+  "summary": "Post/read messages",
+  "tables": "support_chat_message",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-02"
+  ]
+ },
+ {
+  "id": "HLP-06",
+  "method": "GET",
+  "path": "/internal/support/chats",
+  "roles": "SUP",
+  "summary": "Agent inbox",
+  "tables": "support_chat_session",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-03"
+  ]
+ },
+ {
+  "id": "AIO-01",
+  "method": "GET",
+  "path": "/internal/ai/eval/summary",
+  "roles": "OWN,AIE",
+  "summary": "Q-01 headline accuracy vs gold set, by board and question type",
+  "tables": "eval_run,eval_result",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-01"
+  ]
+ },
+ {
+  "id": "AIO-02",
+  "method": "GET",
+  "path": "/internal/ai/eval/runs",
+  "roles": "AIE,OWN",
+  "summary": "Runs",
+  "tables": "eval_run",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-01"
+  ]
+ },
+ {
+  "id": "AIO-03",
+  "method": "GET",
+  "path": "/internal/ai/eval/runs/{evalId}",
+  "roles": "AIE,OWN",
+  "summary": "Run detail incl. disagreements",
+  "tables": "eval_run,eval_result",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-01"
+  ]
+ },
+ {
+  "id": "AIO-04",
+  "method": "POST",
+  "path": "/internal/ai/eval/runs",
+  "roles": "AIE",
+  "summary": "Run a prompt version against gold set / fixed QG set",
+  "tables": "eval_run,eval_result",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-01"
+  ]
+ },
+ {
+  "id": "AIO-05",
+  "method": "POST",
+  "path": "/internal/ai/gold-set/import",
+  "roles": "AIE,OWN",
+  "summary": "CSV import of examiner-marked answers (owner pending P-2)",
+  "tables": "gold_set_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-01"
+  ]
+ },
+ {
+  "id": "AIO-06",
+  "method": "GET",
+  "path": "/internal/ai/gold-set",
+  "roles": "AIE,OWN",
+  "summary": "Gold-set inventory, holdout flag, size vs 2,000 target",
+  "tables": "gold_set_item",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-01"
+  ]
+ },
+ {
+  "id": "AIO-07",
+  "method": "PATCH",
+  "path": "/internal/ai/gold-set/{goldId}",
+  "roles": "AIE",
+  "summary": "Verify/mark holdout",
+  "tables": "gold_set_item,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-01"
+  ]
+ },
+ {
+  "id": "AIO-10",
+  "method": "GET",
+  "path": "/internal/ai/gateway-log",
+  "roles": "CMP,AIE",
+  "summary": "Q-02 call log (no identity fields exist)",
+  "tables": "ai_gateway_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-02"
+  ]
+ },
+ {
+  "id": "AIO-11",
+  "method": "GET",
+  "path": "/internal/ai/gateway-log/{logId}",
+  "roles": "CMP",
+  "summary": "Exact redacted outbound payload (14 days) + redactions",
+  "tables": "ai_gateway_payload,redaction_event,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-02"
+  ]
+ },
+ {
+  "id": "AIO-12",
+  "method": "GET",
+  "path": "/internal/ai/redactions",
+  "roles": "CMP",
+  "summary": "Redaction stats by kind/method",
+  "tables": "redaction_event",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-02"
+  ]
+ },
+ {
+  "id": "AIO-13",
+  "method": "GET",
+  "path": "/internal/ai/boundary-attestation",
+  "roles": "CMP",
+  "summary": "Daily canary attestation",
+  "tables": "boundary_attestation",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-02"
+  ]
+ },
+ {
+  "id": "AIO-20",
+  "method": "GET",
+  "path": "/internal/ai/prompts",
+  "roles": "AIE",
+  "summary": "Q-03 prompt list with live version",
+  "tables": "prompt_version",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "AIO-21",
+  "method": "GET",
+  "path": "/internal/ai/prompts/{promptId}/versions",
+  "roles": "AIE",
+  "summary": "Versions + metrics",
+  "tables": "prompt_version,eval_run",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "AIO-22",
+  "method": "POST",
+  "path": "/internal/ai/prompts/{promptId}/versions",
+  "roles": "AIE",
+  "summary": "Create DRAFT (file-loader or edit)",
+  "tables": "prompt_version",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "AIO-23",
+  "method": "POST",
+  "path": "/internal/ai/prompt-versions/{id}/evaluate",
+  "roles": "AIE",
+  "summary": "Evaluate on gold set",
+  "tables": "eval_run",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "AIO-24",
+  "method": "POST",
+  "path": "/internal/ai/prompt-versions/{id}/promote",
+  "roles": "AIE",
+  "summary": "Promote only if gate passes (server-enforced)",
+  "tables": "prompt_version,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "AIO-25",
+  "method": "POST",
+  "path": "/internal/ai/prompt-versions/{id}/rollback",
+  "roles": "AIE",
+  "summary": "Roll back to previous LIVE",
+  "tables": "prompt_version,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "AIO-26",
+  "method": "GET",
+  "path": "/internal/ai/model-routing",
+  "roles": "AIE",
+  "summary": "Task \u2192 model map",
+  "tables": "model_routing",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "AIO-27",
+  "method": "PUT",
+  "path": "/internal/ai/model-routing/{taskKey}",
+  "roles": "AIE",
+  "summary": "Change model for a task (gate-checked; audit-logged)",
+  "tables": "model_routing,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "AIO-30",
+  "method": "GET",
+  "path": "/internal/ai/cost",
+  "roles": "OWN",
+  "summary": "Q-04 cost per active student by task",
+  "tables": "ai_usage_cost",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-04"
+  ]
+ },
+ {
+  "id": "AIO-31",
+  "method": "PUT",
+  "path": "/internal/ai/budgets",
+  "roles": "OWN",
+  "summary": "Budgets and alert thresholds",
+  "tables": "ai_budget",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-04"
+  ]
+ },
+ {
+  "id": "PLT-01",
+  "method": "GET",
+  "path": "/internal/feature-flags",
+  "roles": "OWN,AIE,SUP",
+  "summary": "Flags",
+  "tables": "feature_flag",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "PLT-02",
+  "method": "PUT",
+  "path": "/internal/feature-flags/{flagKey}",
+  "roles": "OWN",
+  "summary": "Toggle (audit-logged)",
+  "tables": "feature_flag,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "Q-03"
+  ]
+ },
+ {
+  "id": "PLT-03",
+  "method": "GET",
+  "path": "/health",
+  "roles": "PUB",
+  "summary": "Liveness/readiness",
+  "tables": "",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "PLT-04",
+  "method": "POST",
+  "path": "/internal/staff",
+  "roles": "OWN,CMP",
+  "summary": "Create staff account/roles (MFA required, vetting record checked)",
+  "tables": "account,account_role,staff_vetting_record,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-04"
+  ]
+ },
+ {
+  "id": "PLT-05",
+  "method": "GET",
+  "path": "/internal/vetting",
+  "roles": "CMP",
+  "summary": "Staff DBS status (uCheck)",
+  "tables": "staff_vetting_record",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "P-04"
+  ]
+ },
+ {
+  "id": "PLT-06",
+  "method": "POST",
+  "path": "/webhooks/ucheck",
+  "roles": "SYS",
+  "summary": "uCheck status webhook",
+  "tables": "staff_vetting_record",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "GW-01",
+  "method": "POST",
+  "path": "/gateway/v1/run",
+  "roles": "SYS",
+  "summary": "Run a registered prompt (variables + schema) \u2192 JSON; redaction + token + logging",
+  "tables": "ai_gateway_log,ai_gateway_payload,redaction_event,ai_usage_cost",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "GW-02",
+  "method": "POST",
+  "path": "/gateway/v1/stream",
+  "roles": "SYS",
+  "summary": "Streaming variant (tutor chat)",
+  "tables": "ai_gateway_log",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "GW-03",
+  "method": "POST",
+  "path": "/gateway/v1/batch",
+  "roles": "SYS",
+  "summary": "Submit Message Batch (nightly generation)",
+  "tables": "ai_gateway_log",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "GW-04",
+  "method": "GET",
+  "path": "/gateway/v1/batch/{batchId}",
+  "roles": "SYS",
+  "summary": "Batch status/results",
+  "tables": "ai_gateway_log",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "GW-05",
+  "method": "POST",
+  "path": "/gateway/v1/image/prepare",
+  "roles": "SYS",
+  "summary": "Verify image is masked; strip EXIF; reject if header mask absent",
+  "tables": "ai_gateway_log,redaction_event",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "GW-06",
+  "method": "POST",
+  "path": "/gateway/v1/speech/stt",
+  "roles": "SYS",
+  "summary": "Streaming STT session (Google) \u2014 the only route where audio leaves",
+  "tables": "ai_gateway_log",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "GW-07",
+  "method": "POST",
+  "path": "/gateway/v1/speech/tts",
+  "roles": "SYS",
+  "summary": "Text \u2192 audio (Google TTS)",
+  "tables": "ai_gateway_log",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ },
+ {
+  "id": "GW-08",
+  "method": "POST",
+  "path": "/gateway/v1/embed",
+  "roles": "SYS",
+  "summary": "Embeddings via self-hosted model (no vendor)",
+  "tables": "ai_gateway_log",
+  "prompts": "",
+  "notes": "",
+  "screens": []
+ }
+]

@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "marking_result",
+  "title": "marking_result",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "question_id": {
+          "type": "string"
+        },
+        "scheme_type": {
+          "type": "string",
+          "enum": [
+            "POINTS",
+            "LEVELS"
+          ]
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "awarded": {
+                "type": "integer"
+              },
+              "max": {
+                "type": "integer"
+              },
+              "evidence": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "ecf_from": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "awarded",
+              "max",
+              "evidence",
+              "reason",
+              "ecf_from"
+            ]
+          }
+        },
+        "total_marks": {
+          "type": "integer"
+        },
+        "max_marks": {
+          "type": "integer"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "AMBIGUOUS_ANSWER",
+              "POSSIBLE_VALID_ALT",
+              "ILLEGIBLE",
+              "OFF_TOPIC",
+              "SCHEME_GAP",
+              "CONTRADICTION",
+              "POSSIBLE_INJECTION"
+            ]
+          }
+        },
+        "level_decision": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "level": {
+              "type": "integer"
+            },
+            "band_position": {
+              "type": "string",
+              "enum": [
+                "LOW",
+                "MID",
+                "HIGH"
+              ]
+            },
+            "justification": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "level",
+            "band_position",
+            "justification"
+          ]
+        },
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status",
+        "question_id",
+        "scheme_type",
+        "points",
+        "total_marks",
+        "max_marks",
+        "confidence",
+        "flags"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "cannot_complete"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

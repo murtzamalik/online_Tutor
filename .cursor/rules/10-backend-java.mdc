@@ -1,0 +1,12 @@
+---
+description: Java/Spring backend standards
+globs: backend/**/*.java,backend/**/pom.xml,backend/**/*.yml
+alwaysApply: false
+---
+- Java 21, Spring Boot 3, Maven multi-module; modular monolith `core-api` with modules per `docs/03_system_architecture.md`. Only a module's `api` package is importable by others (ArchUnit).
+- jOOQ/Spring JDBC for data access (no JPA). Money = long pence. Science numbers = BigDecimal (MathContext 12).
+- Errors as RFC 7807 with stable `code`. Idempotency-Key on payment/answer/submit endpoints.
+- Roles enforced per `api/endpoints.json`; add a test asserting the role map equals the catalogue.
+- School data via RLS: set `app.school_id` per transaction; `@BypassRls` only in audited service methods; write cross-tenant isolation tests.
+- Jobs via JobRunr, idempotent. Events via transactional outbox → Redis Streams.
+- Never log personal data or learner free text. Inject `Clock`. Secrets from env/Docker secrets only.
