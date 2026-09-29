@@ -147,4 +147,17 @@ public class AiOpsController {
       @RequestBody Map<String, Object> body) {
     return aiOpsService.putModelRouting(principal, taskKey, body);
   }
+
+  @GetMapping("/internal/ai/cost")
+  @CatalogueRoles(id = "AIO-30", roles = "OWN")
+  public Map<String, Object> cost(@AuthenticationPrincipal AccountPrincipal principal) {
+    return aiOpsService.aiCost(principal);
+  }
+
+  @PutMapping("/internal/ai/budgets")
+  @CatalogueRoles(id = "AIO-31", roles = "OWN")
+  public Map<String, Object> budgets(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, Object> body) {
+    return aiOpsService.putBudget(principal, body);
+  }
 }

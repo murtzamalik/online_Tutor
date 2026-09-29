@@ -68,4 +68,32 @@ public class ConsentController {
     String policyVersion = body.get("policyVersion") != null ? body.get("policyVersion").toString() : null;
     return consentService.cookieConsent(visitorId, categories, policyVersion);
   }
+
+  @GetMapping("/consents")
+  @CatalogueRoles(id = "CON-01", roles = "PAR")
+  public Map<String, Object> consents(@AuthenticationPrincipal AccountPrincipal principal) {
+    return consentService.listConsents(principal);
+  }
+
+  @PostMapping("/students/{studentId}/consents/voice")
+  @CatalogueRoles(id = "CON-03", roles = "PAR")
+  public Map<String, Object> voiceGrant(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID studentId,
+      @RequestBody Map<String, Object> body) {
+    return consentService.grantVoiceConsent(principal, studentId, body);
+  }
+
+  @org.springframework.web.bind.annotation.DeleteMapping("/students/{studentId}/consents/voice")
+  @CatalogueRoles(id = "CON-04", roles = "PAR")
+  public Map<String, Object> voiceWithdraw(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
+    return consentService.withdrawVoiceConsent(principal, studentId);
+  }
+
+  @GetMapping("/legal/sub-processors")
+  @CatalogueRoles(id = "CON-07", roles = "PUB")
+  public Map<String, Object> subProcessors() {
+    return consentService.subProcessors();
+  }
 }

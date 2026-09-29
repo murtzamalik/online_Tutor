@@ -450,4 +450,66 @@ public class AiOpsService {
       throw AppException.forbidden("Forbidden");
     }
   }
+
+  public Map<String, Object> aiCost(AccountPrincipal principal) {
+    requireOwner(principal);
+    List<Map<String, Object>> usage = jdbc.query(
+        """
+        SELECT day, task_key, vendor, model, calls, tokens_in, tokens_out, cost_pence
+        FROM ai_usage_cost ORDER BY day DESC LIMIT 90
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("day", rs.getDate(1).toString());
+          m.put("taskKey", rs.getString(2));
+          m.put("vendor", rs.getString(3));
+          m.put("model", rs.getString(4));
+          m.put("calls", rs.getInt(5));
+          m.put("tokensIn", rs.getLong(6));
+          m.put("tokensOut", rs.getLong(7));
+          m.put("costPence", rs.getLong(8));
+          return m;
+        });
+    List<Map<String, Object>> budgets = jdbc.query(
+        "SELECT budget_id, period, task_key, metric, budget_value, alert_at_pct FROM ai_budget ORDER BY period DESC",
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("budgetId", rs.getLong(1));
+          m.put("period", rs.getString(2));
+          m.put("taskKey", rs.getString(3));
+          m.put("metric", rs.getString(4));
+          m.put("budgetValue", rs.getBigDecimal(5));
+          m.put("alertAtPct", rs.getShort(6));
+          return m;
+        });
+    long total = usage.stream().mapToLong(u -> ((Number) u.get("costPence")).longValue()).sum();
+    return Map.of("usage", usage, "budgets", budgets, "totalCostPence", total);
+  }
+
+  @Transactional
+  public Map<String, Object> putBudget(AccountPrincipal principal, Map<String, Object> body) {
+    requireOwner(principal);
+    jdbc.update(
+        """
+        INSERT INTO ai_budget (period, task_key, metric, budget_value, alert_at_pct, set_by)
+        VALUES (?,?,?,?,?,?)
+        """,
+        body.getOrDefault("period", "2026-09").toString(),
+        body.get("taskKey") == null ? null : body.get("taskKey").toString(),
+        body.getOrDefault("metric", "TOTAL_PENCE").toString(),
+        new BigDecimal(body.getOrDefault("budgetValue", "100000").toString()),
+        body.get("alertAtPct") == null ? 80 : ((Number) body.get("alertAtPct")).intValue(),
+        principal.accountId());
+    return aiCost(principal);
+  }
+
+  private void requireOwner(AccountPrincipal principal) {
+    if (!StudentAccessHelper.hasOwnerRole(principal.roles())
+        && !principal.roles().contains("OWN")
+        && !principal.roles().contains("PRODUCT_OWNER")
+        && !principal.roles().contains("BUSINESS_OWNER")) {
+      throw AppException.forbidden("Owner access required");
+    }
+  }
+
 }

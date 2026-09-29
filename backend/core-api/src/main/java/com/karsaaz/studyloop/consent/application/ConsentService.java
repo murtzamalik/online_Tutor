@@ -6,6 +6,7 @@ import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
 import java.time.Clock;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -136,4 +137,77 @@ public class ConsentService {
     }
     return Map.of("cookieConsentId", id, "visitorId", visitorId);
   }
+
+
+  public Map<String, Object> listConsents(AccountPrincipal principal) {
+    access.requireParent(principal);
+    var items = jdbc.query(
+        """
+        SELECT consent_id, student_id, consent_type, granted, document_version, granted_at, withdrawn_at
+        FROM consent_record WHERE account_id = ? OR student_id IN (
+          SELECT student_id FROM parent_student_link WHERE parent_account_id = ?)
+        ORDER BY granted_at DESC NULLS LAST
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("consentId", rs.getObject(1) == null ? null : rs.getObject(1).toString());
+          m.put("studentId", rs.getObject(2) == null ? null : rs.getObject(2).toString());
+          m.put("consentType", rs.getString(3));
+          m.put("granted", rs.getBoolean(4));
+          m.put("documentVersion", rs.getString(5));
+          m.put("grantedAt", rs.getTimestamp(6));
+          m.put("withdrawnAt", rs.getTimestamp(7));
+          return m;
+        },
+        principal.accountId(), principal.accountId());
+    return Map.of("items", items);
+  }
+
+  @Transactional
+  public Map<String, Object> grantVoiceConsent(AccountPrincipal principal, UUID studentId, Map<String, Object> body) {
+    access.assertParentOwns(principal, studentId);
+    if (!Boolean.TRUE.equals(body.get("googleProcessingAcknowledged"))) {
+      throw AppException.badRequest("CONSENT_REQUIRED", "Google speech processing must be acknowledged");
+    }
+    UUID id = UUID.randomUUID();
+    jdbc.update(
+        """
+        INSERT INTO voice_consent (voice_consent_id, student_id, parent_account_id, text_version, google_processing_acknowledged)
+        VALUES (?,?,?,?, TRUE)
+        """,
+        id, studentId, principal.accountId(), body.getOrDefault("textVersion", "voice-v1").toString());
+    jdbc.update(
+        """
+        INSERT INTO parent_ai_controls (student_id, voice_enabled, updated_by)
+        VALUES (?, TRUE, ?)
+        ON CONFLICT (student_id) DO UPDATE SET voice_enabled = TRUE, updated_by = EXCLUDED.updated_by, updated_at = now()
+        """,
+        studentId, principal.accountId());
+    return Map.of("voiceConsentId", id.toString(), "status", "GRANTED");
+  }
+
+  @Transactional
+  public Map<String, Object> withdrawVoiceConsent(AccountPrincipal principal, UUID studentId) {
+    access.assertParentOwns(principal, studentId);
+    jdbc.update(
+        "UPDATE voice_consent SET withdrawn_at = now() WHERE student_id = ? AND withdrawn_at IS NULL",
+        studentId);
+    jdbc.update(
+        "UPDATE parent_ai_controls SET voice_enabled = FALSE, updated_by = ?, updated_at = now() WHERE student_id = ?",
+        principal.accountId(), studentId);
+    return Map.of("status", "WITHDRAWN");
+  }
+
+  public Map<String, Object> subProcessors() {
+    var items = jdbc.query(
+        "SELECT name, purpose, data_categories, location, receives_personal_data FROM sub_processor WHERE active = TRUE",
+        (rs, i) -> Map.of(
+            "name", rs.getString(1),
+            "purpose", rs.getString(2),
+            "dataCategories", rs.getString(3),
+            "location", rs.getString(4),
+            "receivesPersonalData", rs.getBoolean(5)));
+    return Map.of("items", items);
+  }
+
 }
