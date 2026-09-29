@@ -45,53 +45,53 @@
 ## Task breakdown
 
 ### S1 — Pricing
-- [ ] T1.1 C-01 `/pricing` from CAT-07 / pricing tables
-- [ ] T1.2 C-04 compare matrix
-- [ ] T1.3 C-05 upgrade/downgrade/change subjects (BIL change endpoints)
+- [x] T1.1 C-01 `/pricing` from CAT-07 / pricing tables
+- [x] T1.2 C-04 compare matrix
+- [x] T1.3 C-05 upgrade/downgrade/change subjects (BIL change endpoints)
 
 ### S2 — Marketing Phase 2
-- [ ] T2.1 A-04 `/try` sample (MKT-07/08)
-- [ ] T2.2 A-06 `/results` outcomes; A-07 case studies; A-09 plan quiz
+- [x] T2.1 A-04 `/try` sample (MKT-07/08)
+- [x] T2.2 A-06 `/results` outcomes; A-07 case studies; A-09 plan quiz
 
 ### S3 — Signup & plan
-- [ ] T3.1 B-03 student standalone register (age gates)
-- [ ] T3.2 B-07 PLN-01/02/03 weekly plan reveal UI
+- [x] T3.1 B-03 student standalone register (age gates)
+- [x] T3.2 B-07 PLN-01/02/03 weekly plan reveal UI
 
 ### S4 — Mocks
-- [ ] T4.1 D-02 mock setup; D-03 timed sit; results already partial from W1
-- [ ] T4.2 Exam-authentic layout basics + timer/extended-time hook
+- [x] T4.1 D-02 mock setup; D-03 timed sit; results already partial from W1
+- [x] T4.2 Exam-authentic layout basics + timer/extended-time hook
 
 ### S5 — Practice modes
-- [ ] T5.1 D-05 multi-version; D-07 custom quiz; D-08 home goal widget; D-09 redrill
-- [ ] T5.2 D-06 photo path: wire PRA-06 if feasible else explicit FEATURE_DISABLED UI
+- [x] T5.1 D-05 multi-version; D-07 custom quiz; D-08 home goal widget; D-09 redrill
+- [x] T5.2 D-06 photo path: wire PRA-06 if feasible else explicit FEATURE_DISABLED UI
 
 ### S6 — Feedback / tutor UI
-- [ ] T6.1 F-03 self-mark against scheme
-- [ ] T6.2 F-06 re-explain; F-07 Socratic session (gateway prompts, no PII)
+- [x] T6.1 F-03 self-mark against scheme
+- [x] T6.2 F-06 re-explain; F-07 Socratic session (gateway prompts, no PII)
 
 ### S7 — A-Level go-live path
-- [ ] T7.1 Provisional marking path when `a_level_review` on (P-MK-04 via gateway)
-- [ ] T7.2 F-05 review workbench; F-09 student provisional status
-- [ ] T7.3 Seed reviewer; SLA 48h drill script; config to enable flag in demo
+- [x] T7.1 Provisional marking path when `a_level_review` on (P-MK-04 via gateway)
+- [x] T7.2 F-05 review workbench; F-09 student provisional status
+- [x] T7.3 Seed reviewer; SLA 48h drill script; config to enable flag in demo
 
 ### S8 — Engagement & parent insights
-- [ ] T8.1 G-01 surprise micro-quiz
-- [ ] T8.2 H-02 misconceptions; H-03 narrative report; H-04 predicted; H-08 print checklist
+- [x] T8.1 G-01 surprise micro-quiz
+- [x] T8.2 H-02 misconceptions; H-03 narrative report; H-04 predicted; H-08 print checklist
 
 ### S9 — Revision
-- [ ] T9.1 Decks/notes/cheat sheets/knowledge-check APIs + UIs
-- [ ] T9.2 Generation/QC via existing RVC/revision prompts where needed
+- [x] T9.1 Decks/notes/cheat sheets/knowledge-check APIs + UIs
+- [x] T9.2 Generation/QC via existing RVC/revision prompts where needed
 
 ### S10 — Deletion
-- [ ] T10.1 L-02 request, cool-off, export, purge job hooks (GDPR-style; no dark patterns)
+- [x] T10.1 L-02 request, cool-off, export, purge job hooks (GDPR-style; no dark patterns)
 
 ### S11 — Support & shell
-- [ ] T11.1 M-03 systemic marking flags; P-01 help; P-02 live chat widget (staff queue)
-- [ ] T11.2 Shell-05 notifications centre; Shell-08 search
+- [x] T11.1 M-03 systemic marking flags; P-01 help; P-02 live chat widget (staff queue)
+- [x] T11.2 Shell-05 notifications centre; Shell-08 search
 
 ### S12 — Gate
-- [ ] T12.1 `w3_status=W3_BUILT` for 37 screens
-- [ ] T12.2 `docs/waves/W3_gate_report.md` + A-Level SLA demo script
+- [x] T12.1 `w3_status=W3_BUILT` for 37 screens
+- [x] T12.2 `docs/waves/W3_gate_report.md` + A-Level SLA demo script
 
 ## Standing rules reminder
 - AI only via gateway; D-15 boundary
@@ -103,5 +103,5 @@
 ## Deviations / assumptions (living)
 - P-1: local seed reviewer satisfies “vetting” for SLA drill only — not production staffing sign-off
 - P-2 gold still unvalidated; A-Level accuracy claims stay “unvalidated”
-- D-06 photo may remain FEATURE_DISABLED with honest UI if camera pipeline not ready
+- D-06 photo remains FEATURE_DISABLED with honest UI (camera pipeline not ready)
 - Pricing copy still placeholder until client sets final prices
