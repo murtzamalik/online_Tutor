@@ -11,7 +11,7 @@ export const TokenResponseSchema = z.object({
 });
 
 export const MeSchema = z.object({
-  accountId: z.string(),
+  accountId: z.string().nullable(),
   email: z.string().nullable(),
   displayName: z.string(),
   kind: z.string(),
@@ -21,6 +21,7 @@ export const MeSchema = z.object({
   entitlements: z.array(z.record(z.unknown())),
   featureFlags: z.record(z.boolean()),
   mfaSatisfied: z.boolean(),
+  studentId: z.string().nullable().optional(),
 });
 
 export function login(email: string, password: string) {

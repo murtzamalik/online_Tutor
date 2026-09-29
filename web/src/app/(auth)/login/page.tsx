@@ -84,9 +84,17 @@ export default function LoginPage() {
       >
         {mode === "login" ? "Forgot password?" : "Back to login"}
       </button>
-      <Link href="/staff/login" className="mt-6 text-sm text-ink/70 underline">
-        Staff login
-      </Link>
+      <div className="mt-6 flex flex-col gap-2 text-sm text-ink/70">
+        <Link href="/signup" className="underline">
+          Create a parent account
+        </Link>
+        <Link href="/child-login" className="underline">
+          Child picture-PIN login
+        </Link>
+        <Link href="/staff/login" className="underline">
+          Staff login
+        </Link>
+      </div>
     </main>
   );
 }
