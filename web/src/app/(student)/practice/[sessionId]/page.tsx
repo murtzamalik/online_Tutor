@@ -1,5 +1,6 @@
 "use client";
 
+import { EngagementOverlays } from "@/components/engagement/EngagementOverlays";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -211,6 +212,7 @@ export default function PracticeSessionPage() {
           </Link>
         </div>
       )}
-    </main>
+            <EngagementOverlays sessionId={typeof sessionId === "string" ? sessionId : undefined} />
+      </main>
   );
 }

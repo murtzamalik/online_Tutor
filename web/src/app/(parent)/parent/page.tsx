@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppNav } from "@/components/shell/AppNav";
 import { listStudents, StudentSchema } from "@/lib/api/students";
+import { getParentHome } from "@/lib/api/w2";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { z } from "zod";
 
@@ -16,7 +17,10 @@ export default function ParentHomePage() {
 
   useEffect(() => {
     listStudents()
-      .then((r) => setItems(r.items))
+      .then(async (r) => {
+        setItems(r.items);
+        try { await getParentHome(); } catch { /* H-10 aggregate best-effort */ }
+      })
       .catch(() => setError("Could not load children. Are you signed in as a parent?"));
   }, []);
 
@@ -50,6 +54,9 @@ export default function ParentHomePage() {
                   {s.requiresUnder13Consent ? " · under-13 consent needed" : ""}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                  <Link className="underline" href={`/parent/children/${s.studentId}`}>Progress</Link>
+                  <Link className="underline" href="/parent/plan/subjects">Plan subjects</Link>
+                  <Link className="underline" href="/parent/billing">Billing</Link>
                   <Link className="underline" href={`/onboarding/subjects?studentId=${s.studentId}`}>
                     Choose subjects
                   </Link>
