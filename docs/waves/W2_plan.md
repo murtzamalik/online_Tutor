@@ -40,59 +40,59 @@
 ## Task breakdown
 
 ### S1 — Billing
-- [ ] T1.1 Stripe customers/subscriptions (test mode); webhook handler; money as pence (B decisions)
-- [ ] T1.2 Entitlement grants from subscription state (replace W1 stub)
-- [ ] T1.3 C-02 plan subject selector; C-03 checkout + trial
-- [ ] T1.4 C-08 manage/cancel; C-09 dunning; C-10 history/invoices
-- [ ] T1.5 Role-map + tests; no card PAN/CVV stored
+- [x] T1.1 Stripe customers/subscriptions (test mode); webhook handler; money as pence (B decisions)
+- [x] T1.2 Entitlement grants from subscription state (replace W1 stub)
+- [x] T1.3 C-02 plan subject selector; C-03 checkout + trial
+- [x] T1.4 C-08 manage/cancel; C-09 dunning; C-10 history/invoices
+- [x] T1.5 Role-map + tests; no card PAN/CVV stored
 
 ### S2 — Parent dashboards
-- [ ] T2.1 H-01 progress dashboard APIs + UI
-- [ ] T2.2 H-09 controls & AI transcript access (privacy defaults)
-- [ ] T2.3 H-10 mobile parent home API (reuse aggregates; web-compatible payload)
+- [x] T2.1 H-01 progress dashboard APIs + UI
+- [x] T2.2 H-09 controls & AI transcript access (privacy defaults)
+- [x] T2.3 H-10 mobile parent home API (reuse aggregates; web-compatible payload)
 
 ### S3 — Reports & notifications
-- [ ] T3.1 Weekly report generation job (code stats + AI rationale via gateway, no PII)
-- [ ] T3.2 Notification prefs already partial — extend send path for billing/safeguarding events
+- [x] T3.1 Weekly report generation job (code stats + AI rationale via gateway, no PII)
+- [x] T3.2 Notification prefs already partial — extend send path for billing/safeguarding events
 
 ### S4 — Engagement
-- [ ] T4.1 ENG confidence / nudge / frustration endpoints
-- [ ] T4.2 Overlay components on practice (G-02/03/04)
+- [x] T4.1 ENG confidence / nudge / frustration endpoints
+- [x] T4.2 Overlay components on practice (G-02/03/04)
 
 ### S5 — Tutor + safety
-- [ ] T5.1 Tutor session APIs (TUT-*); prompts via gateway only
-- [ ] T5.2 Safety layers P-SF-*; fail closed; scripted templates from `ai_prompts/safety`
-- [ ] T5.3 No learner PII in tutor prompts (D-15)
+- [x] T5.1 Tutor session APIs (TUT-*); prompts via gateway only
+- [x] T5.2 Safety layers P-SF-*; fail closed; scripted templates from `ai_prompts/safety`
+- [x] T5.3 No learner PII in tutor prompts (D-15)
 
 ### S6 — Voice
-- [ ] T6.1 Voice consent J-06; session J-01
-- [ ] T6.2 STT/TTS only via gateway/vendor path with consent gate
-- [ ] T6.3 Error/degraded states
+- [x] T6.1 Voice consent J-06; session J-01
+- [x] T6.2 STT/TTS only via gateway/vendor path with consent gate
+- [x] T6.3 Error/degraded states
 
 ### S7 — Privacy & safeguarding
-- [ ] T7.1 L-01 under-13 consent polish; L-03 privacy settings; L-05 age-check
-- [ ] T7.2 L-04 DSL console; Q-05 safety flags queue
-- [ ] T7.3 Safeguarding drill script + SLA timers (config; do not invent legal copy)
+- [x] T7.1 L-01 under-13 consent polish; L-03 privacy settings; L-05 age-check
+- [x] T7.2 L-04 DSL console; Q-05 safety flags queue
+- [x] T7.3 Safeguarding drill script + SLA timers (config; do not invent legal copy)
 
 ### S8 — School teaching
-- [ ] T8.1 O-01 classes; O-02 admin dashboard; O-03 KCSIE
-- [ ] T8.2 O-04 assignments; O-05 insights heatmap
-- [ ] T8.3 RLS isolation tests for school tenants
+- [x] T8.1 O-01 classes; O-02 admin dashboard; O-03 KCSIE
+- [x] T8.2 O-04 assignments; O-05 insights heatmap
+- [x] T8.3 RLS isolation tests for school tenants
 
 ### S9 — School onboarding & billing
-- [ ] T9.1 O-06 CSV roster; SSO FEATURE_DISABLED or stub callback; Wonde remains flag-off
-- [ ] T9.2 O-07 DPA + per-pupil invoice billing
+- [x] T9.1 O-06 CSV roster; SSO FEATURE_DISABLED or stub callback; Wonde remains flag-off
+- [x] T9.2 O-07 DPA + per-pupil invoice billing
 
 ### S10 — Support & AI cost
-- [ ] T10.1 P-03 support console; P-04 audit viewer
-- [ ] T10.2 Staff vetting uCheck integration stub
-- [ ] T10.3 Q-04 AI cost & usage
+- [x] T10.1 P-03 support console; P-04 audit viewer
+- [x] T10.2 Staff vetting uCheck integration stub
+- [x] T10.3 Q-04 AI cost & usage
 
 ### S11 — Gate evidence
-- [ ] T11.1 Consumer pilot demo script (signup→trial→practise→parent dash→tutor/voice consent)
-- [ ] T11.2 School pilot demo (CSV roster→class→assignment→insights→DPA)
-- [ ] T11.3 Safeguarding drill + boundary attestation job/report
-- [ ] T11.4 Traceability `w2_status=W2_BUILT` for 28 screens; `docs/waves/W2_gate_report.md`
+- [x] T11.1 Consumer pilot demo script (signup→trial→practise→parent dash→tutor/voice consent)
+- [x] T11.2 School pilot demo (CSV roster→class→assignment→insights→DPA)
+- [x] T11.3 Safeguarding drill + boundary attestation job/report
+- [x] T11.4 Traceability `w2_status=W2_BUILT` for 28 screens; `docs/waves/W2_gate_report.md`
 
 ## Standing rules reminder
 - AI only via `ai-gateway`; gateway DB role cannot read learner tables
