@@ -44,4 +44,11 @@ public class MasteryController {
       @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
     return masteryService.reviewDue(principal, studentId);
   }
+
+  @GetMapping("/students/{studentId}/misconceptions")
+  @CatalogueRoles(id = "MAS-04", roles = "PAR,STU")
+  public Map<String, Object> misconceptions(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
+    return masteryService.misconceptions(principal, studentId);
+  }
 }

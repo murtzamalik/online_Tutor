@@ -125,9 +125,10 @@ public class AuthController {
   }
 
   @PostMapping("/auth/student/register")
+  @ResponseStatus(HttpStatus.CREATED)
   @CatalogueRoles(id = "AUTH-16", roles = "PUB")
-  public void studentRegister() {
-    throw com.karsaaz.studyloop.common.error.AppException.featureDisabled("Standalone student signup is W3 (B-03)");
+  public Map<String, Object> studentRegister(@RequestBody Map<String, Object> body) {
+    return authService.registerStandaloneStudent(body);
   }
 
   @GetMapping("/me")

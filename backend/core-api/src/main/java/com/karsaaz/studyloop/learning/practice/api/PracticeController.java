@@ -85,4 +85,75 @@ public class PracticeController {
       @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID sessionId) {
     return practiceService.endSession(principal, sessionId);
   }
+
+  @PostMapping("/practice/photos")
+  @CatalogueRoles(id = "PRA-06", roles = "STU")
+  public Map<String, Object> photos(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, Object> body) {
+    return practiceService.submitPhoto(principal, body);
+  }
+
+  @PostMapping("/practice/multi-version")
+  @CatalogueRoles(id = "PRA-10", roles = "STU")
+  public Map<String, Object> multiVersion(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, Object> body) {
+    return practiceService.multiVersion(principal, body);
+  }
+
+  @GetMapping("/students/{studentId}/wrong-answers")
+  @CatalogueRoles(id = "PRA-11", roles = "STU")
+  public Map<String, Object> wrongAnswers(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
+    return practiceService.wrongAnswers(principal, studentId);
+  }
+
+  @GetMapping("/students/{studentId}/quiz-sets")
+  @CatalogueRoles(id = "PRA-12", roles = "STU")
+  public Map<String, Object> quizSets(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
+    return practiceService.listQuizSets(principal, studentId);
+  }
+
+  @PostMapping("/students/{studentId}/quiz-sets")
+  @ResponseStatus(HttpStatus.CREATED)
+  @CatalogueRoles(id = "PRA-13", roles = "STU")
+  public Map<String, Object> saveQuizSet(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID studentId,
+      @RequestBody Map<String, Object> body) {
+    return practiceService.saveQuizSet(principal, studentId, body);
+  }
+
+  @GetMapping("/students/{studentId}/topics")
+  @CatalogueRoles(id = "PRA-14", roles = "STU,PAR,TCH")
+  public Map<String, Object> topics(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
+    return practiceService.studentTopics(principal, studentId);
+  }
+
+  @GetMapping("/students/{studentId}/topics/{topicId}")
+  @CatalogueRoles(id = "PRA-15", roles = "STU,PAR,TCH")
+  public Map<String, Object> topicDetail(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID studentId,
+      @PathVariable long topicId) {
+    return practiceService.studentTopicDetail(principal, studentId, topicId);
+  }
+
+  @GetMapping("/search")
+  @CatalogueRoles(id = "PRA-16", roles = "STU")
+  public Map<String, Object> search(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @org.springframework.web.bind.annotation.RequestParam(required = false) String q) {
+    return practiceService.search(principal, q);
+  }
+
+  @PostMapping("/practice/sessions/{sessionId}/mode")
+  @CatalogueRoles(id = "PRA-17", roles = "STU")
+  public Map<String, Object> mode(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID sessionId,
+      @RequestBody Map<String, Object> body) {
+    return practiceService.setMode(principal, sessionId, body);
+  }
 }

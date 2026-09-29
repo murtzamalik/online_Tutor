@@ -118,4 +118,18 @@ public class StudentController {
       @RequestBody Map<String, Object> body) {
     return studentService.putDailyGoal(principal, studentId, body);
   }
+
+  @org.springframework.web.bind.annotation.DeleteMapping("/enrolments/{enrolmentId}")
+  @CatalogueRoles(id = "STU-09", roles = "PAR")
+  public Map<String, Object> deleteEnrolment(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID enrolmentId) {
+    return studentService.deleteEnrolment(principal, enrolmentId);
+  }
+
+  @GetMapping("/students/{studentId}/accessibility")
+  @CatalogueRoles(id = "STU-10", roles = "PAR,STU")
+  public Map<String, Object> accessibility(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
+    return studentService.accessibility(principal, studentId);
+  }
 }

@@ -439,4 +439,31 @@ public class StudentService {
       throw new IllegalStateException(e);
     }
   }
+
+  @Transactional
+  public Map<String, Object> deleteEnrolment(AccountPrincipal principal, UUID enrolmentId) {
+    access.requireParent(principal);
+    UUID studentId = jdbc.query(
+        "SELECT student_id FROM student_enrolment WHERE enrolment_id = ?",
+        rs -> rs.next() ? (UUID) rs.getObject(1) : null,
+        enrolmentId);
+    if (studentId == null) {
+      throw AppException.notFound("Enrolment not found");
+    }
+    access.assertParentOwns(principal, studentId);
+    jdbc.update(
+        "UPDATE student_enrolment SET status = 'ENDED' WHERE enrolment_id = ?",
+        enrolmentId);
+    return Map.of("enrolmentId", enrolmentId, "status", "ENDED");
+  }
+
+  public Map<String, Object> accessibility(AccountPrincipal principal, UUID studentId) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudent(principal, sid);
+    String json = jdbc.query(
+        "SELECT accessibility_json::text FROM student_profile WHERE student_id = ?",
+        rs -> rs.next() ? rs.getString(1) : "{}",
+        sid);
+    return Map.of("studentId", sid, "accessibilityJson", json == null ? "{}" : json);
+  }
 }

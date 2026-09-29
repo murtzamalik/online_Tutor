@@ -64,4 +64,10 @@ public class CatalogController {
   public Map<String, Object> pricing() {
     return Map.of("items", catalogService.pricing());
   }
+
+  @GetMapping("/catalog/plans/compare")
+  @CatalogueRoles(id = "CAT-08", roles = "PUB,PAR")
+  public Map<String, Object> compare() {
+    return catalogService.comparePlans();
+  }
 }

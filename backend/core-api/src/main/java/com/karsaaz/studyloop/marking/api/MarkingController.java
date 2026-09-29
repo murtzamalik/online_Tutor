@@ -51,4 +51,20 @@ public class MarkingController {
       @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID responseId) {
     return markingQueryService.reviewStatus(principal, responseId);
   }
+
+  @PostMapping("/answers/{responseId}/self-mark")
+  @CatalogueRoles(id = "MRK-03", roles = "STU")
+  public Map<String, Object> selfMark(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID responseId,
+      @RequestBody Map<String, Object> body) {
+    return markingQueryService.selfMark(principal, responseId, body);
+  }
+
+  @PostMapping("/answers/{responseId}/self-mark-compare")
+  @CatalogueRoles(id = "MRK-06", roles = "STU")
+  public Map<String, Object> selfMarkCompare(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID responseId) {
+    return markingQueryService.selfMarkCompare(principal, responseId);
+  }
 }

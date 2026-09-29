@@ -125,6 +125,47 @@ public class MarkingOrchestrator {
       return;
     }
 
+    String qualificationCode = jdbc.query(
+        "SELECT qualification_code FROM student_response WHERE response_id = ?",
+        rs -> rs.next() ? rs.getString(1) : "GCSE",
+        responseId);
+    boolean aLevelOn = Boolean.TRUE.equals(jdbc.query(
+        "SELECT enabled FROM feature_flag WHERE flag_key = 'a_level_review'",
+        rs -> rs.next() ? rs.getBoolean(1) : false));
+    if (ALevelProvisionalRouter.shouldQueueForReview(aLevelOn, qualificationCode)) {
+      AiPass aLevel = runAiMark("P-MK-04", answerText, row);
+      insertMarkingResult(responseId, "AI_A_LEVEL", aLevel.marks, aLevel.confidence, aLevel.points, false);
+      jdbc.update(
+          """
+          UPDATE student_response SET marks_awarded = ?, is_correct = NULL, marking_mode = 'AI_PROVISIONAL',
+                 marking_status = 'MARKED_PROVISIONAL', marked_at = ?, counts_toward_progress = FALSE
+          WHERE response_id = ?
+          """,
+          aLevel.marks,
+          clock.instant(),
+          responseId);
+      Long specId = jdbc.query(
+          "SELECT specification_id FROM question WHERE question_id = ?",
+          rs -> rs.next() ? rs.getLong(1) : null,
+          questionId);
+      if (specId != null) {
+        jdbc.update(
+            """
+            INSERT INTO marking_review_queue (
+              review_id, response_id, anonymous_ref, specification_id, status, ai_marks, due_at)
+            VALUES (?, ?, ?, ?, 'QUEUED', ?, ?)
+            ON CONFLICT (response_id) DO NOTHING
+            """,
+            UUID.randomUUID(),
+            responseId,
+            "AL-" + responseId.toString().substring(0, 8).toUpperCase(),
+            specId,
+            aLevel.marks,
+            clock.instant().plusSeconds(ALevelProvisionalRouter.defaultSlaHours() * 3600L));
+      }
+      return;
+    }
+
     insertMarkingResult(responseId, "AI_PASS_A", passA.marks, passA.confidence, passA.points, false);
     insertMarkingResult(responseId, "AI_PASS_B", passB.marks, passB.confidence, passB.points, true);
     boolean correct = decision.finalMarks().compareTo(BigDecimal.valueOf(marksAvailable)) >= 0;

@@ -164,4 +164,32 @@ public class CatalogService {
             "pricePence", rs.getInt("amount_pence"),
             "currency", rs.getString("currency")));
   }
+
+  public Map<String, Object> comparePlans() {
+    List<Map<String, Object>> plans = jdbc.query(
+        """
+        SELECT plan_id, code, display_name, tab, features_json::text AS features,
+               includes_mock_tests, max_subjects
+        FROM pricing_plan ORDER BY sort_order NULLS LAST, plan_id
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("planId", rs.getLong("plan_id"));
+          m.put("code", rs.getString("code"));
+          m.put("displayName", rs.getString("display_name"));
+          m.put("tab", rs.getString("tab"));
+          m.put("featuresJson", rs.getString("features"));
+          m.put("includesMockTests", rs.getBoolean("includes_mock_tests"));
+          m.put("maxSubjects", rs.getObject("max_subjects"));
+          return m;
+        });
+    String matrix = jdbc.query(
+        "SELECT value_json::text FROM app_config WHERE config_key = 'pricing.compare_matrix'",
+        rs -> rs.next() ? rs.getString(1) : null);
+    Map<String, Object> out = new HashMap<>();
+    out.put("plans", plans);
+    out.put("matrixJson", matrix);
+    out.put("disclaimer", "Placeholder pricing until client sets final prices.");
+    return out;
+  }
 }

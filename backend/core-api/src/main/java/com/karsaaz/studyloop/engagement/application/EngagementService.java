@@ -106,4 +106,85 @@ public class EngagementService {
     });
     return m;
   }
+
+  public Map<String, Object> surpriseQuiz(AccountPrincipal principal, UUID studentId) {
+    access.requireStudent(principal);
+    UUID sid = access.resolveStudentId(principal, studentId);
+    Map<String, Object> existing = jdbc.query(
+        """
+        SELECT quiz_id, topic_ids, reason, status, served_at
+        FROM surprise_quiz WHERE student_id = ? AND status = 'SERVED'
+        ORDER BY served_at DESC LIMIT 1
+        """,
+        rs -> {
+          if (!rs.next()) {
+            return null;
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("quizId", rs.getObject("quiz_id"));
+          m.put("reason", rs.getString("reason"));
+          m.put("status", rs.getString("status"));
+          m.put("servedAt", rs.getTimestamp("served_at").toInstant().toString());
+          return m;
+        },
+        sid);
+    if (existing != null) {
+      return existing;
+    }
+    Long topicId = jdbc.query(
+        """
+        SELECT t.topic_id FROM student_enrolment se
+        JOIN spec_topic t ON t.specification_id = se.specification_id AND t.topic_level = 1
+        WHERE se.student_id = ? AND se.status = 'ACTIVE'
+        ORDER BY random() LIMIT 1
+        """,
+        rs -> rs.next() ? rs.getLong(1) : null,
+        sid);
+    if (topicId == null) {
+      return Map.of("studentId", sid, "quiz", null, "message", "No surprise quiz ready");
+    }
+    UUID quizId = UUID.randomUUID();
+    jdbc.update(
+        connection -> {
+          var ps =
+              connection.prepareStatement(
+                  "INSERT INTO surprise_quiz (quiz_id, student_id, topic_ids, reason, status) VALUES (?,?,?,'NOT_RECENTLY_TOUCHED','SERVED')");
+          ps.setObject(1, quizId);
+          ps.setObject(2, sid);
+          ps.setArray(3, connection.createArrayOf("bigint", new Long[] {topicId}));
+          return ps;
+        });
+    return Map.of(
+        "quizId",
+        quizId,
+        "topicIds",
+        List.of(topicId),
+        "reason",
+        "NOT_RECENTLY_TOUCHED",
+        "status",
+        "SERVED",
+        "prompt",
+        "Quick check — ready for a 2-question surprise quiz?");
+  }
+
+  @Transactional
+  public Map<String, Object> completeSurprise(
+      AccountPrincipal principal, UUID quizId, Map<String, Object> body) {
+    access.requireStudent(principal);
+    String status = Boolean.TRUE.equals(body.get("skipped")) ? "SKIPPED" : "COMPLETED";
+    int n = jdbc.update(
+        """
+        UPDATE surprise_quiz SET status = ?, completed_at = now(),
+          result_json = COALESCE(?::jsonb, '{}'::jsonb)
+        WHERE quiz_id = ? AND student_id = ?
+        """,
+        status,
+        body.get("resultJson") == null ? "{}" : body.get("resultJson").toString(),
+        quizId,
+        principal.studentId());
+    if (n == 0) {
+      throw AppException.notFound("Surprise quiz not found");
+    }
+    return Map.of("quizId", quizId, "status", status);
+  }
 }

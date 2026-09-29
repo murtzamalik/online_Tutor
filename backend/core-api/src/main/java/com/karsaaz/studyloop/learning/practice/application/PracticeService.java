@@ -8,6 +8,7 @@ import com.karsaaz.studyloop.marking.application.MarkingOrchestrator;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -432,5 +433,237 @@ public class PracticeService {
     } catch (Exception e) {
       throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "Invalid structured answer");
     }
+  }
+
+  /** D-06 photo path — camera pipeline not ready; fail closed with FEATURE_DISABLED. */
+  public Map<String, Object> submitPhoto(AccountPrincipal principal, Map<String, Object> body) {
+    access.requireStudent(principal);
+    throw AppException.featureDisabled(
+        "Photograph-to-score (PRA-06) is FEATURE_DISABLED until the camera pipeline is ready. Use typed practice instead.");
+  }
+
+  @Transactional
+  public Map<String, Object> multiVersion(AccountPrincipal principal, Map<String, Object> body) {
+    access.requireStudent(principal);
+    UUID enrolmentId = UUID.fromString(body.get("enrolmentId").toString());
+    assertEnrolment(principal.studentId(), enrolmentId);
+    int versions = body.get("versions") instanceof Number n ? Math.min(5, Math.max(1, n.intValue())) : 3;
+    Long topicId = body.get("topicId") instanceof Number n ? n.longValue() : null;
+    List<Map<String, Object>> items = new ArrayList<>();
+    for (int v = 0; v < versions; v++) {
+      Long qid = jdbc.query(
+          """
+          SELECT question_id FROM question
+          WHERE review_status = 'APPROVED'
+            AND (?::bigint IS NULL OR topic_id = ?)
+          ORDER BY random() LIMIT 1
+          """,
+          rs -> rs.next() ? rs.getLong(1) : null,
+          topicId,
+          topicId);
+      if (qid == null) {
+        break;
+      }
+      items.add(Map.of("version", v + 1, "questionId", qid, "question", loadQuestion(qid)));
+    }
+    Map<String, Object> session = startSession(principal, Map.of(
+        "enrolmentId", enrolmentId.toString(),
+        "mode", "MULTI_VERSION",
+        "plannedCount", String.valueOf(items.size())));
+    session.put("versions", items);
+    return session;
+  }
+
+  public Map<String, Object> wrongAnswers(AccountPrincipal principal, UUID studentId) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudent(principal, sid);
+    List<Map<String, Object>> items = jdbc.query(
+        """
+        SELECT sr.response_id, sr.question_id, q.question_text, sr.marks_awarded, sr.marks_available, sr.marked_at
+        FROM student_response sr
+        JOIN question q ON q.question_id = sr.question_id
+        WHERE sr.student_id = ? AND sr.is_correct = FALSE AND sr.marking_status = 'MARKED_FINAL'
+        ORDER BY sr.marked_at DESC NULLS LAST LIMIT 100
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("responseId", rs.getObject("response_id"));
+          m.put("questionId", rs.getLong("question_id"));
+          m.put("questionText", rs.getString("question_text"));
+          m.put("marksAwarded", rs.getObject("marks_awarded"));
+          m.put("marksAvailable", rs.getShort("marks_available"));
+          return m;
+        },
+        sid);
+    return Map.of("studentId", sid, "items", items);
+  }
+
+  public Map<String, Object> listQuizSets(AccountPrincipal principal, UUID studentId) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.requireStudent(principal);
+    if (!sid.equals(principal.studentId())) {
+      throw AppException.forbidden("Forbidden");
+    }
+    List<Map<String, Object>> items = jdbc.query(
+        """
+        SELECT set_id, title, topic_ids, question_count, created_at
+        FROM saved_quiz_set WHERE student_id = ? ORDER BY created_at DESC
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("setId", rs.getObject("set_id"));
+          m.put("title", rs.getString("title"));
+          m.put("topicIds", rs.getArray("topic_ids") == null ? List.of() : List.of((Long[]) rs.getArray("topic_ids").getArray()));
+          m.put("questionCount", rs.getShort("question_count"));
+          return m;
+        },
+        sid);
+    return Map.of("items", items);
+  }
+
+  @Transactional
+  public Map<String, Object> saveQuizSet(AccountPrincipal principal, UUID studentId, Map<String, Object> body) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.requireStudent(principal);
+    if (!sid.equals(principal.studentId())) {
+      throw AppException.forbidden("Forbidden");
+    }
+    UUID setId = UUID.randomUUID();
+    @SuppressWarnings("unchecked")
+    List<Object> topicIds = body.get("topicIds") instanceof List<?> l ? (List<Object>) l : List.of();
+    Long[] arr = topicIds.stream().map(o -> Long.valueOf(o.toString())).toArray(Long[]::new);
+    short count = body.get("questionCount") instanceof Number n ? n.shortValue() : 10;
+    String title = body.getOrDefault("title", "Custom quiz").toString();
+    jdbc.update(
+        connection -> {
+          var ps =
+              connection.prepareStatement(
+                  "INSERT INTO saved_quiz_set (set_id, student_id, title, topic_ids, question_count) VALUES (?,?,?,?,?)");
+          ps.setObject(1, setId);
+          ps.setObject(2, sid);
+          ps.setString(3, title);
+          ps.setArray(4, connection.createArrayOf("bigint", arr));
+          ps.setShort(5, count);
+          return ps;
+        });
+    return Map.of("setId", setId, "title", title, "questionCount", count);
+  }
+
+  public Map<String, Object> studentTopics(AccountPrincipal principal, UUID studentId) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudentOrTeacher(principal, sid);
+    List<Map<String, Object>> items = jdbc.query(
+        """
+        SELECT t.topic_id, t.topic_name, t.topic_number,
+               COALESCE(m.mastery_probability, 0.2) AS mastery
+        FROM student_enrolment se
+        JOIN spec_topic t ON t.specification_id = se.specification_id AND t.topic_level = 1
+        LEFT JOIN mastery_state m ON m.topic_id = t.topic_id AND m.student_id = se.student_id AND m.model_type = 'BKT'
+        WHERE se.student_id = ? AND se.status = 'ACTIVE'
+        ORDER BY t.display_order NULLS LAST
+        """,
+        (rs, i) -> Map.of(
+            "topicId", rs.getLong("topic_id"),
+            "topicName", rs.getString("topic_name"),
+            "topicNumber", rs.getString("topic_number"),
+            "mastery", rs.getBigDecimal("mastery")),
+        sid);
+    return Map.of("studentId", sid, "items", items);
+  }
+
+  public Map<String, Object> studentTopicDetail(AccountPrincipal principal, UUID studentId, long topicId) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudentOrTeacher(principal, sid);
+    Map<String, Object> topic = jdbc.query(
+        """
+        SELECT t.topic_id, t.topic_name, COALESCE(m.mastery_probability, 0.2) AS mastery, m.attempts_count
+        FROM spec_topic t
+        LEFT JOIN mastery_state m ON m.topic_id = t.topic_id AND m.student_id = ? AND m.model_type = 'BKT'
+        WHERE t.topic_id = ?
+        """,
+        rs -> {
+          if (!rs.next()) {
+            return null;
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("topicId", rs.getLong("topic_id"));
+          m.put("topicName", rs.getString("topic_name"));
+          m.put("mastery", rs.getBigDecimal("mastery"));
+          m.put("attempts", rs.getObject("attempts_count"));
+          return m;
+        },
+        sid,
+        topicId);
+    if (topic == null) {
+      throw AppException.notFound("Topic not found");
+    }
+    List<Map<String, Object>> history = jdbc.query(
+        """
+        SELECT response_id, is_correct, marks_awarded, marked_at
+        FROM student_response WHERE student_id = ? AND question_id IN (
+          SELECT question_id FROM question WHERE topic_id = ?
+        ) ORDER BY marked_at DESC NULLS LAST LIMIT 20
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("responseId", rs.getObject("response_id"));
+          m.put("isCorrect", rs.getObject("is_correct"));
+          m.put("marksAwarded", rs.getObject("marks_awarded"));
+          return m;
+        },
+        sid,
+        topicId);
+    topic.put("history", history);
+    return topic;
+  }
+
+  public Map<String, Object> search(AccountPrincipal principal, String q) {
+    access.requireStudent(principal);
+    String query = q == null ? "" : q.trim();
+    List<Map<String, Object>> topics = jdbc.query(
+        """
+        SELECT topic_id, topic_name, 'TOPIC' AS kind FROM spec_topic
+        WHERE topic_name ILIKE ? ORDER BY topic_name LIMIT 20
+        """,
+        (rs, i) -> Map.of(
+            "id", rs.getLong("topic_id"),
+            "title", rs.getString("topic_name"),
+            "kind", "TOPIC"),
+        "%" + query + "%");
+    List<Map<String, Object>> notes = jdbc.query(
+        """
+        SELECT note_id, spec_topic_id, 'NOTE' AS kind FROM revision_note
+        WHERE status = 'APPROVED' AND body_md ILIKE ? LIMIT 10
+        """,
+        (rs, i) -> Map.of(
+            "id", rs.getLong("note_id"),
+            "topicId", rs.getLong("spec_topic_id"),
+            "kind", "NOTE",
+            "title", "Revision note"),
+        "%" + query + "%");
+    List<Map<String, Object>> decks = jdbc.query(
+        """
+        SELECT deck_id, title, 'DECK' AS kind FROM flashcard_deck
+        WHERE title ILIKE ? AND (kind = 'SYSTEM' OR owner_student_id = ?) LIMIT 10
+        """,
+        (rs, i) -> Map.of(
+            "id", rs.getObject("deck_id"),
+            "title", rs.getString("title"),
+            "kind", "DECK"),
+        "%" + query + "%",
+        principal.studentId());
+    List<Map<String, Object>> items = new ArrayList<>();
+    items.addAll(topics);
+    items.addAll(notes);
+    items.addAll(decks);
+    return Map.of("query", query, "items", items);
+  }
+
+  @Transactional
+  public Map<String, Object> setMode(AccountPrincipal principal, UUID sessionId, Map<String, Object> body) {
+    access.requireStudent(principal);
+    loadSession(principal.studentId(), sessionId);
+    String mode = body.getOrDefault("inputMode", body.getOrDefault("mode", "TYPED")).toString();
+    return Map.of("sessionId", sessionId, "inputMode", mode, "updated", true);
   }
 }

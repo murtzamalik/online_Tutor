@@ -32,4 +32,20 @@ public class EngagementController {
       @RequestBody Map<String, Object> body) {
     return engagement.respondNudge(principal, nudgeId, body);
   }
+
+  @GetMapping("/students/{studentId}/surprise-quiz")
+  @CatalogueRoles(id = "ENG-03", roles = "STU")
+  public Map<String, Object> surpriseQuiz(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
+    return engagement.surpriseQuiz(principal, studentId);
+  }
+
+  @PostMapping("/surprise-quizzes/{quizId}/complete")
+  @CatalogueRoles(id = "ENG-04", roles = "STU")
+  public Map<String, Object> completeSurprise(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID quizId,
+      @RequestBody(required = false) Map<String, Object> body) {
+    return engagement.completeSurprise(principal, quizId, body == null ? Map.of() : body);
+  }
 }

@@ -150,4 +150,156 @@ public class MockService {
     }
     return results(principal, mockId);
   }
+
+  @Transactional
+  public Map<String, Object> createMock(AccountPrincipal principal, Map<String, Object> body) {
+    access.requireStudent(principal);
+    UUID sid = principal.studentId();
+    UUID enrolmentId = UUID.fromString(body.get("enrolmentId").toString());
+    short duration = body.get("durationMinutes") instanceof Number n ? n.shortValue() : 45;
+    boolean extended = Boolean.TRUE.equals(body.get("extendedTime"));
+    if (extended) {
+      duration = (short) Math.round(duration * 1.25);
+    }
+    UUID mockId = UUID.randomUUID();
+    jdbc.update(
+        """
+        INSERT INTO mock_paper (
+          mock_id, student_id, enrolment_id, source_kind, duration_minutes, structure_json, status)
+        VALUES (?, ?, ?, ?, ?, '{"sections":[{"name":"A"}]}'::jsonb, 'SETUP')
+        """,
+        mockId, sid, enrolmentId,
+        body.getOrDefault("sourceKind", "GENERATED").toString(),
+        duration);
+    List<Long> qids = jdbc.query(
+        """
+        SELECT q.question_id FROM question q
+        JOIN student_enrolment se ON se.specification_id = q.specification_id
+        WHERE se.enrolment_id = ? AND q.review_status = 'APPROVED'
+        ORDER BY random() LIMIT 10
+        """,
+        (rs, i) -> rs.getLong(1),
+        enrolmentId);
+    short seq = 1;
+    for (Long qid : qids) {
+      jdbc.update(
+          "INSERT INTO mock_paper_item (mock_id, seq, section, question_id, marks) VALUES (?, ?, 'A', ?, 2)",
+          mockId, seq++, qid);
+    }
+    Map<String, Object> out = new HashMap<>();
+    out.put("mockId", mockId);
+    out.put("status", "SETUP");
+    out.put("durationMinutes", duration);
+    out.put("extendedTime", extended);
+    out.put("itemCount", qids.size());
+    return out;
+  }
+
+  public Map<String, Object> getMock(AccountPrincipal principal, UUID mockId) {
+    Map<String, Object> mock = loadMock(mockId);
+    access.assertParentOrStudent(principal, (UUID) mock.get("studentId"));
+    List<Map<String, Object>> items = jdbc.query(
+        """
+        SELECT i.seq, i.section, i.question_id, i.marks, q.question_text, q.question_type, i.answer_text
+        FROM mock_paper_item i
+        JOIN question q ON q.question_id = i.question_id
+        WHERE i.mock_id = ? ORDER BY i.seq
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("seq", rs.getShort("seq"));
+          m.put("section", rs.getString("section"));
+          m.put("questionId", rs.getLong("question_id"));
+          m.put("marks", rs.getShort("marks"));
+          m.put("questionText", rs.getString("question_text"));
+          m.put("questionType", rs.getString("question_type"));
+          m.put("answerText", rs.getString("answer_text"));
+          return m;
+        },
+        mockId);
+    mock.put("items", items);
+    return mock;
+  }
+
+  @Transactional
+  public Map<String, Object> start(AccountPrincipal principal, UUID mockId) {
+    access.requireStudent(principal);
+    Map<String, Object> mock = loadMock(mockId);
+    if (!principal.studentId().equals(mock.get("studentId"))) {
+      throw AppException.forbidden("Forbidden");
+    }
+    jdbc.update(
+        "UPDATE mock_paper SET status = 'IN_PROGRESS', started_at = ? WHERE mock_id = ? AND status = 'SETUP'",
+        clock.instant(), mockId);
+    return getMock(principal, mockId);
+  }
+
+  @Transactional
+  public Map<String, Object> saveAnswer(AccountPrincipal principal, UUID mockId, int seq, Map<String, Object> body) {
+    access.requireStudent(principal);
+    Map<String, Object> mock = loadMock(mockId);
+    if (!principal.studentId().equals(mock.get("studentId"))) {
+      throw AppException.forbidden("Forbidden");
+    }
+    jdbc.update(
+        "UPDATE mock_paper_item SET answer_text = ? WHERE mock_id = ? AND seq = ?",
+        body.getOrDefault("answerText", "").toString(), mockId, (short) seq);
+    return Map.of("mockId", mockId, "seq", seq, "saved", true);
+  }
+
+  @Transactional
+  public Map<String, Object> submit(AccountPrincipal principal, UUID mockId) {
+    access.requireStudent(principal);
+    Map<String, Object> mock = loadMock(mockId);
+    if (!principal.studentId().equals(mock.get("studentId"))) {
+      throw AppException.forbidden("Forbidden");
+    }
+    Integer total = jdbc.queryForObject(
+        "SELECT COALESCE(SUM(marks),0) FROM mock_paper_item WHERE mock_id = ?", Integer.class, mockId);
+    jdbc.update(
+        """
+        UPDATE mock_paper SET status = 'MARKED', submitted_at = ?, total_marks = ?, score = ?,
+          result_json = jsonb_build_object('note','Auto-scored demo mock','overallPct',60)
+        WHERE mock_id = ?
+        """,
+        clock.instant(), total == null ? 0 : total.shortValue(),
+        total == null ? 0 : total * 0.6, mockId);
+    return results(principal, mockId);
+  }
+
+  public Map<String, Object> photoPages(AccountPrincipal principal, UUID mockId, Map<String, Object> body) {
+    access.requireStudent(principal);
+    throw AppException.featureDisabled("Mock photo upload (MOC-07) is FEATURE_DISABLED with PRA-06 camera pipeline.");
+  }
+
+  public Map<String, Object> pdf(AccountPrincipal principal, UUID mockId) {
+    Map<String, Object> mock = results(principal, mockId);
+    mock.put("pdfUrl", "/api/v1/mock-papers/" + mockId + "/pdf");
+    mock.put("note", "Demo PDF placeholder — print results from browser");
+    return mock;
+  }
+
+  private Map<String, Object> loadMock(UUID mockId) {
+    Map<String, Object> mock = jdbc.query(
+        """
+        SELECT mock_id, student_id, enrolment_id, source_kind, status, duration_minutes, started_at, submitted_at
+        FROM mock_paper WHERE mock_id = ?
+        """,
+        rs -> {
+          if (!rs.next()) return null;
+          Map<String, Object> m = new HashMap<>();
+          m.put("mockId", rs.getObject("mock_id"));
+          m.put("studentId", rs.getObject("student_id"));
+          m.put("enrolmentId", rs.getObject("enrolment_id"));
+          m.put("sourceKind", rs.getString("source_kind"));
+          m.put("status", rs.getString("status"));
+          m.put("durationMinutes", rs.getShort("duration_minutes"));
+          m.put("startedAt", rs.getTimestamp("started_at"));
+          m.put("submittedAt", rs.getTimestamp("submitted_at"));
+          return m;
+        },
+        mockId);
+    if (mock == null) throw AppException.notFound("Mock not found");
+    return mock;
+  }
 }

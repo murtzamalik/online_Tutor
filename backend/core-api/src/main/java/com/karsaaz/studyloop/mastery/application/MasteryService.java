@@ -207,4 +207,37 @@ public class MasteryService {
         clock.instant().plus(BktEngine.reviewDaysForLevel(state.masteryLevel()), ChronoUnit.DAYS),
         clock.instant());
   }
+
+  public Map<String, Object> misconceptions(AccountPrincipal principal, UUID studentId) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudent(principal, sid);
+    List<Map<String, Object>> items = jdbc.query(
+        """
+        SELECT o.observation_id, o.topic_id, t.topic_name, o.misconception_code, o.plain_english, o.occurred_at
+        FROM misconception_observation o
+        JOIN spec_topic t ON t.topic_id = o.topic_id
+        WHERE o.student_id = ?
+        ORDER BY o.occurred_at DESC LIMIT 50
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("observationId", rs.getObject("observation_id"));
+          m.put("topicId", rs.getLong("topic_id"));
+          m.put("topicName", rs.getString("topic_name"));
+          m.put("label", rs.getString("misconception_code"));
+          m.put("plainEnglish", rs.getString("plain_english"));
+          m.put("observedAt", rs.getTimestamp("occurred_at"));
+          return m;
+        },
+        sid);
+    if (items.isEmpty()) {
+      items = List.of(Map.of(
+          "label", "No misconceptions recorded yet",
+          "plainEnglish",
+          "Keep practising — misconceptions appear here in plain English when the marking engine flags them.",
+          "topicName",
+          "—"));
+    }
+    return Map.of("studentId", sid, "items", items);
+  }
 }

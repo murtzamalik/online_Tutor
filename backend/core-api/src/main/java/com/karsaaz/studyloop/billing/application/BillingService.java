@@ -243,11 +243,44 @@ public class BillingService {
   @Transactional
   public Map<String, Object> patchSubscription(AccountPrincipal principal, Map<String, Object> body) {
     access.requireParent(principal);
-    // W2: accept cycle change only; subject change is W3 (C-05)
     String cycle = str(body, "billingCycle", null);
     UUID sid = currentSubscriptionId(principal.accountId());
     if (cycle != null) {
       jdbc.update("UPDATE subscription SET billing_cycle = ?, updated_at = now() WHERE subscription_id = ?", cycle, sid);
+    }
+    if (body.get("planCode") != null) {
+      Long planId = jdbc.query(
+          "SELECT plan_id FROM pricing_plan WHERE code = ?",
+          rs -> rs.next() ? rs.getLong(1) : null,
+          body.get("planCode").toString());
+      if (planId != null) {
+        jdbc.update("UPDATE subscription SET plan_id = ?, updated_at = now() WHERE subscription_id = ?", planId, sid);
+      }
+    }
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> subjects = body.get("subjects") instanceof List<?> l
+        ? (List<Map<String, Object>>) l
+        : null;
+    if (subjects != null) {
+      jdbc.update(
+          "UPDATE subscription_item SET removed_at = now() WHERE subscription_id = ? AND removed_at IS NULL",
+          sid);
+      for (Map<String, Object> s : subjects) {
+        UUID studentId = UUID.fromString(s.get("studentId").toString());
+        long subjectId = Long.parseLong(s.get("subjectId").toString());
+        long qualificationId = Long.parseLong(s.getOrDefault("qualificationId", "1").toString());
+        jdbc.update(
+            """
+            INSERT INTO subscription_item (item_id, subscription_id, student_id, subject_id, qualification_id)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT (subscription_id, student_id, subject_id) DO UPDATE SET removed_at = NULL, qualification_id = EXCLUDED.qualification_id
+            """,
+            UUID.randomUUID(),
+            sid,
+            studentId,
+            subjectId,
+            qualificationId);
+      }
     }
     return getSubscription(principal);
   }

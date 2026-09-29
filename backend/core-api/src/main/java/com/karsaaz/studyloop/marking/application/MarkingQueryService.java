@@ -143,14 +143,115 @@ public class MarkingQueryService {
 
   public Map<String, Object> reviewStatus(AccountPrincipal principal, UUID responseId) {
     access.requireStudent(principal);
-    String qual = jdbc.queryForObject(
-        "SELECT qualification_code FROM student_response WHERE response_id = ? AND student_id = ?",
-        String.class,
+    Map<String, Object> row = jdbc.query(
+        """
+        SELECT sr.qualification_code, sr.marking_status, sr.marks_awarded,
+               r.review_id, r.status AS review_status, r.due_at, r.anonymous_ref
+        FROM student_response sr
+        LEFT JOIN marking_review_queue r ON r.response_id = sr.response_id
+        WHERE sr.response_id = ? AND sr.student_id = ?
+        """,
+        rs -> {
+          if (!rs.next()) {
+            return null;
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("qualificationCode", rs.getString("qualification_code"));
+          m.put("markingStatus", rs.getString("marking_status"));
+          m.put("marksAwarded", rs.getObject("marks_awarded"));
+          m.put("reviewId", rs.getObject("review_id"));
+          m.put("reviewStatus", rs.getString("review_status"));
+          m.put(
+              "dueAt",
+              rs.getTimestamp("due_at") == null ? null : rs.getTimestamp("due_at").toInstant().toString());
+          m.put("anonymousRef", rs.getString("anonymous_ref"));
+          return m;
+        },
         responseId,
         principal.studentId());
-    if (!"A_LEVEL".equals(qual)) {
-      return Map.of("responseId", responseId, "feature", "FEATURE_DISABLED", "status", "NOT_APPLICABLE");
+    if (row == null) {
+      throw AppException.notFound("Response not found");
     }
-    return Map.of("responseId", responseId, "status", "QUEUED", "etaHours", 48);
+    boolean flagOn = Boolean.TRUE.equals(jdbc.query(
+        "SELECT enabled FROM feature_flag WHERE flag_key = 'a_level_review'",
+        rs -> rs.next() ? rs.getBoolean(1) : false));
+    if (!ALevelProvisionalRouter.shouldQueueForReview(flagOn, String.valueOf(row.get("qualificationCode")))) {
+      return Map.of(
+          "responseId",
+          responseId,
+          "feature",
+          flagOn ? "NOT_APPLICABLE" : "FEATURE_DISABLED",
+          "status",
+          "NOT_APPLICABLE");
+    }
+    Map<String, Object> out = new HashMap<>();
+    out.put("responseId", responseId);
+    out.put("status", row.get("reviewStatus") != null ? row.get("reviewStatus") : row.get("markingStatus"));
+    out.put("provisionalMarks", row.get("marksAwarded"));
+    out.put("etaHours", ALevelProvisionalRouter.defaultSlaHours());
+    out.put("dueAt", row.get("dueAt"));
+    out.put("message", "Your mark is provisional until a human reviewer confirms (within 48 hours). Accuracy claims remain unvalidated.");
+    return out;
+  }
+
+  @Transactional
+  public Map<String, Object> selfMark(
+      AccountPrincipal principal, UUID responseId, Map<String, Object> body) {
+    access.requireStudent(principal);
+    UUID studentId = principal.studentId();
+    Integer owned = jdbc.queryForObject(
+        "SELECT COUNT(*) FROM student_response WHERE response_id = ? AND student_id = ?",
+        Integer.class,
+        responseId,
+        studentId);
+    if (owned == null || owned == 0) {
+      throw AppException.notFound("Response not found");
+    }
+    java.math.BigDecimal marks = body.get("marksAwarded") instanceof Number n
+        ? java.math.BigDecimal.valueOf(n.doubleValue())
+        : new java.math.BigDecimal(body.getOrDefault("marksAwarded", "0").toString());
+    jdbc.update(
+        """
+        INSERT INTO marking_result (result_id, response_id, kind, is_final, marks_total, confidence, points_json)
+        VALUES (?, ?, 'SELF_MARK', FALSE, ?, 1.0, ?::jsonb)
+        """,
+        UUID.randomUUID(),
+        responseId,
+        marks,
+        body.get("pointsJson") == null ? "[]" : body.get("pointsJson").toString());
+    jdbc.update(
+        "UPDATE student_response SET marking_mode = 'SELF_MARKED' WHERE response_id = ?",
+        responseId);
+    return Map.of("responseId", responseId, "selfMarks", marks, "status", "SELF_MARKED");
+  }
+
+  public Map<String, Object> selfMarkCompare(AccountPrincipal principal, UUID responseId) {
+    access.requireStudent(principal);
+    List<Map<String, Object>> results = jdbc.query(
+        """
+        SELECT kind, marks_total FROM marking_result
+        WHERE response_id = ? AND kind IN ('SELF_MARK','AI_PASS_A','AI_PASS_B','OBJECTIVE','AI_A_LEVEL')
+        ORDER BY created_at
+        """,
+        (rs, i) -> Map.of("kind", rs.getString("kind"), "marksTotal", rs.getBigDecimal("marks_total")),
+        responseId);
+    java.math.BigDecimal self = null;
+    java.math.BigDecimal ai = null;
+    for (Map<String, Object> r : results) {
+      if ("SELF_MARK".equals(r.get("kind"))) {
+        self = (java.math.BigDecimal) r.get("marksTotal");
+      } else {
+        ai = (java.math.BigDecimal) r.get("marksTotal");
+      }
+    }
+    Map<String, Object> out = new HashMap<>();
+    out.put("responseId", responseId);
+    out.put("selfMarks", self);
+    out.put("aiMarks", ai);
+    out.put(
+        "delta",
+        self != null && ai != null ? self.subtract(ai) : null);
+    out.put("calibrationNote", "Compare your self-mark with the system mark for learning — numbers are computed in code.");
+    return out;
   }
 }

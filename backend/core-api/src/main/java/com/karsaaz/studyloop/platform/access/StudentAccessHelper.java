@@ -110,4 +110,18 @@ public class StudentAccessHelper {
   public static boolean hasComplianceRole(List<String> roles) {
     return roles.contains("COMPLIANCE") || roles.contains("CMP");
   }
+
+  public static boolean hasReviewerRole(List<String> roles) {
+    return roles.contains("REVIEWER") || roles.contains("REV");
+  }
+
+  public static boolean hasSupportRole(List<String> roles) {
+    return roles.contains("SUPPORT") || roles.contains("SUP");
+  }
+
+  public void requireReviewer(AccountPrincipal principal) {
+    if (!hasReviewerRole(principal.roles())) {
+      throw AppException.forbidden("Reviewer access required");
+    }
+  }
 }

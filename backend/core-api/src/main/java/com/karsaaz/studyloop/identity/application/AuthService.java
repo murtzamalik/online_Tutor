@@ -734,4 +734,80 @@ public class AuthService {
       throw new IllegalStateException(e);
     }
   }
+
+  /** B-03 standalone student (13+) signup with age gate. */
+  @Transactional
+  public Map<String, Object> registerStandaloneStudent(Map<String, Object> body) {
+    int ageYears = body.get("ageYears") instanceof Number n
+        ? n.intValue()
+        : Integer.parseInt(body.getOrDefault("ageYears", "0").toString());
+    if (ageYears < 13) {
+      throw AppException.badRequest(
+          ProblemCode.VALIDATION_FAILED,
+          "Under-13 learners must be registered by a parent. Use parent signup instead.");
+    }
+    if (ageYears < 16 && !Boolean.TRUE.equals(body.get("parentAware"))) {
+      throw AppException.badRequest(
+          ProblemCode.VALIDATION_FAILED,
+          "Ages 13–15 need a parent-aware confirmation before standalone signup.");
+    }
+    if (!Boolean.TRUE.equals(body.get("acceptTerms"))) {
+      throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "Terms must be accepted");
+    }
+    String email = body.getOrDefault("email", "").toString().toLowerCase().trim();
+    String password = body.getOrDefault("password", "").toString();
+    String displayName = body.getOrDefault("displayName", "Student").toString();
+    if (email.isBlank() || password.length() < 10) {
+      throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "Valid email and password required");
+    }
+    Integer exists = jdbc.queryForObject(
+        "SELECT COUNT(*) FROM account WHERE email = ?", Integer.class, email);
+    if (exists != null && exists > 0) {
+      throw AppException.conflict(ProblemCode.CONFLICT, "Unable to register with that email");
+    }
+    UUID accountId = UUID.randomUUID();
+    UUID studentId = UUID.randomUUID();
+    String hash = passwordHasher.hash(password.toCharArray());
+    jdbc.update(
+        """
+        INSERT INTO account (account_id, email, password_hash, display_name, kind, status, mfa_required, email_verified_at)
+        VALUES (?, ?, ?, ?, 'STUDENT', 'ACTIVE', FALSE, now())
+        """,
+        accountId,
+        email,
+        hash,
+        displayName);
+    jdbc.update("INSERT INTO account_role (account_id, role) VALUES (?, 'STUDENT')", accountId);
+    jdbc.update(
+        """
+        INSERT INTO student_profile (student_id, display_name, year_group, login_account_id, age_band)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        studentId,
+        displayName,
+        body.get("yearGroup") == null ? null : body.get("yearGroup").toString(),
+        accountId,
+        ageYears >= 18 ? "18_PLUS" : ageYears >= 16 ? "16_17" : "13_15");
+    jdbc.update("INSERT INTO privacy_settings (student_id) VALUES (?) ON CONFLICT DO NOTHING", studentId);
+    jdbc.update(
+        """
+        INSERT INTO age_assurance_record (record_id, account_id, method, outcome, completed_at)
+        VALUES (?, ?, 'SELF_DECLARED_AGE', 'PASS', now())
+        """,
+        UUID.randomUUID(),
+        accountId);
+    jdbc.update(
+        """
+        INSERT INTO consent_record (account_id, consent_type, document_version, granted, method)
+        VALUES (?, 'TERMS', 'v1', TRUE, 'CHECKBOX')
+        """,
+        accountId);
+    auditLogService.append(
+        accountId, "STUDENT", "STUDENT_STANDALONE_REGISTER", "account", accountId.toString(), Map.of("ageYears", ageYears));
+    return Map.of(
+        "accountId", accountId,
+        "studentId", studentId,
+        "status", "ACTIVE",
+        "ageGate", ageYears >= 16 ? "16_PLUS" : "13_TO_15");
+  }
 }
