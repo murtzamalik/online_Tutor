@@ -42,59 +42,59 @@
 ## Task breakdown
 
 ### S1 — Catalogue
-- [ ] T1.1 CAT-01..05 repositories + controllers against V009 seed
-- [ ] T1.2 Role-map annotations + tests
-- [ ] T1.3 B-04 subject selector wired (web)
+- [x] T1.1 CAT-01..05 repositories + controllers against V009 seed
+- [x] T1.2 Role-map annotations + tests
+- [x] T1.3 B-04 subject selector wired (web)
 
 ### S2 — Parent signup / verify / age
-- [ ] T2.1 AGE-01..03 + CON-05/06 legal docs
-- [ ] T2.2 B-01 `/signup`, B-10 `/verify-email` screens
-- [ ] T2.3 Wire AUTH-01..03 already present; complete UX states + a11y
+- [x] T2.1 AGE-01..03 + CON-05/06 legal docs
+- [x] T2.2 B-01 `/signup`, B-10 `/verify-email` screens
+- [x] T2.3 Wire AUTH-01..03 already present; complete UX states + a11y
 
 ### S3 — Child profile + picture PIN
-- [ ] T3.1 STU-01/02/04 create child + credential
-- [ ] T3.2 AUTH-15 picture PIN login (leave FEATURE_DISABLED only if incomplete — prefer implement)
-- [ ] T3.3 B-02, B-11 screens; CON-02 under-13 consent stub
+- [x] T3.1 STU-01/02/04 create child + credential
+- [x] T3.2 AUTH-15 picture PIN login (leave FEATURE_DISABLED only if incomplete — prefer implement)
+- [x] T3.3 B-02, B-11 screens; CON-02 under-13 consent stub
 
 ### S4 — Enrolment + demo bank
-- [ ] T4.1 STU-06/07 enrolment to board-track
-- [ ] T4.2 Flyway **V013** demo seed: ≥12 APPROVED questions + schemes on AQA 8462 (topics 1–3); no edit to V001–V012
-- [ ] T4.3 Entitlement stub for pilot (no Stripe yet)
+- [x] T4.1 STU-06/07 enrolment to board-track
+- [x] T4.2 Flyway **V013** demo seed: ≥12 APPROVED questions + schemes on AQA 8462 (topics 1–3); no edit to V001–V012
+- [x] T4.3 Entitlement stub for pilot (no Stripe yet)
 
 ### S5 — Diagnostic
-- [ ] T5.1 DIA-01..04 + IRT cold-start selection
-- [ ] T5.2 B-06 screen; writes `diagnostic_run` + initial `mastery_state`
+- [x] T5.1 DIA-01..04 + IRT cold-start selection
+- [x] T5.2 B-06 screen; writes `diagnostic_run` + initial `mastery_state`
 
 ### S6 — Practice
-- [ ] T6.1 PRA-01 start session, PRA-03 adaptive select, PRA-04 submit, PRA-05 SSE status
-- [ ] T6.2 D-01 renderer (MCQ / short / numeric); D-12 chem structured input
-- [ ] T6.3 Hints PRA-07..09; confidence ENG-01 hook (minimal)
+- [x] T6.1 PRA-01 start session, PRA-03 adaptive select, PRA-04 submit, PRA-05 SSE status
+- [x] T6.2 D-01 renderer (MCQ / short / numeric); D-12 chem structured input
+- [x] T6.3 Hints PRA-07..09; confidence ENG-01 hook (minimal)
 
 ### S7 — Marking pipeline
-- [ ] T7.1 Code pre-checks (MCQ, numeric, equation balance hooks)
-- [ ] T7.2 Gateway calls P-MK-01∥02, P-MK-03 for 6-mark, P-MK-05 chem, P-MK-07 feedback
-- [ ] T7.3 Code validate / Pass A·B compare / totals; exception triggers
-- [ ] T7.4 F-01 result + F-02 scheme reveal; MRK-* endpoints
-- [ ] T7.5 Stub fixtures for all P-MK-* used; latency budget test
+- [x] T7.1 Code pre-checks (MCQ, numeric, equation balance hooks)
+- [x] T7.2 Gateway calls P-MK-01∥02, P-MK-03 for 6-mark, P-MK-05 chem, P-MK-07 feedback
+- [x] T7.3 Code validate / Pass A·B compare / totals; exception triggers
+- [x] T7.4 F-01 result + F-02 scheme reveal; MRK-* endpoints
+- [x] T7.5 Stub fixtures for all P-MK-* used; latency budget test
 
 ### S8 — Exceptions & disputes
-- [ ] T8.1 EXC-01..05 queue + resolve → gold candidate + mastery recompute
-- [ ] T8.2 F-04 dispute; F-10 staff UI
-- [ ] T8.3 Outbox → mastery consumer event
+- [x] T8.1 EXC-01..05 queue + resolve → gold candidate + mastery recompute
+- [x] T8.2 F-04 dispute; F-10 staff UI
+- [x] T8.3 Outbox → mastery consumer event
 
 ### S9 — Mastery + homes
-- [ ] T9.1 BKT update consumer; FSRS scaffolding; MAS-07 due list
-- [ ] T9.2 Shell-01 student home real aggregates
-- [ ] T9.3 Shell-02 parent home basics (RPT-01/STU-01)
+- [x] T9.1 BKT update consumer; FSRS scaffolding; MAS-07 due list
+- [x] T9.2 Shell-01 student home real aggregates
+- [x] T9.3 Shell-02 parent home basics (RPT-01/STU-01)
 
 ### S10 — Generation + eval
-- [ ] T10.1 JobRunr nightly GEN-01..04; C1–C10 code gates; P-QG-* via gateway
-- [ ] T10.2 Minimal CNT approve path for NEEDS_REVIEW → APPROVED
-- [ ] T10.3 AIO eval harness + synthetic gold until P-2
+- [x] T10.1 JobRunr nightly GEN-01..04; C1–C10 code gates; P-QG-* via gateway
+- [x] T10.2 Minimal CNT approve path for NEEDS_REVIEW → APPROVED
+- [x] T10.3 AIO eval harness + synthetic gold until P-2
 - [ ] T10.4 Q-01/02/03 minimal read UIs
 
 ### S11 — Marketing & settings
-- [ ] T11.1 A-01/02/03/05/08 CMS-backed or static content APIs
+- [x] T11.1 A-01/02/03/05/08 CMS-backed or static content APIs
 - [ ] T11.2 Shell-06 settings; Shell-10 legal + cookies
 - [ ] T11.3 B-05 goals; B-08 target grade
 
