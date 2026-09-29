@@ -46,46 +46,46 @@
 ## Task breakdown
 
 ### S1 — Library
-- [ ] T1.1 A-10 `/library` wired to marketing resources API
+- [x] T1.1 A-10 `/library` wired to marketing resources API
 
 ### S2 — Accessibility
-- [ ] T2.1 B-09 onboarding accessibility prefs (STU-10/11)
-- [ ] T2.2 J-03 settings panel; J-05 simplified-language toggle
-- [ ] T2.3 J-04 extended-time on mock sit (reads accessibility_json)
+- [x] T2.1 B-09 onboarding accessibility prefs (STU-10/11)
+- [x] T2.2 J-03 settings panel; J-05 simplified-language toggle
+- [x] T2.3 J-04 extended-time on mock sit (reads accessibility_json)
 
 ### S3 — Micro billing & referral
-- [ ] T3.1 C-06 micro-subscription purchase (Stripe/fake provider)
-- [ ] T3.2 C-07 referral codes + rewards config (no dark patterns)
+- [x] T3.1 C-06 micro-subscription purchase (Stripe/fake provider)
+- [x] T3.2 C-07 referral codes + rewards config (no dark patterns)
 
 ### S4 — Entrance test
-- [ ] T4.1 ENT-01…04 adaptive 11+; no skip/back; lock-down rules
-- [ ] T4.2 D-04 UI
+- [x] T4.1 ENT-01…04 adaptive 11+; no skip/back; lock-down rules
+- [x] T4.2 D-04 UI
 
 ### S5 — Keep-going drill
-- [ ] T5.1 D-10 session mode until consistency threshold (code)
+- [x] T5.1 D-10 session mode until consistency threshold (code)
 
 ### S6 — Photo stuck
-- [ ] T6.1 F-08 walkthrough; reuse PRA-06 masking rules; FEATURE_DISABLED only if camera still blocked — prefer implement stub upload + tutor response via gateway
+- [x] T6.1 F-08 walkthrough; reuse PRA-06 masking rules; FEATURE_DISABLED only if camera still blocked — prefer implement stub upload + tutor response via gateway
 
 ### S7 — Alerts & maps
-- [ ] T7.1 H-05 early-warning drift alerts
-- [ ] T7.2 H-06 skill map from mastery_state
-- [ ] T7.3 H-07 cohort benchmark only if n≥50 / opted in (else empty/honest state)
+- [x] T7.1 H-05 early-warning drift alerts
+- [x] T7.2 H-06 skill map from mastery_state
+- [x] T7.3 H-07 cohort benchmark only if n≥50 / opted in (else empty/honest state)
 
 ### S8 — Share
-- [ ] T8.1 I-06 share deck/quiz set with expiry + revoke
+- [x] T8.1 I-06 share deck/quiz set with expiry + revoke
 
 ### S9 — Verbal discussion
-- [ ] T9.1 J-02 discussion mode (English Lang/Lit scoped); voice consent required
+- [x] T9.1 J-02 discussion mode (English Lang/Lit scoped); voice consent required
 
 ### S10 — K-02
-- [ ] T10.1 Parent toggle for daily goal **nudges** only (goals tile already exists); no K-01 streaks
+- [x] T10.1 Parent toggle for daily goal **nudges** only (goals tile already exists); no K-01 streaks
 
 ### S11 — Gate
-- [ ] T11.1 `w4_status=W4_BUILT` for 16 screens; confirm K-01/N-* still deferred
-- [ ] T11.2 `docs/waves/W4_gate_report.md`
-- [ ] T11.3 Update `docs/CURSOR_UNDERSTANDING.md` living notes for W4 complete
-- [ ] T11.4 Note mobile phase remains docs/19 (out of this wave)
+- [x] T11.1 `w4_status=W4_BUILT` for 16 screens; confirm K-01/N-* still deferred
+- [x] T11.2 `docs/waves/W4_gate_report.md`
+- [x] T11.3 Update `docs/CURSOR_UNDERSTANDING.md` living notes for W4 complete
+- [x] T11.4 Note mobile phase remains docs/19 (out of this wave)
 
 ## Standing rules reminder
 - AI only via gateway; D-15

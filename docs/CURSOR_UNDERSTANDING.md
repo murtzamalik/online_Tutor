@@ -14,7 +14,7 @@ Study Loop is a UK exam-prep product for parents, learners (11+, GCSE/iGCSE, A-L
 
 **For whom:** visitors (marketing), parents (pay, consent, monitor), students/children (practice, tutor, revise), school teachers/admins/business managers, and staff roles (content, ops marking exceptions, A-Level reviewers, support, compliance, AI ops, DSL, owners).
 
-**Deferred / flag-off (not deleted — D-14):** K-01 gamification (client held to Phase 2); N-01…N-03 tutor marketplace (Won't yet); cohort benchmark UI until sample size ≥ 50; micro-subscriptions and referrals (Phase 3); 11+ entrance test (Phase 3); native mobile apps (separate phase after web — API must stay mobile-ready); own LLM hosting and webcam/affect sensing (non-goals). Wonde MIS is behind `wonde_mis` until a commercial agreement exists; CSV rostering is always on.
+**Deferred / flag-off (not deleted — D-14):** K-01 gamification (`gamification_phase2=off` — no badges/streaks UI); N-01…N-03 tutor marketplace (Won't yet — no screens); native mobile apps (separate phase after web — **docs/19**; API stays mobile-ready); own LLM hosting and webcam/affect sensing (non-goals). Wonde MIS is behind `wonde_mis` until a commercial agreement exists; CSV rostering is always on. H-07 cohort UI is built but shows an honest empty state until opted in **and** sample size ≥ 50.
 
 **Why flag rather than cut:** standing rule D-14 — client-stated requirements stay in the pack as deferred/flagged specs so they are not reinterpreted away during build.
 
@@ -227,7 +227,7 @@ onEscalate: P-SF-04 summary → disclosure_log → DSL actions (never auto-notif
 
 **Pull-forward:** Tutor dialogue + safety classifiers must exist by W2 for **J-01** voice even though **F-06/F-07** UIs are W3. Photo transcription (**P-MK-06**) is W2-capable while D-06 screen is W3. Weekly narrative prompts may land before H-03 UI.
 
-**Flag-off / deferred screens:** K-01 (`gamification_phase2=off`); N-01…N-03 (no endpoints); cohort benchmark H-07 hidden until n≥50 / flag; C-06/C-07 Phase 3 flags; `a_level_review` off until P-1; `wonde_mis` off until agreement; `voice_tutor` gated on consent + flag.
+**Flag-off / deferred screens:** K-01 (`gamification_phase2=off` — not built in W4); N-01…N-03 (no marketplace screens); H-07 honest empty until n≥50 + opt-in; `a_level_review` client-controlled after W3 demo seed; `wonde_mis` off until agreement; `voice_tutor` gated on consent + parent toggle.
 
 **Traceability:** 130 user stories mapped; matrix CSV present (story↔screen↔endpoints↔tables↔prompts). Catalogue header text says “338” endpoints while `endpoints.json` has **339** — treat JSON as authoritative.
 
@@ -294,4 +294,12 @@ Only items that change behaviour or compliance if answered wrong. **None of thes
 - **Status:** Gate **PASS** with documented deviations — see `docs/waves/W0_plan.md`, `docs/waves/W0_gate_report.md`.
 - **Delivered:** monorepo, Compose stack, Flyway V001–V012, `common` + identity skeleton, `ai-gateway` stub, embedding stub service, Next.js Shell-03/04/07/09, CI + DB boundary/RLS gate script.
 - **Local note:** Testcontainers may fail on Docker Desktop API mismatch; use `./infra/scripts/verify_db_gate.sh` as the authoritative local boundary/RLS/migrate gate.
-- **Do not start W1** until architect signs the gate report.
+
+### W1–W3 — prior waves
+- See respective `docs/waves/W*_gate_report.md`. W3 gate **PASS** (37 screens); A-Level SLA drill documented.
+
+### W4 — Phase 3 & flag-offs (29 Sep 2026)
+- **Status:** Web/backend pilot pack **closed** for build-pack waves — see `docs/waves/W4_plan.md`, `docs/waves/W4_gate_report.md`.
+- **Delivered:** 16 screens (A-10, B-09, C-06/07, D-04/10, F-08, H-05/06/07, I-06, J-02…J-05, K-02) wired to catalogue endpoints; Flyway **V017**; ENT/BIL micro/referral/MAS-05/08/TUT-06/RVN-09…11; accessibility prefs; entrance lock + keep-going consistency + cohort gate unit tests.
+- **Explicitly not built:** K-01 badges/streaks; N-01…N-03 marketplace screens.
+- **Mobile:** remains a **separate phase** per `docs/19_mobile_phase_spec.md` — API surface is mobile-ready; no native iOS/Android in this wave.
