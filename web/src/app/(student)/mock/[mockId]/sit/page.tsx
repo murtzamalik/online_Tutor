@@ -44,7 +44,14 @@ export default function Page() {
         {error && <div className="mt-8"><ErrorState body={error} /></div>}
         {data && (
           <div className="mt-8 space-y-4 animate-rise">
-            <p role="timer" aria-live="polite">Duration {data.durationMinutes} minutes (extended-time supported at setup).</p>
+            <p role="timer" aria-live="polite">
+              Duration {data.durationMinutes} minutes
+              {data.extendedTimePct != null
+                ? ` (extended time +${data.extendedTimePct}% from accessibility profile — J-04)`
+                : data.extendedTime
+                  ? " (extended time applied)"
+                  : " (extended time reads accessibility_json at setup)"}
+            </p>
             <button type="button" className="rounded border px-3 py-2" onClick={async () => {
               await api.saveMockAnswer(params.mockId, 1, { answerText: "Demo answer" }, token);
               setData(await api.submitMock(params.mockId, token));
