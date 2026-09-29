@@ -32,6 +32,12 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/api/v1/legal/**").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/v1/cookie-consent").permitAll()
             .requestMatchers("/api/v1/marketing/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/stripe").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/ucheck").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/billing/checkout/plan-preview").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/jobs/weekly-reports/run").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/internal-svc/safety/classify").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/tutor/rescue").permitAll()
             .requestMatchers(
                 "/api/v1/auth/register-parent",
                 "/api/v1/auth/verify-email",

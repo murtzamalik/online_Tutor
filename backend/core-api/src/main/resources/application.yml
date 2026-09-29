@@ -39,6 +39,10 @@ studyloop:
     service-token: ${GATEWAY_SERVICE_TOKEN:local_gateway_service_token_change_me}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8080}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
 
 springdoc:
   api-docs:
