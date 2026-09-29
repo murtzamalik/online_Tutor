@@ -1,6 +1,7 @@
 package com.karsaaz.studyloop.aiops.application;
 
 import com.karsaaz.studyloop.common.error.AppException;
+import com.karsaaz.studyloop.common.error.ProblemCode;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
 import java.math.BigDecimal;
@@ -44,6 +45,60 @@ public class AiOpsService {
     out.put("targetGoldSize", 2000);
     out.put("latestRun", latest);
     return out;
+  }
+
+  public List<Map<String, Object>> listEvalRuns(AccountPrincipal principal) {
+    requireAiOrOwner(principal);
+    return jdbc.query(
+        """
+        SELECT eval_id, task_key, model_id, n_items, point_accuracy, exact_total_agreement,
+               passes_gate, started_at, finished_at
+        FROM eval_run ORDER BY started_at DESC LIMIT 50
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("evalId", rs.getObject("eval_id"));
+          m.put("taskKey", rs.getString("task_key"));
+          m.put("modelId", rs.getString("model_id"));
+          m.put("nItems", rs.getInt("n_items"));
+          m.put("pointAccuracy", rs.getBigDecimal("point_accuracy"));
+          m.put("exactTotalAgreement", rs.getBigDecimal("exact_total_agreement"));
+          m.put("passesGate", rs.getObject("passes_gate"));
+          m.put("startedAt", rs.getTimestamp("started_at"));
+          m.put("finishedAt", rs.getTimestamp("finished_at"));
+          return m;
+        });
+  }
+
+  public Map<String, Object> evalDetail(AccountPrincipal principal, UUID evalId) {
+    requireAiOrOwner(principal);
+    Map<String, Object> run = jdbc.query(
+        """
+        SELECT eval_id, task_key, model_id, n_items, point_accuracy, exact_total_agreement,
+               passes_gate, started_at, finished_at
+        FROM eval_run WHERE eval_id = ?
+        """,
+        rs -> {
+          if (!rs.next()) {
+            return null;
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("evalId", rs.getObject("eval_id"));
+          m.put("taskKey", rs.getString("task_key"));
+          m.put("modelId", rs.getString("model_id"));
+          m.put("nItems", rs.getInt("n_items"));
+          m.put("pointAccuracy", rs.getBigDecimal("point_accuracy"));
+          m.put("exactTotalAgreement", rs.getBigDecimal("exact_total_agreement"));
+          m.put("passesGate", rs.getObject("passes_gate"));
+          m.put("startedAt", rs.getTimestamp("started_at"));
+          m.put("finishedAt", rs.getTimestamp("finished_at"));
+          return m;
+        },
+        evalId);
+    if (run == null) {
+      throw AppException.notFound("Eval run not found");
+    }
+    return run;
   }
 
   @Transactional
@@ -123,6 +178,253 @@ public class AiOpsService {
             "verified", rs.getBoolean("verified")));
   }
 
+  public List<Map<String, Object>> gatewayLog(AccountPrincipal principal) {
+    requireComplianceOrAi(principal);
+    return jdbc.query(
+        """
+        SELECT log_id, task_key, prompt_id, prompt_version, vendor, model, route,
+               latency_ms, status, boundary_ok, redaction_count, created_at
+        FROM ai_gateway_log ORDER BY created_at DESC LIMIT 100
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("logId", rs.getObject("log_id"));
+          m.put("taskKey", rs.getString("task_key"));
+          m.put("promptId", rs.getString("prompt_id"));
+          m.put("promptVersion", rs.getString("prompt_version"));
+          m.put("vendor", rs.getString("vendor"));
+          m.put("model", rs.getString("model"));
+          m.put("route", rs.getString("route"));
+          m.put("latencyMs", rs.getObject("latency_ms"));
+          m.put("status", rs.getString("status"));
+          m.put("boundaryOk", rs.getBoolean("boundary_ok"));
+          m.put("redactionCount", rs.getShort("redaction_count"));
+          m.put("createdAt", rs.getTimestamp("created_at"));
+          return m;
+        });
+  }
+
+  public Map<String, Object> gatewayLogDetail(AccountPrincipal principal, UUID logId) {
+    requireCompliance(principal);
+    Map<String, Object> row = jdbc.query(
+        """
+        SELECT log_id, task_key, prompt_id, prompt_version, vendor, model, route,
+               latency_ms, status, boundary_ok, redaction_count, payload_hash, created_at
+        FROM ai_gateway_log WHERE log_id = ?
+        """,
+        rs -> {
+          if (!rs.next()) {
+            return null;
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("logId", rs.getObject("log_id"));
+          m.put("taskKey", rs.getString("task_key"));
+          m.put("status", rs.getString("status"));
+          m.put("boundaryOk", rs.getBoolean("boundary_ok"));
+          m.put("payloadHash", rs.getString("payload_hash"));
+          m.put("createdAt", rs.getTimestamp("created_at"));
+          return m;
+        },
+        logId);
+    if (row == null) {
+      throw AppException.notFound("Gateway log not found");
+    }
+    return row;
+  }
+
+  public List<Map<String, Object>> redactions(AccountPrincipal principal) {
+    requireCompliance(principal);
+    return jdbc.query(
+        """
+        SELECT redaction_id, log_id, kind, method, placeholder, created_at
+        FROM redaction_event ORDER BY created_at DESC LIMIT 100
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("redactionId", rs.getObject("redaction_id"));
+          m.put("logId", rs.getObject("log_id"));
+          m.put("kind", rs.getString("kind"));
+          m.put("method", rs.getString("method"));
+          m.put("placeholder", rs.getString("placeholder"));
+          m.put("createdAt", rs.getTimestamp("created_at"));
+          return m;
+        });
+  }
+
+  public List<Map<String, Object>> boundaryAttestations(AccountPrincipal principal) {
+    requireCompliance(principal);
+    return jdbc.query(
+        """
+        SELECT attestation_id, day, checks_json, passed, created_at
+        FROM boundary_attestation ORDER BY day DESC LIMIT 30
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("attestationId", rs.getObject("attestation_id"));
+          m.put("day", rs.getDate("day"));
+          m.put("checksJson", rs.getString("checks_json"));
+          m.put("passed", rs.getBoolean("passed"));
+          m.put("createdAt", rs.getTimestamp("created_at"));
+          return m;
+        });
+  }
+
+  public List<Map<String, Object>> listPrompts(AccountPrincipal principal) {
+    requireAiEngineer(principal);
+    return jdbc.query(
+        """
+        SELECT DISTINCT ON (prompt_id) prompt_id, prompt_version_id, version, task_key, status, created_at
+        FROM prompt_version ORDER BY prompt_id, created_at DESC
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("promptId", rs.getString("prompt_id"));
+          m.put("promptVersionId", rs.getObject("prompt_version_id"));
+          m.put("version", rs.getString("version"));
+          m.put("taskKey", rs.getString("task_key"));
+          m.put("status", rs.getString("status"));
+          m.put("createdAt", rs.getTimestamp("created_at"));
+          return m;
+        });
+  }
+
+  public List<Map<String, Object>> promptVersions(AccountPrincipal principal, String promptId) {
+    requireAiEngineer(principal);
+    return jdbc.query(
+        """
+        SELECT prompt_version_id, prompt_id, version, task_key, status, model_tier, created_at, promoted_at
+        FROM prompt_version WHERE prompt_id = ? ORDER BY created_at DESC
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("promptVersionId", rs.getObject("prompt_version_id"));
+          m.put("promptId", rs.getString("prompt_id"));
+          m.put("version", rs.getString("version"));
+          m.put("taskKey", rs.getString("task_key"));
+          m.put("status", rs.getString("status"));
+          m.put("modelTier", rs.getString("model_tier"));
+          m.put("createdAt", rs.getTimestamp("created_at"));
+          m.put("promotedAt", rs.getTimestamp("promoted_at"));
+          return m;
+        },
+        promptId);
+  }
+
+  @Transactional
+  public Map<String, Object> createPromptVersion(
+      AccountPrincipal principal, String promptId, Map<String, Object> body) {
+    requireAiEngineer(principal);
+    UUID id = UUID.randomUUID();
+    String version = body.getOrDefault("version", "w1-" + id.toString().substring(0, 8)).toString();
+    String taskKey = body.getOrDefault("taskKey", "mark.gcse.pass_a").toString();
+    String bodyText = body.getOrDefault("bodyText", "W1 draft prompt").toString();
+    jdbc.update(
+        """
+        INSERT INTO prompt_version (
+          prompt_version_id, prompt_id, version, task_key, body_text, model_tier,
+          source_path, sha256, status, created_by
+        ) VALUES (?, ?, ?, ?, ?, 'large', 'w1-console', ?, 'DRAFT', ?)
+        """,
+        id,
+        promptId,
+        version,
+        taskKey,
+        bodyText,
+        Integer.toHexString(bodyText.hashCode()),
+        principal.accountId());
+    return Map.of("promptVersionId", id, "promptId", promptId, "version", version, "status", "DRAFT");
+  }
+
+  @Transactional
+  public Map<String, Object> evaluatePromptVersion(AccountPrincipal principal, UUID versionId) {
+    requireAiEngineer(principal);
+    jdbc.update(
+        "UPDATE prompt_version SET status = 'EVALUATING' WHERE prompt_version_id = ? AND status = 'DRAFT'",
+        versionId);
+    jdbc.update(
+        "UPDATE prompt_version SET status = 'DRAFT', metrics_json = '{\"w1Stub\":true}'::jsonb WHERE prompt_version_id = ?",
+        versionId);
+    return Map.of("promptVersionId", versionId, "status", "EVALUATED_STUB");
+  }
+
+  @Transactional
+  public Map<String, Object> promotePromptVersion(AccountPrincipal principal, UUID versionId) {
+    requireAiEngineer(principal);
+    String promptId = jdbc.query(
+        "SELECT prompt_id FROM prompt_version WHERE prompt_version_id = ?",
+        rs -> rs.next() ? rs.getString(1) : null,
+        versionId);
+    if (promptId == null) {
+      throw AppException.notFound("Prompt version not found");
+    }
+    jdbc.update(
+        "UPDATE prompt_version SET status = 'RETIRED' WHERE prompt_id = ? AND status = 'LIVE'",
+        promptId);
+    jdbc.update(
+        """
+        UPDATE prompt_version SET status = 'LIVE', promoted_by = ?, promoted_at = ?
+        WHERE prompt_version_id = ?
+        """,
+        principal.accountId(),
+        clock.instant(),
+        versionId);
+    return Map.of("promptVersionId", versionId, "status", "LIVE");
+  }
+
+  @Transactional
+  public Map<String, Object> rollbackPromptVersion(AccountPrincipal principal, UUID versionId) {
+    requireAiEngineer(principal);
+    jdbc.update(
+        "UPDATE prompt_version SET status = 'RETIRED' WHERE prompt_version_id = ? AND status = 'LIVE'",
+        versionId);
+    return Map.of("promptVersionId", versionId, "status", "RETIRED");
+  }
+
+  public List<Map<String, Object>> modelRouting(AccountPrincipal principal) {
+    requireAiEngineer(principal);
+    return jdbc.query(
+        """
+        SELECT task_key, model_tier, vendor, model_id, fallback_model_id, updated_at
+        FROM model_routing ORDER BY task_key
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("taskKey", rs.getString("task_key"));
+          m.put("modelTier", rs.getString("model_tier"));
+          m.put("vendor", rs.getString("vendor"));
+          m.put("modelId", rs.getString("model_id"));
+          m.put("fallbackModelId", rs.getString("fallback_model_id"));
+          m.put("updatedAt", rs.getTimestamp("updated_at"));
+          return m;
+        });
+  }
+
+  @Transactional
+  public Map<String, Object> putModelRouting(
+      AccountPrincipal principal, String taskKey, Map<String, Object> body) {
+    requireAiEngineer(principal);
+    if (body.get("modelId") == null) {
+      throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "modelId required");
+    }
+    jdbc.update(
+        """
+        INSERT INTO model_routing (task_key, model_tier, vendor, model_id, updated_by, updated_at)
+        VALUES (?, COALESCE(?, 'large'), COALESCE(?, 'ANTHROPIC'), ?, ?, now())
+        ON CONFLICT (task_key) DO UPDATE SET
+          model_id = EXCLUDED.model_id,
+          model_tier = COALESCE(EXCLUDED.model_tier, model_routing.model_tier),
+          vendor = COALESCE(EXCLUDED.vendor, model_routing.vendor),
+          updated_by = EXCLUDED.updated_by,
+          updated_at = now()
+        """,
+        taskKey,
+        body.get("modelTier") != null ? body.get("modelTier").toString() : null,
+        body.get("vendor") != null ? body.get("vendor").toString() : null,
+        body.get("modelId").toString(),
+        principal.accountId());
+    return Map.of("taskKey", taskKey, "modelId", body.get("modelId").toString());
+  }
+
   private void requireAiEngineer(AccountPrincipal principal) {
     if (!StudentAccessHelper.hasAiEngineerRole(principal.roles())) {
       throw AppException.forbidden("AI engineer access required");
@@ -132,6 +434,19 @@ public class AiOpsService {
   private void requireAiOrOwner(AccountPrincipal principal) {
     if (!StudentAccessHelper.hasAiEngineerRole(principal.roles())
         && !StudentAccessHelper.hasOwnerRole(principal.roles())) {
+      throw AppException.forbidden("Forbidden");
+    }
+  }
+
+  private void requireCompliance(AccountPrincipal principal) {
+    if (!StudentAccessHelper.hasComplianceRole(principal.roles())) {
+      throw AppException.forbidden("Compliance access required");
+    }
+  }
+
+  private void requireComplianceOrAi(AccountPrincipal principal) {
+    if (!StudentAccessHelper.hasComplianceRole(principal.roles())
+        && !StudentAccessHelper.hasAiEngineerRole(principal.roles())) {
       throw AppException.forbidden("Forbidden");
     }
   }

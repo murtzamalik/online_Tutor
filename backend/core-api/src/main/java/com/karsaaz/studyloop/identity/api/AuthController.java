@@ -4,9 +4,13 @@ import com.karsaaz.studyloop.identity.api.dto.AuthDtos;
 import com.karsaaz.studyloop.identity.application.AuthService;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import jakarta.validation.Valid;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -130,5 +134,32 @@ public class AuthController {
   @CatalogueRoles(id = "AUTH-17", roles = "PAR,STU,TCH,SADM,SBM,STAFF")
   public AuthDtos.MeResponse me(@AuthenticationPrincipal AccountPrincipal principal) {
     return authService.me(principal);
+  }
+
+  @PatchMapping("/me")
+  @CatalogueRoles(id = "AUTH-18", roles = "PAR,STU,TCH,SADM,SBM,STAFF")
+  public AuthDtos.MeResponse patchMe(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, Object> body) {
+    return authService.patchMe(principal, body);
+  }
+
+  @PostMapping("/me/password/change")
+  @CatalogueRoles(id = "AUTH-19", roles = "PAR,TCH,SADM,SBM,STAFF")
+  public void changePassword(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, String> body) {
+    authService.changePassword(principal, body.get("currentPassword"), body.get("newPassword"));
+  }
+
+  @GetMapping("/me/sessions")
+  @CatalogueRoles(id = "AUTH-20", roles = "PAR,STU,TCH,SADM,SBM,STAFF")
+  public Map<String, Object> sessions(@AuthenticationPrincipal AccountPrincipal principal) {
+    return Map.of("items", authService.listSessions(principal));
+  }
+
+  @DeleteMapping("/me/sessions/{sessionId}")
+  @CatalogueRoles(id = "AUTH-21", roles = "PAR,STU,TCH,SADM,SBM,STAFF")
+  public void revokeSession(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID sessionId) {
+    authService.revokeSession(principal, sessionId);
   }
 }

@@ -106,4 +106,8 @@ public class StudentAccessHelper {
   public static boolean hasOwnerRole(List<String> roles) {
     return roles.contains("PRODUCT_OWNER") || roles.contains("BUSINESS_OWNER") || roles.contains("OWN");
   }
+
+  public static boolean hasComplianceRole(List<String> roles) {
+    return roles.contains("COMPLIANCE") || roles.contains("CMP");
+  }
 }

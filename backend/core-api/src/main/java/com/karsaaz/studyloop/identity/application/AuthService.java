@@ -422,6 +422,118 @@ public class AuthService {
         principal.mfaSatisfied());
   }
 
+  @Transactional
+  public AuthDtos.MeResponse patchMe(AccountPrincipal principal, Map<String, Object> body) {
+    if (principal.accountId() == null) {
+      throw AppException.forbidden("Account required");
+    }
+    if (body.get("displayName") != null) {
+      jdbc.update(
+          "UPDATE account SET display_name = ? WHERE account_id = ?",
+          body.get("displayName").toString(),
+          principal.accountId());
+    }
+    if (body.get("locale") != null) {
+      jdbc.update(
+          "UPDATE account SET locale = ? WHERE account_id = ?",
+          body.get("locale").toString(),
+          principal.accountId());
+    }
+    if (body.get("marketingOptIn") != null) {
+      jdbc.update(
+          "UPDATE account SET marketing_opt_in = ? WHERE account_id = ?",
+          Boolean.TRUE.equals(body.get("marketingOptIn")) || "true".equalsIgnoreCase(body.get("marketingOptIn").toString()),
+          principal.accountId());
+    }
+    return me(principal);
+  }
+
+  @Transactional
+  public void changePassword(AccountPrincipal principal, String currentPassword, String newPassword) {
+    if (principal.accountId() == null) {
+      throw AppException.forbidden("Account required");
+    }
+    if (currentPassword == null || newPassword == null || newPassword.length() < 10) {
+      throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "Password requirements not met");
+    }
+    String hash = jdbc.query(
+        "SELECT password_hash FROM account WHERE account_id = ?",
+        rs -> rs.next() ? rs.getString(1) : null,
+        principal.accountId());
+    if (hash == null || !passwordHasher.verify(hash, currentPassword.toCharArray())) {
+      throw AppException.forbidden("Current password incorrect");
+    }
+    jdbc.update(
+        "UPDATE account SET password_hash = ? WHERE account_id = ?",
+        passwordHasher.hash(newPassword.toCharArray()),
+        principal.accountId());
+    auditLogService.append(
+        principal.accountId(), null, "PASSWORD_CHANGE", "account", principal.accountId().toString(), Map.of());
+  }
+
+  public List<Map<String, Object>> listSessions(AccountPrincipal principal) {
+    if (principal.accountId() != null) {
+      return jdbc.query(
+          """
+          SELECT session_id, user_agent, created_at, last_used_at, expires_at, mfa_satisfied
+          FROM auth_session
+          WHERE account_id = ? AND revoked_at IS NULL AND expires_at > ?
+          ORDER BY last_used_at DESC
+          """,
+          (rs, i) -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("sessionId", rs.getObject("session_id"));
+            m.put("userAgent", rs.getString("user_agent"));
+            m.put("createdAt", rs.getTimestamp("created_at"));
+            m.put("lastUsedAt", rs.getTimestamp("last_used_at"));
+            m.put("expiresAt", rs.getTimestamp("expires_at"));
+            m.put("mfaSatisfied", rs.getBoolean("mfa_satisfied"));
+            return m;
+          },
+          principal.accountId(),
+          clock.instant());
+    }
+    return jdbc.query(
+        """
+        SELECT session_id, user_agent, created_at, last_used_at, expires_at, mfa_satisfied
+        FROM auth_session
+        WHERE student_id = ? AND revoked_at IS NULL AND expires_at > ?
+        ORDER BY last_used_at DESC
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("sessionId", rs.getObject("session_id"));
+          m.put("userAgent", rs.getString("user_agent"));
+          m.put("createdAt", rs.getTimestamp("created_at"));
+          m.put("lastUsedAt", rs.getTimestamp("last_used_at"));
+          m.put("expiresAt", rs.getTimestamp("expires_at"));
+          m.put("mfaSatisfied", rs.getBoolean("mfa_satisfied"));
+          return m;
+        },
+        principal.studentId(),
+        clock.instant());
+  }
+
+  @Transactional
+  public void revokeSession(AccountPrincipal principal, UUID sessionId) {
+    int updated;
+    if (principal.accountId() != null) {
+      updated = jdbc.update(
+          "UPDATE auth_session SET revoked_at = ? WHERE session_id = ? AND account_id = ? AND revoked_at IS NULL",
+          clock.instant(),
+          sessionId,
+          principal.accountId());
+    } else {
+      updated = jdbc.update(
+          "UPDATE auth_session SET revoked_at = ? WHERE session_id = ? AND student_id = ? AND revoked_at IS NULL",
+          clock.instant(),
+          sessionId,
+          principal.studentId());
+    }
+    if (updated == 0) {
+      throw AppException.notFound("Session not found");
+    }
+  }
 
   @Transactional
   public AuthDtos.MfaEnrollConfirmResponse regenerateRecoveryCodes(UUID accountId) {

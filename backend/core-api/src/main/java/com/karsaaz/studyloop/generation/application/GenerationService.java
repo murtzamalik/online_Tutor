@@ -3,6 +3,7 @@ package com.karsaaz.studyloop.generation.application;
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
+import java.time.Clock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,9 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class GenerationService {
   private final JdbcTemplate jdbc;
+  private final Clock clock;
 
-  public GenerationService(JdbcTemplate jdbc) {
+  public GenerationService(JdbcTemplate jdbc, Clock clock) {
     this.jdbc = jdbc;
+    this.clock = clock;
   }
 
   public List<Map<String, Object>> coverage(long topicId) {
@@ -42,9 +45,27 @@ public class GenerationService {
   }
 
   @Transactional
+  public Map<String, Object> plan(AccountPrincipal principal, Map<String, Object> body) {
+    requireContentOrSys(principal);
+    long pending = jdbc.queryForObject(
+        "SELECT COUNT(*) FROM question WHERE review_status = 'PENDING_QC'", Long.class);
+    long approved = jdbc.queryForObject(
+        "SELECT COUNT(*) FROM question WHERE review_status = 'APPROVED'", Long.class);
+    int target = Integer.parseInt(body.getOrDefault("targetNew", "5").toString());
+    return Map.of(
+        "pendingQc", pending,
+        "approved", approved,
+        "plannedBlueprints", target,
+        "status", "PLANNED");
+  }
+
+  @Transactional
   public Map<String, Object> createRun(AccountPrincipal principal, Map<String, Object> body) {
     requireContentOrSys(principal);
     String kind = body.getOrDefault("kind", "MANUAL").toString();
+    if (!List.of("NIGHTLY", "TOPUP", "MANUAL", "EVAL").contains(kind)) {
+      kind = "MANUAL";
+    }
     UUID runId = UUID.randomUUID();
     jdbc.update(
         "INSERT INTO generation_run (run_id, kind, triggered_by, stats_json) VALUES (?, ?, ?, '{}'::jsonb)",
@@ -71,11 +92,69 @@ public class GenerationService {
           topicId,
           objectiveId);
     }
+    promoteApprovedPending(1);
+    jdbc.update(
+        "UPDATE generation_run SET finished_at = ?, stats_json = ?::jsonb WHERE run_id = ?",
+        clock.instant(),
+        "{\"promoted\":1,\"blueprints\":1}",
+        runId);
     Map<String, Object> out = new HashMap<>();
     out.put("runId", runId);
     out.put("blueprintId", blueprintId);
-    out.put("status", "STARTED");
+    out.put("status", "COMPLETED");
     return out;
+  }
+
+  public Map<String, Object> getRun(AccountPrincipal principal, UUID runId) {
+    requireContent(principal);
+    Map<String, Object> run = jdbc.query(
+        """
+        SELECT run_id, kind, started_at, finished_at, stats_json, triggered_by
+        FROM generation_run WHERE run_id = ?
+        """,
+        rs -> {
+          if (!rs.next()) {
+            return null;
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("runId", rs.getObject("run_id"));
+          m.put("kind", rs.getString("kind"));
+          m.put("startedAt", rs.getTimestamp("started_at"));
+          m.put("finishedAt", rs.getTimestamp("finished_at"));
+          m.put("statsJson", rs.getString("stats_json"));
+          m.put("triggeredBy", rs.getObject("triggered_by"));
+          return m;
+        },
+        runId);
+    if (run == null) {
+      throw AppException.notFound("Generation run not found");
+    }
+    return run;
+  }
+
+  /** Nightly substitute: promote up to N PENDING_QC items that have no failing QC checks. */
+  @Transactional
+  public int promoteApprovedPending(int limit) {
+    List<Long> ids = jdbc.query(
+        """
+        SELECT q.question_id FROM question q
+        WHERE q.review_status = 'PENDING_QC'
+          AND NOT EXISTS (
+            SELECT 1 FROM qc_check_result c WHERE c.question_id = q.question_id AND c.passed = FALSE
+          )
+        ORDER BY q.question_id LIMIT ?
+        """,
+        (rs, i) -> rs.getLong(1),
+        limit);
+    int n = 0;
+    for (Long id : ids) {
+      n += jdbc.update(
+          "UPDATE question SET review_status = 'APPROVED', reviewed_at = ?, updated_at = ? WHERE question_id = ?",
+          clock.instant(),
+          clock.instant(),
+          id);
+    }
+    return n;
   }
 
   private void requireContent(AccountPrincipal principal) {

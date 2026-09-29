@@ -31,6 +31,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/api/v1/catalog/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/legal/**").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/v1/cookie-consent").permitAll()
+            .requestMatchers("/api/v1/marketing/**").permitAll()
             .requestMatchers(
                 "/api/v1/auth/register-parent",
                 "/api/v1/auth/verify-email",

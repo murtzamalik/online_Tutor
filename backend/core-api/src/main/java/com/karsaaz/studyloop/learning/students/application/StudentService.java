@@ -223,6 +223,116 @@ public class StudentService {
     return dailyGoalSummary(principal, sid);
   }
 
+  @Transactional
+  public Map<String, Object> patchStudent(AccountPrincipal principal, UUID studentId, Map<String, Object> body) {
+    access.assertParentOwns(principal, studentId);
+    if (body.get("displayName") != null) {
+      jdbc.update(
+          "UPDATE student_profile SET display_name = ? WHERE student_id = ?",
+          body.get("displayName").toString(),
+          studentId);
+    }
+    if (body.get("yearGroup") != null) {
+      jdbc.update(
+          "UPDATE student_profile SET year_group = ? WHERE student_id = ?",
+          body.get("yearGroup").toString(),
+          studentId);
+    }
+    if (body.get("avatarKey") != null) {
+      jdbc.update(
+          "UPDATE student_profile SET avatar_key = ? WHERE student_id = ?",
+          body.get("avatarKey").toString(),
+          studentId);
+    }
+    return getStudent(principal, studentId);
+  }
+
+  @Transactional
+  public Map<String, Object> patchEnrolment(
+      AccountPrincipal principal, UUID enrolmentId, Map<String, Object> body) {
+    UUID studentId = jdbc.query(
+        "SELECT student_id FROM student_enrolment WHERE enrolment_id = ?",
+        rs -> rs.next() ? (UUID) rs.getObject(1) : null,
+        enrolmentId);
+    if (studentId == null) {
+      throw AppException.notFound("Enrolment not found");
+    }
+    access.assertParentOrStudent(principal, studentId);
+    if (body.get("goalType") != null) {
+      jdbc.update(
+          "UPDATE student_enrolment SET goal_type = ? WHERE enrolment_id = ?",
+          body.get("goalType").toString(),
+          enrolmentId);
+    }
+    if (body.get("targetGrade") != null) {
+      access.assertParentOwns(principal, studentId);
+      jdbc.update(
+          "UPDATE student_enrolment SET target_grade = ? WHERE enrolment_id = ?",
+          body.get("targetGrade").toString(),
+          enrolmentId);
+    }
+    if (body.get("examDate") != null) {
+      jdbc.update(
+          "UPDATE student_enrolment SET exam_date = ?::date WHERE enrolment_id = ?",
+          body.get("examDate").toString(),
+          enrolmentId);
+    }
+    if (body.get("goalDetailJson") != null) {
+      try {
+        String json = body.get("goalDetailJson") instanceof String s
+            ? s
+            : new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(body.get("goalDetailJson"));
+        jdbc.update(
+            "UPDATE student_enrolment SET goal_detail_json = ?::jsonb WHERE enrolment_id = ?",
+            json,
+            enrolmentId);
+      } catch (Exception e) {
+        throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "Invalid goalDetailJson");
+      }
+    }
+    return jdbc.query(
+        """
+        SELECT enrolment_id, student_id, specification_id, tier, goal_type, target_grade, exam_date, status
+        FROM student_enrolment WHERE enrolment_id = ?
+        """,
+        rs -> {
+          if (!rs.next()) {
+            throw AppException.notFound("Enrolment not found");
+          }
+          Map<String, Object> m = new HashMap<>();
+          m.put("enrolmentId", rs.getObject("enrolment_id"));
+          m.put("studentId", rs.getObject("student_id"));
+          m.put("specificationId", rs.getLong("specification_id"));
+          m.put("tier", rs.getString("tier"));
+          m.put("goalType", rs.getString("goal_type"));
+          m.put("targetGrade", rs.getString("target_grade"));
+          m.put("examDate", rs.getDate("exam_date"));
+          m.put("status", rs.getString("status"));
+          return m;
+        },
+        enrolmentId);
+  }
+
+  @Transactional
+  public Map<String, Object> putDailyGoal(AccountPrincipal principal, UUID studentId, Map<String, Object> body) {
+    UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudent(principal, sid);
+    short target = Short.parseShort(body.getOrDefault("targetQuestions", "10").toString());
+    boolean enabled = body.get("enabled") == null || Boolean.TRUE.equals(body.get("enabled"))
+        || "true".equalsIgnoreCase(String.valueOf(body.get("enabled")));
+    jdbc.update(
+        """
+        INSERT INTO daily_goal (student_id, target_questions, enabled)
+        VALUES (?, ?, ?)
+        ON CONFLICT (student_id) DO UPDATE SET target_questions = EXCLUDED.target_questions,
+          enabled = EXCLUDED.enabled, updated_at = now()
+        """,
+        sid,
+        target,
+        enabled);
+    return dailyGoalSummary(principal, sid);
+  }
+
   private Map<String, Object> dailyGoalSummary(AccountPrincipal principal, UUID sid) {
     LocalDate today = LocalDate.now(clock);
     return jdbc.query(

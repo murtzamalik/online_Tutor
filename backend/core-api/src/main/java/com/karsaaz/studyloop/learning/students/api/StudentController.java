@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -89,5 +90,32 @@ public class StudentController {
   public Map<String, Object> dailyGoal(
       @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
     return studentService.dailyGoal(principal, studentId);
+  }
+
+  @PatchMapping("/students/{studentId}")
+  @CatalogueRoles(id = "STU-03", roles = "PAR")
+  public Map<String, Object> patchStudent(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID studentId,
+      @RequestBody Map<String, Object> body) {
+    return studentService.patchStudent(principal, studentId, body);
+  }
+
+  @PatchMapping("/enrolments/{enrolmentId}")
+  @CatalogueRoles(id = "STU-08", roles = "PAR,STU")
+  public Map<String, Object> patchEnrolment(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID enrolmentId,
+      @RequestBody Map<String, Object> body) {
+    return studentService.patchEnrolment(principal, enrolmentId, body);
+  }
+
+  @PutMapping("/students/{studentId}/daily-goal")
+  @CatalogueRoles(id = "STU-14", roles = "PAR,STU")
+  public Map<String, Object> putDailyGoal(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID studentId,
+      @RequestBody Map<String, Object> body) {
+    return studentService.putDailyGoal(principal, studentId, body);
   }
 }
