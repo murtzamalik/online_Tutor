@@ -1,29 +1,117 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Design System & Visual Language §4–8. Tier accent overrides live on [data-tier]. */
 :root {
-  --ink: #14213d;
-  --paper: #f7f4ef;
-  --accent: #0b6e4f;
-  --mist: #d9e2ec;
+  --brand-navy: #1f3864;
+  --brand-teal: #1f7a63;
+  --tier-accent: #1f3864;
 }
 
-body {
-  @apply bg-paper text-ink font-body antialiased;
-  background-image:
-    radial-gradient(circle at top left, rgba(11, 110, 79, 0.08), transparent 40%),
-    linear-gradient(180deg, #fbf8f3 0%, #f0ebe3 100%);
-  min-height: 100vh;
+[data-tier="foundation"] { --tier-accent: #f2994a; }
+[data-tier="advanced"] { --tier-accent: #3b4b66; }
+[data-tier="professional"] { --tier-accent: #1f3864; }
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-paper font-body text-[15px] leading-relaxed text-neutral-900 antialiased;
+    min-height: 100vh;
+    font-feature-settings: "cv11", "ss01";
+  }
+  h1, h2, h3, h4 {
+    @apply text-neutral-900;
+    letter-spacing: -0.011em;
+  }
+  ::selection { background: #e8edf6; }
+  :focus-visible {
+    outline: 2px solid var(--brand-navy);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  input, select, textarea { @apply text-neutral-900; }
+  a { text-underline-offset: 3px; }
+}
+
+@layer components {
+  /* Legacy screen headings ("font-display text-4xl") sit on the H1 scale (§5.2). */
+  .font-display.text-4xl { font-size: 26px; line-height: 1.25; font-weight: 700; }
+  .font-display.text-3xl { font-size: 24px; line-height: 1.25; font-weight: 700; }
+  .font-display.text-2xl { font-size: 21px; line-height: 1.3; font-weight: 600; }
+  .font-display.text-xl { font-size: 18px; line-height: 1.35; font-weight: 600; }
+  .font-display { font-weight: 700; }
+
+  /* Legacy bare inputs/buttons: give them the field/button look until each screen is rebuilt. */
+  main input[type="text"]:not([class*="sl-"]),
+  main input[type="email"]:not([class*="sl-"]),
+  main input[type="password"]:not([class*="sl-"]),
+  main input[type="number"]:not([class*="sl-"]),
+  main input[type="date"]:not([class*="sl-"]),
+  main select:not([class*="sl-"]),
+  main textarea:not([class*="sl-"]) {
+    @apply rounded-md border border-neutral-200 bg-white px-3 py-2 shadow-soft transition-colors duration-fast;
+  }
+  main input:focus, main select:focus, main textarea:focus {
+    @apply border-brand-navy outline-none ring-2 ring-brand-navy/15;
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .skeleton {
+    background: linear-gradient(90deg, #eef1f5 0%, #f7f8fa 50%, #eef1f5 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s linear infinite;
+  }
 }
 
 @keyframes rise-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-rise {
-  animation: rise-in 250ms ease-out both;
+.animate-rise { animation: rise-in 250ms ease-out both; }
+.animate-slide-up { animation: slide-up 200ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Learner accessibility preferences (J-03 / B-09), set on <html> by AppShell and the settings panel. */
+/* Most sizes are px tokens, so scale the content area rather than the root font size. */
+.sl-content { zoom: var(--a11y-text-scale, 1); }
+html[data-dyslexia="1"] body,
+html[data-dyslexia="1"] body * {
+  font-family: "OpenDyslexic", "Comic Sans MS", "Verdana", sans-serif !important;
+  letter-spacing: 0.03em;
+  word-spacing: 0.08em;
+}
+html[data-dyslexia="1"] .katex, html[data-dyslexia="1"] .katex * { font-family: KaTeX_Main, serif !important; }
+html[data-contrast="high"] body { background: #fff; color: #000; }
+html[data-contrast="high"] .text-neutral-400,
+html[data-contrast="high"] .text-neutral-600,
+html[data-contrast="high"] .text-neutral-700 { color: #1a1a1a !important; }
+html[data-contrast="high"] .border-neutral-100,
+html[data-contrast="high"] .border-neutral-200 { border-color: #4a4a4a !important; }
+html[data-contrast="high"] :focus-visible { outline: 3px solid #000 !important; outline-offset: 2px; }
+html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-motion="reduce"] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
 }

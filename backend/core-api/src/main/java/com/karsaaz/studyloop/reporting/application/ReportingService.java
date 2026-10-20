@@ -1,6 +1,8 @@
 package com.karsaaz.studyloop.reporting.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.error.AppException;
+import com.karsaaz.studyloop.gatewayclient.api.GatewayAiSupport;
 import com.karsaaz.studyloop.gatewayclient.api.GatewayClient;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
@@ -13,20 +15,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ReportingService {
+  private static final Logger log = LoggerFactory.getLogger(ReportingService.class);
+
   private final JdbcTemplate jdbc;
   private final StudentAccessHelper access;
   private final GatewayClient gateway;
+  private final GatewayAiSupport ai;
 
-  public ReportingService(JdbcTemplate jdbc, StudentAccessHelper access, GatewayClient gateway) {
+  public ReportingService(
+      JdbcTemplate jdbc, StudentAccessHelper access, GatewayClient gateway, GatewayAiSupport ai) {
     this.jdbc = jdbc;
     this.access = access;
     this.gateway = gateway;
+    this.ai = ai;
   }
 
   public List<Map<String, Object>> getNotificationPreferences(AccountPrincipal principal) {
@@ -105,16 +114,28 @@ public class ReportingService {
     access.assertParentOwns(principal, studentId);
     List<Map<String, Object>> weak = jdbc.query(
         """
-        SELECT topic_id, mastery_probability, mastery_level FROM mastery_state
-        WHERE student_id = ? ORDER BY mastery_probability ASC NULLS LAST LIMIT 5
+        SELECT m.topic_id, m.mastery_probability, m.mastery_level, t.topic_name, t.topic_number
+        FROM mastery_state m JOIN spec_topic t ON t.topic_id = m.topic_id
+        WHERE m.student_id = ? ORDER BY m.mastery_probability ASC NULLS LAST LIMIT 5
         """,
-        (rs, i) -> Map.of(
-            "topicId", rs.getLong(1),
-            "pKnow", rs.getBigDecimal(2),
-            "level", rs.getShort(3)),
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("topicId", rs.getLong(1));
+          m.put("pKnow", rs.getBigDecimal(2));
+          m.put("level", rs.getShort(3));
+          m.put("topicName", rs.getString(4));
+          m.put("topicNumber", rs.getString(5));
+          return m;
+        },
         studentId);
-    return Map.of("studentId", studentId.toString(), "focusTopics", weak, "actions",
-        List.of("Practise weakest topic for 15 minutes", "Review mark scheme on last wrong answer"));
+    String weakest = weak.isEmpty() ? null : String.valueOf(weak.get(0).get("topicName"));
+    boolean allMastered = !weak.isEmpty() && ((Number) weak.get(0).get("level")).intValue() >= 3;
+    List<String> actions = weakest == null
+        ? List.of("Start with a short practice session to find the starting point", "Review the mark scheme on any wrong answer")
+        : allMastered
+            ? List.of("Try a mixed set across all topics to keep them fresh", "Add a new topic or subject when ready")
+            : List.of("Practise “" + weakest + "” for 15 minutes", "Review the mark scheme on the last wrong answer");
+    return Map.of("studentId", studentId.toString(), "focusTopics", weak, "actions", actions);
   }
 
   public Map<String, Object> alerts(AccountPrincipal principal, UUID studentId) {
@@ -158,7 +179,7 @@ public class ReportingService {
         SELECT report_id, week_start, created_at FROM weekly_report
         WHERE student_id = ? ORDER BY week_start DESC LIMIT 12
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "reportId", rs.getObject(1).toString(),
             "weekStart", rs.getDate(2).toString(),
             "createdAt", rs.getTimestamp(3).toString()),
@@ -240,36 +261,51 @@ public class ReportingService {
     return Map.of("deviceId", id.toString());
   }
 
-  @Transactional
+  /** RPT-13 (SYS / owner). The scheduled job calls {@link #runWeeklyReports()} directly. */
+  public Map<String, Object> runWeeklyReports(AccountPrincipal principal) {
+    if (principal == null
+        || (!principal.roles().contains("SYS") && !StudentAccessHelper.hasOwnerRole(principal.roles()))) {
+      throw AppException.forbidden("System access required");
+    }
+    return runWeeklyReports();
+  }
+
+  /**
+   * One report per active student for last week. Each student commits on its own, so one AI failure
+   * does not roll back the others; the code-written fallback text is used and the failure is logged.
+   */
   public Map<String, Object> runWeeklyReports() {
     LocalDate weekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).minusWeeks(1);
     List<UUID> students = jdbc.query(
         "SELECT student_id FROM student_profile WHERE status = 'ACTIVE'",
         (rs, i) -> (UUID) rs.getObject(1));
     int created = 0;
+    int aiFailures = 0;
     for (UUID sid : students) {
       Integer exists = jdbc.queryForObject(
           "SELECT COUNT(*) FROM weekly_report WHERE student_id = ? AND week_start = ?",
           Integer.class, sid, Date.valueOf(weekStart));
       if (exists != null && exists > 0) continue;
-      int answered = jdbc.queryForObject(
-          """
-          SELECT COUNT(*) FROM student_response
-          WHERE student_id = ? AND responded_at >= ? AND responded_at < ?
-          """,
-          Integer.class, sid, Timestamp.valueOf(weekStart.atStartOfDay()),
-          Timestamp.valueOf(weekStart.plusWeeks(1).atStartOfDay()));
-      // AI rationale via gateway — no PII (D-15): only aggregates
+      Map<String, Object> facts = weeklyFacts(sid, weekStart);
+      int answered = ((Number) facts.get("answers")).intValue();
+      String displayName = jdbc.query(
+          "SELECT display_name FROM student_profile WHERE student_id = ?",
+          rs -> rs.next() ? rs.getString(1) : null,
+          sid);
       String narrativeParent = "This week: " + answered + " answers practised. Keep a steady cadence.";
       String narrativeStudent = "Nice work — you answered " + answered + " questions. Pick one weak topic next.";
       try {
-        Map<?, ?> gw = gateway.run("P-RP-01", Map.of(
-            "answers_count", answered,
-            "week_start", weekStart.toString()), null);
-        if (gw.get("content") != null) {
-          narrativeParent = gw.get("content").toString();
+        // Aggregates only (D-15): no name, id or free text goes to the model.
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("facts", facts.get("items"));
+        vars.put("goal_context", goalContext(sid));
+        Map<String, Object> result = ai.requireResult(gateway.run("P-RP-01", vars, null), "P-RP-01");
+        if (!GatewayAiSupport.cannotComplete(result)) {
+          narrativeParent = withChildName(reportMarkdown(result), displayName);
         }
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        aiFailures++;
+        log.warn("Weekly report narrative failed for student {}: {}", sid, e.getClass().getSimpleName());
       }
       UUID reportId = UUID.randomUUID();
       jdbc.update(
@@ -278,7 +314,7 @@ public class ReportingService {
           VALUES (?,?,?,?::jsonb,?,?)
           """,
           reportId, sid, Date.valueOf(weekStart),
-          "{\"answers\":" + answered + "}",
+          ai.toJson(facts),
           narrativeParent, narrativeStudent);
       UUID parentId = jdbc.query(
           "SELECT parent_account_id FROM parent_student_link WHERE student_id = ? LIMIT 1",
@@ -294,7 +330,110 @@ public class ReportingService {
       }
       created++;
     }
-    return Map.of("created", created, "weekStart", weekStart.toString());
+    return Map.of("created", created, "aiFailures", aiFailures, "weekStart", weekStart.toString());
+  }
+
+  /** Code-computed weekly facts; {@code items} carries the fact ids the narrative must cite. */
+  private Map<String, Object> weeklyFacts(UUID sid, LocalDate weekStart) {
+    Timestamp from = Timestamp.valueOf(weekStart.atStartOfDay());
+    Timestamp to = Timestamp.valueOf(weekStart.plusWeeks(1).atStartOfDay());
+    Map<String, Object> totals = jdbc.queryForMap(
+        """
+        SELECT COUNT(*) AS answers,
+               COUNT(*) FILTER (WHERE is_correct) AS correct,
+               COUNT(DISTINCT CAST(responded_at AS date)) AS active_days
+        FROM student_response
+        WHERE student_id = ? AND responded_at >= ? AND responded_at < ?
+        """,
+        sid, from, to);
+    int answers = ((Number) totals.get("answers")).intValue();
+    int correct = ((Number) totals.get("correct")).intValue();
+    int activeDays = ((Number) totals.get("active_days")).intValue();
+    List<String> topics = jdbc.query(
+        """
+        SELECT t.topic_name FROM student_response r
+        JOIN question q ON q.question_id = r.question_id
+        JOIN spec_topic t ON t.topic_id = q.topic_id
+        WHERE r.student_id = ? AND r.responded_at >= ? AND r.responded_at < ?
+        GROUP BY t.topic_name ORDER BY COUNT(*) DESC LIMIT 5
+        """,
+        (rs, i) -> rs.getString(1),
+        sid, from, to);
+    List<String> weakest = jdbc.query(
+        """
+        SELECT t.topic_name FROM mastery_state m JOIN spec_topic t ON t.topic_id = m.topic_id
+        WHERE m.student_id = ? AND m.model_type = 'BKT'
+        ORDER BY m.mastery_probability ASC LIMIT 3
+        """,
+        (rs, i) -> rs.getString(1),
+        sid);
+    List<Map<String, Object>> items = new java.util.ArrayList<>();
+    items.add(Map.of("id", "F1", "fact", "answers_this_week", "value", answers));
+    items.add(Map.of("id", "F2", "fact", "accuracy_percent", "value",
+        answers == 0 ? 0L : Math.round(100.0 * correct / answers)));
+    items.add(Map.of("id", "F3", "fact", "active_days", "value", activeDays));
+    items.add(Map.of("id", "F4", "fact", "topics_practised", "value", topics));
+    items.add(Map.of("id", "F5", "fact", "weakest_topics", "value", weakest));
+    Map<String, Object> facts = new HashMap<>();
+    facts.put("answers", answers);
+    facts.put("correct", correct);
+    facts.put("activeDays", activeDays);
+    facts.put("items", items);
+    return facts;
+  }
+
+  private Map<String, Object> goalContext(UUID sid) {
+    Map<String, Object> goal = new HashMap<>();
+    jdbc.query(
+        """
+        SELECT goal_type, target_grade, exam_date FROM student_enrolment
+        WHERE student_id = ? AND status = 'ACTIVE' ORDER BY created_at DESC LIMIT 1
+        """,
+        rs -> {
+          goal.put("goal_type", rs.getString("goal_type"));
+          goal.put("target_grade", rs.getString("target_grade"));
+          Date exam = rs.getDate("exam_date");
+          // Relative days only — the model does not need the date itself.
+          goal.put(
+              "exam_in_days",
+              exam == null ? null : java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), exam.toLocalDate()));
+        },
+        sid);
+    return goal;
+  }
+
+  /** Renders the {@code report_narrative} schema output as markdown. */
+  static String reportMarkdown(Map<String, Object> result) {
+    StringBuilder md = new StringBuilder();
+    Object headline = result.get("headline");
+    if (headline != null && !headline.toString().isBlank()) {
+      md.append("## ").append(headline).append("\n\n");
+    }
+    if (result.get("paragraphs") instanceof List<?> paragraphs) {
+      for (Object p : paragraphs) {
+        md.append(p).append("\n\n");
+      }
+    }
+    appendSection(md, "Wins", result.get("wins"));
+    appendSection(md, "Focus areas", result.get("focus_areas"));
+    appendSection(md, "How you can help", result.get("suggested_parent_actions"));
+    return md.toString().trim();
+  }
+
+  private static void appendSection(StringBuilder md, String heading, Object items) {
+    if (items instanceof List<?> list && !list.isEmpty()) {
+      md.append("**").append(heading).append("**\n\n");
+      for (Object o : list) {
+        md.append("- ").append(o).append("\n");
+      }
+      md.append("\n");
+    }
+  }
+
+  /** D-15: the model only ever sees {{child_name}}; the real name is filled in by code afterwards. */
+  static String withChildName(String text, String displayName) {
+    String name = displayName == null || displayName.isBlank() ? "Your child" : displayName;
+    return text.replace("{{child_name}}", name);
   }
 
   public Map<String, Object> aiTranscripts(AccountPrincipal principal, UUID studentId) {

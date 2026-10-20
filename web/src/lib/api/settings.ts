@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiFetch } from "./client";
+import { apiFetch, EmptyResponseSchema } from "./client";
 import { requireToken } from "./auth-extra";
 
 export function patchMe(body: { displayName?: string; locale?: string; marketingOptIn?: boolean }) {
@@ -16,7 +16,7 @@ export function changePassword(currentPassword: string, newPassword: string) {
     method: "POST",
     token: requireToken(),
     body: JSON.stringify({ currentPassword, newPassword }),
-    schema: z.void().or(z.undefined()).or(z.null()),
+    schema: EmptyResponseSchema,
   });
 }
 
@@ -32,7 +32,7 @@ export function revokeSession(sessionId: string) {
   return apiFetch(`/me/sessions/${sessionId}`, {
     method: "DELETE",
     token: requireToken(),
-    schema: z.void().or(z.undefined()).or(z.null()),
+    schema: EmptyResponseSchema,
   });
 }
 

@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.billing.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karsaaz.studyloop.billing.domain.DunningStateMachine;
 import com.karsaaz.studyloop.billing.domain.EntitlementMath;
@@ -96,7 +97,13 @@ public class BillingService {
     }
     List<EntitlementMath.Line> lines = new ArrayList<>();
     Set<UUID> children = new HashSet<>();
+    if (items == null || items.isEmpty()) {
+      throw AppException.badRequest("VALIDATION_FAILED", "items required");
+    }
     for (Map<String, Object> it : items) {
+      if (it.get("studentId") == null || it.get("subjectId") == null || it.get("qualificationId") == null) {
+        throw AppException.badRequest("VALIDATION_FAILED", "studentId, subjectId, qualificationId required on each item");
+      }
       UUID studentId = UUID.fromString(it.get("studentId").toString());
       if (principal != null && principal.accountId() != null && StudentAccessHelper.hasParentRole(principal.roles())) {
         access.assertParentOwns(principal, studentId);
@@ -142,8 +149,8 @@ public class BillingService {
     ensureEmailVerified(principal.accountId());
     long planId = longVal(body.get("planId"));
     String cycle = str(body, "billingCycle", "MONTHLY");
-    List<Map<String, Object>> items = (List<Map<String, Object>>) body.getOrDefault("items", List.of());
-    if (items.isEmpty()) {
+    List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("items");
+    if (items == null || items.isEmpty()) {
       throw AppException.badRequest("VALIDATION_FAILED", "items required");
     }
     String customerId = ensureBillingCustomer(principal);
@@ -175,7 +182,14 @@ public class BillingService {
         Timestamp.from(now), Timestamp.from(trialEnd), Timestamp.from(now), Timestamp.from(trialEnd),
         siblingPct, promoId);
     for (Map<String, Object> it : items) {
-      UUID studentId = UUID.fromString(it.get("studentId").toString());
+      if (it == null) {
+        throw AppException.badRequest("VALIDATION_FAILED", "items entries must be objects");
+      }
+      Object studentRaw = it.get("studentId");
+      if (studentRaw == null) {
+        throw AppException.badRequest("VALIDATION_FAILED", "studentId required");
+      }
+      UUID studentId = UUID.fromString(studentRaw.toString());
       access.assertParentOwns(principal, studentId);
       long subjectId = longVal(it.get("subjectId"));
       long qualificationId = longVal(it.get("qualificationId"));
@@ -231,7 +245,10 @@ public class BillingService {
         },
         principal.accountId());
     if (rows.isEmpty()) {
-      return Map.of("subscription", null, "items", List.of());
+      Map<String, Object> empty = new HashMap<>();
+      empty.put("subscription", null);
+      empty.put("items", List.of());
+      return empty;
     }
     UUID sid = UUID.fromString(rows.get(0).get("subscriptionId").toString());
     List<Map<String, Object>> items = jdbc.query(
@@ -239,7 +256,7 @@ public class BillingService {
         SELECT student_id, subject_id, qualification_id FROM subscription_item
         WHERE subscription_id = ? AND removed_at IS NULL
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "studentId", rs.getObject("student_id").toString(),
             "subjectId", rs.getLong("subject_id"),
             "qualificationId", rs.getLong("qualification_id")),
@@ -300,10 +317,11 @@ public class BillingService {
     if (s == null) {
       throw AppException.notFound("No subscription");
     }
-    return Map.of(
-        "endsAt", s.get("currentPeriodEnd"),
-        "keepsAccessUntil", s.get("currentPeriodEnd"),
-        "message", "Access continues until the end of the current period. No dark patterns.");
+    Map<String, Object> preview = new HashMap<>();
+    preview.put("endsAt", s.get("currentPeriodEnd"));
+    preview.put("keepsAccessUntil", s.get("currentPeriodEnd"));
+    preview.put("message", "Access continues until the end of the current period. No dark patterns.");
+    return preview;
   }
 
   @Transactional
@@ -410,7 +428,9 @@ public class BillingService {
         },
         principal.accountId());
     if (rows.isEmpty()) {
-      return Map.of("dunning", null);
+      Map<String, Object> empty = new HashMap<>();
+      empty.put("dunning", null);
+      return empty;
     }
     return Map.of("dunning", rows.get(0));
   }
@@ -693,6 +713,9 @@ public class BillingService {
   public Map<String, Object> createMicroSubscription(AccountPrincipal principal, Map<String, Object> body) {
     access.requireParent(principal);
     flags.require("micro_subscriptions", "Micro-subscriptions are flag-off");
+    if (body == null || body.get("studentId") == null || body.get("subjectId") == null) {
+      throw AppException.badRequest("VALIDATION_FAILED", "studentId and subjectId required");
+    }
     UUID studentId = UUID.fromString(body.get("studentId").toString());
     access.assertParentOwns(principal, studentId);
     long subjectId = longVal(body.get("subjectId"));
@@ -736,7 +759,10 @@ public class BillingService {
         """,
         rs -> {
           if (!rs.next()) {
-            return Map.of("code", null, "status", "NONE");
+            Map<String, Object> none = new HashMap<>();
+            none.put("code", null);
+            none.put("status", "NONE");
+            return none;
           }
           Map<String, Object> m = new HashMap<>();
           m.put("referralId", rs.getObject("referral_id").toString());

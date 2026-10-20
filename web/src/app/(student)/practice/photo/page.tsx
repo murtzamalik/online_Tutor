@@ -1,62 +1,61 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { AppNav } from "@/components/shell/AppNav";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
-import * as api from "@/lib/api/w3";
-import { getSampleQuestion, answerSampleQuestion, listOutcomes } from "@/lib/api/marketing";
-import { startPractice } from "@/lib/api/practice";
 
-/** D-06 — Photograph paper */
+import { useEffect, useRef, useState } from "react";
+import { Camera, CheckCircle } from "@phosphor-icons/react";
+import { AppPage } from "@/components/ui/AppPage";
+import { ButtonLink } from "@/components/ui/Button";
+import { Badge, Card, PageHeader } from "@/components/ui/primitives";
+import { ForbiddenState, LoadingState } from "@/components/ui/states";
+import { ApiError } from "@/lib/api/client";
+import * as api from "@/lib/api/w3";
+
+type PhotoState = { status: "ready" } | { status: "disabled" } | { status: "forbidden"; message: string };
+
+/** D-06 — Photograph paper (PRA-06 answers FEATURE_DISABLED until the camera pipeline ships). */
 export default function Page() {
-  const params = useParams() as Record<string, string>;
-  const [data, setData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const token = typeof window !== "undefined" ? sessionStorage.getItem("accessToken") ?? undefined : undefined;
-  const studentId = typeof window !== "undefined" ? sessionStorage.getItem("studentId") : null;
-  const childId = typeof window !== "undefined" ? (sessionStorage.getItem("childId") || params.id || studentId) : params.id;
+  const [state, setState] = useState<PhotoState | null>(null);
+  const checked = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-
-        try {
-          await api.photoPractice({}, token);
-          if (!cancelled) setData({ ok: true });
-        } catch (e: any) {
-          if (!cancelled) {
-            setData({
-              feature: "FEATURE_DISABLED",
-              message: e?.message ?? "Camera pipeline not ready",
-              alternative: "/practice",
-            });
-          }
-        }
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Could not load");
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [token, studentId, childId, params.mockId, params.sessionId, params.responseId, params.questionId, params.tutorSessionId, params.deckId, params.topicId, params.reportId, params.id]);
+    if (checked.current) return;
+    checked.current = true;
+    const token = sessionStorage.getItem("accessToken") ?? undefined;
+    api
+      .photoPractice({}, token)
+      .then(() => setState({ status: "ready" }))
+      .catch((e: unknown) => {
+        if (e instanceof ApiError && e.status === 403) setState({ status: "forbidden", message: e.message });
+        else setState({ status: "disabled" });
+      });
+  }, []);
 
   return (
-    <div>
-      <AppNav displayName="Study Loop" />
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="font-display text-4xl">Photograph paper</h1>
-        {!data && !error && <div className="mt-8"><LoadingState /></div>}
-        {error && <div className="mt-8"><ErrorState body={error} /></div>}
-        {data && (
-          <div className="mt-8 space-y-4 animate-rise">
-            <EmptyState title="Photo scoring unavailable" body="PRA-06 is FEATURE_DISABLED until the camera pipeline ships. Use typed practice instead." />
-            <Link className="underline" href="/practice">Go to practice</Link>
-            <pre className="overflow-auto rounded border border-mist bg-white/70 p-4 text-sm" aria-live="polite">{JSON.stringify(data, null, 2)}</pre>
+    <AppPage width="content">
+      <PageHeader eyebrow="Practice" title="Photo marking" description="Snap a handwritten answer and get it marked against the mark scheme." />
+
+      {!state ? (
+        <LoadingState label="Checking photo marking…" />
+      ) : state.status === "forbidden" ? (
+        <ForbiddenState body={state.message || "Photo marking isn’t available on this account."} />
+      ) : (
+        <Card className="animate-rise p-6 text-center sm:p-10">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-neutral-100 text-neutral-700">
+            {state.status === "ready" ? <CheckCircle size={26} weight="fill" className="text-brand-teal" /> : <Camera size={26} />}
+          </span>
+          <div className="mt-4 flex justify-center">
+            <Badge tone={state.status === "ready" ? "teal" : "neutral"}>{state.status === "ready" ? "Available" : "Coming soon"}</Badge>
           </div>
-        )}
-        <p className="mt-6 text-sm"><Link className="underline" href="/home">Back</Link></p>
-      </main>
-    </div>
+          <h2 className="mt-3 text-h2">{state.status === "ready" ? "Photo marking is ready" : "Photo marking isn’t ready yet"}</h2>
+          <p className="mx-auto mt-1.5 max-w-md text-neutral-600">
+            {state.status === "ready"
+              ? "Your photo was accepted."
+              : "We’re still building the camera step. Until then, type your answers and they’re marked straight away."}
+          </p>
+          <div className="mt-6 flex justify-center">
+            <ButtonLink href="/practice">Practise by typing</ButtonLink>
+          </div>
+        </Card>
+      )}
+    </AppPage>
   );
 }

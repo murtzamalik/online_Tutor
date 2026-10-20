@@ -74,7 +74,8 @@ public class TutorController {
 
   @PostMapping("/tutor/rescue")
   @CatalogueRoles(id = "TUT-08", roles = "SYS")
-  public Map<String, Object> rescue(@RequestBody Map<String, Object> body) {
-    return tutor.rescue(body);
+  public Map<String, Object> rescue(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, Object> body) {
+    return tutor.rescue(principal, body);
   }
 }

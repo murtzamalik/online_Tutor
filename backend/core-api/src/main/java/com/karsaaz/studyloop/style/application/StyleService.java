@@ -1,11 +1,14 @@
 package com.karsaaz.studyloop.style.application;
 
 import com.karsaaz.studyloop.common.error.AppException;
+import com.karsaaz.studyloop.gatewayclient.api.GatewayAiSupport;
+import com.karsaaz.studyloop.gatewayclient.api.GatewayClient;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,9 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class StyleService {
   private final JdbcTemplate jdbc;
+  private final GatewayClient gateway;
+  private final GatewayAiSupport ai;
 
-  public StyleService(JdbcTemplate jdbc) {
+  public StyleService(JdbcTemplate jdbc, GatewayClient gateway, GatewayAiSupport ai) {
     this.jdbc = jdbc;
+    this.gateway = gateway;
+    this.ai = ai;
   }
 
   public List<Map<String, Object>> list(AccountPrincipal principal) {
@@ -99,15 +106,77 @@ public class StyleService {
   @Transactional
   public Map<String, Object> derive(AccountPrincipal principal, long specificationId) {
     requireContent(principal);
-    put(
-        principal,
-        specificationId,
-        Map.of(
-            "questionWordingNotes", "Derived stub (W1) — run STYLE-01 via gateway in later wave",
-            "markSchemeFormatNotes", "Derived stub mark-scheme notes",
-            "typicalPaperStructureNotes", "Derived stub paper structure"));
+    List<String> samples =
+        jdbc.query(
+            """
+            SELECT left(ppi.raw_text, 800)
+            FROM past_paper_item ppi
+            JOIN past_paper pp ON pp.paper_id = ppi.paper_id
+            WHERE pp.specification_id = ?
+              AND ppi.raw_text IS NOT NULL
+              AND length(ppi.raw_text) > 40
+            ORDER BY ppi.item_id DESC
+            LIMIT 30
+            """,
+            (rs, i) -> rs.getString(1),
+            specificationId);
+    if (samples.isEmpty()) {
+      throw AppException.badRequest(
+          com.karsaaz.studyloop.common.error.ProblemCode.VALIDATION_FAILED,
+          "No ingested past-paper items available to derive style for specification " + specificationId);
+    }
+    Map<?, ?> gw =
+        gateway.run(
+            "P-IN-05",
+            Map.of(
+                "sample_items", samples.stream().collect(Collectors.joining("\n---\n")),
+                "spec_notation", "Use board conventions from the samples."),
+            "schemas/style_profile.schema.json");
+    Map<String, Object> result = ai.requireResult(gw, "P-IN-05");
+    if ("cannot_complete".equalsIgnoreCase(ai.asText(result.get("status")))) {
+      throw AppException.badRequest(
+          com.karsaaz.studyloop.common.error.ProblemCode.VALIDATION_FAILED,
+          "P-IN-05 cannot_complete: " + result.getOrDefault("reason", "unknown"));
+    }
+    String wording =
+        "Command words: "
+            + ai.toJson(result.get("command_word_usage"))
+            + "\nContexts: "
+            + ai.toJson(result.get("typical_context_types"))
+            + "\nFixed phrases: "
+            + ai.toJson(result.get("fixed_phrases"));
+    String schemeNotes =
+        ai.asText(result.get("six_mark_scheme_format"))
+            + "\nNotation: "
+            + ai.toJson(result.get("notation"));
+    String structure = ai.toJson(result.get("paper_types"));
+    Boolean stateSymbols = null;
+    if (result.get("notation") instanceof Map<?, ?> notation) {
+      Object ss = notation.get("state_symbols_required");
+      if (ss instanceof Boolean b) {
+        stateSymbols = b;
+      }
+    }
+    Map<String, Object> body = new HashMap<>();
+    body.put("questionWordingNotes", wording);
+    body.put("markSchemeFormatNotes", schemeNotes);
+    body.put("typicalPaperStructureNotes", structure);
+    if (stateSymbols != null) {
+      body.put("stateSymbolsRequired", stateSymbols);
+    }
+    put(principal, specificationId, body);
     jdbc.update(
-        "UPDATE board_style_profile SET derived_by_prompt_version = 'W1-STUB' WHERE specification_id = ?",
+        """
+        UPDATE board_style_profile
+        SET derived_by_prompt_version = 'P-IN-05',
+            command_words_json = ?::jsonb,
+            fixed_phrases_json = ?::jsonb,
+            units_and_notation_json = ?::jsonb
+        WHERE specification_id = ?
+        """,
+        ai.toJson(result.get("command_word_usage")),
+        ai.toJson(result.get("fixed_phrases")),
+        ai.toJson(result.get("notation")),
         specificationId);
     return get(principal, specificationId);
   }

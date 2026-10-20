@@ -1,0 +1,32 @@
+{
+  "status": "ok",
+  "topic_ref": "4.1.1",
+  "title": "Atomic structure",
+  "sections": [
+    {
+      "heading": "Protons, neutrons and electrons",
+      "body_md": "Atoms contain protons (+1), neutrons (0) and electrons (-1).",
+      "key_terms": [
+        {
+          "term": "proton",
+          "definition": "Particle in the nucleus with relative charge +1."
+        }
+      ],
+      "diagram_request": {
+        "type": "NONE",
+        "library_id": null
+      }
+    }
+  ],
+  "common_mistakes": [
+    "Saying neutrons are negative."
+  ],
+  "exam_tips": [
+    "Learn the relative charges and masses table."
+  ],
+  "grounding": {
+    "spec_phrases": [
+      "relative charges"
+    ]
+  }
+}

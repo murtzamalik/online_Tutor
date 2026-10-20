@@ -1,0 +1,81 @@
+{
+  "generated": "2026-10-02T13:19:28.187835+00:00",
+  "studentName": "Jordan Nexus",
+  "studentId": "684816ce-ed8d-45ce-b600-542cf814787c",
+  "loginHandle": "learner-6848-4701",
+  "pictureSequence": [
+    "star",
+    "moon",
+    "book"
+  ],
+  "enrolmentId": "70a01420-f6fb-4dc4-bcae-fef0b1f7508a",
+  "diagnosticRetest": {
+    "diagnosticId": "832ed5ca-4b55-4923-b24e-352a80890025",
+    "theta": 2.8,
+    "recommendedTier": "HIGHER",
+    "topicsSeeded": 2
+  },
+  "wrongAnswersFinal": 0,
+  "masteryElevated": 3,
+  "masteryTopics": 67,
+  "predicted": {
+    "status": "PREDICTED_STUB",
+    "gradeHigh": "6",
+    "studentId": "684816ce-ed8d-45ce-b600-542cf814787c",
+    "gradeLow": "4"
+  },
+  "pass": 8,
+  "fail": 0,
+  "results": [
+    {
+      "area": "PASS",
+      "scenario": "wrong pool cleared",
+      "pass": true,
+      "detail": "remaining=0"
+    },
+    {
+      "area": "PROG",
+      "scenario": "mastery elevated",
+      "pass": true,
+      "detail": "3/67"
+    },
+    {
+      "area": "DIA",
+      "scenario": "diagnostic",
+      "pass": true,
+      "detail": "{'diagnosticId': '832ed5ca-4b55-4923-b24e-352a80890025', 'theta': 2.8, 'recommendedTier': 'HIGHER', 'topicsSeeded': 2}"
+    },
+    {
+      "area": "PAR",
+      "scenario": "voice consent",
+      "pass": true,
+      "detail": "{'voiceConsentId': '3769aef7-c58b-42e0-be1d-4ceebeeea0fa', 'status': 'GRANTED'}"
+    },
+    {
+      "area": "HINT",
+      "scenario": "level 1",
+      "pass": true,
+      "detail": "{'hintText': 'Re-read the question and identify the command word.', 'level': 1}"
+    },
+    {
+      "area": "REV",
+      "scenario": "notes",
+      "pass": true,
+      "detail": "{'note': {'readingLevel': 'GCSE', 'noteId': 1, 'version': 1, 'bodyMd': '# Atomic structure\\n\\n- Atoms have a nucleus of protons and neutrons.\\n- Electrons occupy shells.\\n- Atomic number = protons; ma"
+    },
+    {
+      "area": "REV",
+      "scenario": "cheat-sheet",
+      "pass": true,
+      "detail": "{'topicId': 1, 'sheet': {'contentJson': '{\"sections\": [{\"items\": [\"proton\", \"neutron\", \"electron\", \"isotope\"], \"title\": \"Key terms\"}, {\"items\": [\"Confusing mass number with atomic number\"], \"title\": \""
+    },
+    {
+      "area": "VOICE",
+      "scenario": "start",
+      "pass": true,
+      "detail": "{'mode': 'DISCUSSION', 'voiceSessionId': '48230b70-647f-43d3-ada3-0fb82f3c37a2', 'tutorSessionId': '72dff3dd-8cf2-4798-b61b-eb32bb4f4860', 'wsUrl': '/api/v1/voice/sessions/48230b70-647f-43d3-ada3-0fb8"
+    }
+  ],
+  "learningVerdict": "PASSED",
+  "priorBroadSuite": "123/131 then path fixes + learning loop"
+}

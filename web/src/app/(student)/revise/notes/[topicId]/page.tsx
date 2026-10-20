@@ -1,52 +1,95 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
+
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { AppNav } from "@/components/shell/AppNav";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { AppPage } from "@/components/ui/AppPage";
+import { ButtonLink } from "@/components/ui/Button";
+import { Badge, Card, MasteryBadge, PageHeader } from "@/components/ui/primitives";
+import { EmptyState, LoadingState } from "@/components/ui/states";
+import { Markdown } from "@/components/student/Markdown";
+import { FailureView } from "@/components/student/StudentUI";
+import { TopicNav } from "@/components/student/TopicNav";
+import { useTopic } from "@/components/student/useTopic";
+import { asArray, isRecord, str, toFailure, type LoadFailure } from "@/components/student/studentData";
 import * as api from "@/lib/api/w3";
-import { getSampleQuestion, answerSampleQuestion, listOutcomes } from "@/lib/api/marketing";
-import { startPractice } from "@/lib/api/practice";
+
+/** GET /revision/topics/{id}/notes → { topicId, note: { bodyMd, readingLevel, version } | null, message? }. */
+function readNotes(data: unknown): { bodies: string[]; readingLevel: string } {
+  if (!isRecord(data)) return { bodies: [], readingLevel: "" };
+  const note = isRecord(data.note) ? data.note : null;
+  const direct = str(note?.bodyMd ?? data.bodyMd ?? data.body);
+  const list = asArray(data.items)
+    .filter(isRecord)
+    .map((n) => str(n.bodyMd ?? n.body))
+    .filter(Boolean);
+  return { bodies: direct ? [direct] : list, readingLevel: str(note?.readingLevel) };
+}
+
+const READING_LEVEL: Record<string, string> = { "Y10-11": "GCSE level", "Y12-13": "A-Level" };
 
 /** I-03 — Revision notes */
 export default function Page() {
-  const params = useParams() as Record<string, string>;
-  const [data, setData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const token = typeof window !== "undefined" ? sessionStorage.getItem("accessToken") ?? undefined : undefined;
-  const studentId = typeof window !== "undefined" ? sessionStorage.getItem("studentId") : null;
-  const childId = typeof window !== "undefined" ? (sessionStorage.getItem("childId") || params.id || studentId) : params.id;
+  const params = useParams<{ topicId: string }>();
+  const topic = useTopic(params.topicId);
+  const [data, setData] = useState<unknown>(null);
+  const [failure, setFailure] = useState<LoadFailure | null>(null);
+
+  const load = useCallback(async () => {
+    setFailure(null);
+    setData(null);
+    try {
+      const token = sessionStorage.getItem("accessToken") ?? undefined;
+      const result: unknown = await api.revisionNotes(params.topicId, token);
+      setData(result ?? {});
+    } catch (e: unknown) {
+      setFailure(toFailure(e, "Could not load"));
+    }
+  }, [params.topicId]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
+    void load();
+  }, [load]);
 
-        const result = await api.revisionNotes(params.topicId, token);
-
-        if (!cancelled) setData(result);
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Could not load");
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [token, studentId, childId, params.mockId, params.sessionId, params.responseId, params.questionId, params.tutorSessionId, params.deckId, params.topicId, params.reportId, params.id]);
+  const { bodies, readingLevel } = readNotes(data);
 
   return (
-    <div>
-      <AppNav displayName="Study Loop" />
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="font-display text-4xl">Revision notes</h1>
-        {!data && !error && <div className="mt-8"><LoadingState /></div>}
-        {error && <div className="mt-8"><ErrorState body={error} /></div>}
-        {data && (
-          <div className="mt-8 space-y-4 animate-rise">
-            <p className="text-sm text-ink/70">Wired to live API.</p>
-            <pre className="overflow-auto rounded border border-mist bg-white/70 p-4 text-sm" aria-live="polite">{JSON.stringify(data, null, 2)}</pre>
-          </div>
-        )}
-        <p className="mt-6 text-sm"><Link className="underline" href="/home">Back</Link></p>
-      </main>
-    </div>
+    <AppPage width="content">
+      <PageHeader
+        eyebrow="Revision notes"
+        title={topic?.topicName ?? "Revision notes"}
+        description={topic ? <MasteryBadge value={topic.mastery} /> : undefined}
+        actions={<ButtonLink href="/revise" variant="tertiary" size="sm">All topics</ButtonLink>}
+      />
+      <TopicNav topicId={params.topicId} active="notes" />
+
+      {failure ? (
+        <FailureView failure={failure} onRetry={() => void load()} />
+      ) : data === null ? (
+        <LoadingState lines={8} />
+      ) : bodies.length === 0 ? (
+        <EmptyState
+          title="No notes yet"
+          body="Approved notes for this topic will appear here. Try a quick check in the meantime."
+          action={<ButtonLink href={`/revise/check/${params.topicId}`}>Start 2-minute check</ButtonLink>}
+        />
+      ) : (
+        <div className="animate-rise space-y-4">
+          {readingLevel && (
+            <div>
+              <Badge tone="teal">{READING_LEVEL[readingLevel] ?? readingLevel}</Badge>
+            </div>
+          )}
+          {bodies.map((b, i) => (
+            <Card key={i} className="p-6 sm:p-8">
+              <Markdown source={b} className="text-[16px]" />
+            </Card>
+          ))}
+          <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <p className="font-semibold text-neutral-900">Read it? See what stuck.</p>
+            <ButtonLink href={`/revise/check/${params.topicId}`}>Start 2-minute check</ButtonLink>
+          </Card>
+        </div>
+      )}
+    </AppPage>
   );
 }

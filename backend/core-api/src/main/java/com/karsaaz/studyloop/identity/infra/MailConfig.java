@@ -1,6 +1,7 @@
 package com.karsaaz.studyloop.identity.infra;
 
 import java.util.Properties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,10 +12,12 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 public class MailConfig {
   @Bean
   @ConditionalOnMissingBean(JavaMailSender.class)
-  JavaMailSender javaMailSender() {
+  JavaMailSender javaMailSender(
+      @Value("${spring.mail.host:localhost}") String host,
+      @Value("${spring.mail.port:1025}") int port) {
     JavaMailSenderImpl sender = new JavaMailSenderImpl();
-    sender.setHost("localhost");
-    sender.setPort(1025);
+    sender.setHost(host);
+    sender.setPort(port);
     Properties props = sender.getJavaMailProperties();
     props.put("mail.smtp.auth", "false");
     props.put("mail.smtp.starttls.enable", "false");

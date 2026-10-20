@@ -1,54 +1,63 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { AppNav } from "@/components/shell/AppNav";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
-import * as api from "@/lib/api/w3";
-import { getSampleQuestion, answerSampleQuestion, listOutcomes } from "@/lib/api/marketing";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { AppPage } from "@/components/ui/AppPage";
+import { ButtonLink } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/primitives";
+import { LoadingState } from "@/components/ui/states";
+import { FailureView } from "@/components/student/StudentUI";
+import { TopicNav } from "@/components/student/TopicNav";
+import { useTopic } from "@/components/student/useTopic";
+import { toFailure, type LoadFailure } from "@/components/student/studentData";
 import { startPractice } from "@/lib/api/practice";
 
-/** I-05 — 2-minute knowledge check */
+/** I-05 — 2-minute knowledge check: starts a 4-question QUICK_CHECK session and moves straight into it. */
 export default function Page() {
-  const params = useParams() as Record<string, string>;
-  const [data, setData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const token = typeof window !== "undefined" ? sessionStorage.getItem("accessToken") ?? undefined : undefined;
-  const studentId = typeof window !== "undefined" ? sessionStorage.getItem("studentId") : null;
-  const childId = typeof window !== "undefined" ? (sessionStorage.getItem("childId") || params.id || studentId) : params.id;
+  const params = useParams<{ topicId: string }>();
+  const router = useRouter();
+  const topic = useTopic(params.topicId);
+  const [failure, setFailure] = useState<LoadFailure | null>(null);
+  const started = useRef(false);
+
+  const start = useCallback(async () => {
+    setFailure(null);
+    try {
+      const enrolmentId = sessionStorage.getItem("enrolmentId");
+      if (!enrolmentId) throw new Error("enrolmentId required");
+      const topicId = Number(params.topicId);
+      const result = await startPractice({
+        enrolmentId,
+        mode: "QUICK_CHECK",
+        topicIds: Number.isFinite(topicId) ? [topicId] : undefined,
+        plannedCount: 4,
+      });
+      router.replace(`/practice/${result.sessionId}`);
+    } catch (e: unknown) {
+      const f = toFailure(e, "Could not load");
+      setFailure(f.message === "enrolmentId required" ? { kind: "error", message: "No active subject yet — open Home first." } : f);
+    }
+  }, [params.topicId, router]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-
-        const enrolmentId = sessionStorage.getItem("enrolmentId");
-        if (!enrolmentId) throw new Error("enrolmentId required");
-        const result = await startPractice({ enrolmentId, mode: "QUICK_CHECK", plannedCount: 4 });
-
-        if (!cancelled) setData(result);
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Could not load");
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [token, studentId, childId, params.mockId, params.sessionId, params.responseId, params.questionId, params.tutorSessionId, params.deckId, params.topicId, params.reportId, params.id]);
+    if (started.current) return;
+    started.current = true;
+    void start();
+  }, [start]);
 
   return (
-    <div>
-      <AppNav displayName="Study Loop" />
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="font-display text-4xl">2-minute knowledge check</h1>
-        {!data && !error && <div className="mt-8"><LoadingState /></div>}
-        {error && <div className="mt-8"><ErrorState body={error} /></div>}
-        {data && (
-          <div className="mt-8 space-y-4 animate-rise">
-            <p className="text-sm text-ink/70">Wired to live API.</p>
-            <pre className="overflow-auto rounded border border-mist bg-white/70 p-4 text-sm" aria-live="polite">{JSON.stringify(data, null, 2)}</pre>
-          </div>
-        )}
-        <p className="mt-6 text-sm"><Link className="underline" href="/home">Back</Link></p>
-      </main>
-    </div>
+    <AppPage width="content">
+      <PageHeader eyebrow="2-minute check" title={topic?.topicName ?? "Knowledge check"} description="Four quick questions to see what’s stuck." />
+      <TopicNav topicId={params.topicId} active="check" />
+      {failure ? (
+        <FailureView
+          failure={failure}
+          onRetry={() => void start()}
+          action={failure.message.startsWith("No active subject") ? <ButtonLink href="/home" variant="secondary" size="sm">Go to Home</ButtonLink> : undefined}
+        />
+      ) : (
+        <LoadingState label="Setting up your check…" lines={3} />
+      )}
+    </AppPage>
   );
 }

@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.marking.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.db.SqlTime;
 
 import com.karsaaz.studyloop.common.error.AppException;
@@ -31,18 +32,26 @@ public class MarkingQueryService {
     var row = jdbc.query(
         """
         SELECT sr.student_id, sr.marking_status, sr.marks_awarded, sr.marks_available, sr.is_correct,
-               sr.qualification_code
+               sr.qualification_code, sr.question_id, sr.session_id
         FROM student_response sr WHERE sr.response_id = ?
         """,
-        rs -> rs.next()
-            ? Map.of(
-                "studentId", rs.getObject("student_id"),
-                "markingStatus", rs.getString("marking_status"),
-                "marksAwarded", rs.getObject("marks_awarded"),
-                "marksAvailable", rs.getShort("marks_available"),
-                "isCorrect", rs.getObject("is_correct"),
-                "qualificationCode", rs.getString("qualification_code"))
-            : null,
+        rs -> {
+          if (!rs.next()) {
+            return null;
+          }
+          // HashMap: provisional / exception rows often have null marks / is_correct
+          Map<String, Object> m = new HashMap<>();
+          m.put("studentId", rs.getObject("student_id"));
+          // The result screen links to the mark scheme and back into the session.
+          m.put("questionId", rs.getLong("question_id"));
+          m.put("sessionId", rs.getObject("session_id"));
+          m.put("markingStatus", rs.getString("marking_status"));
+          m.put("marksAwarded", rs.getObject("marks_awarded"));
+          m.put("marksAvailable", rs.getShort("marks_available"));
+          m.put("isCorrect", rs.getObject("is_correct"));
+          m.put("qualificationCode", rs.getString("qualification_code"));
+          return m;
+        },
         responseId);
     if (row == null) {
       throw AppException.notFound("Response not found");
@@ -100,13 +109,15 @@ public class MarkingQueryService {
           if (!rs.next()) {
             throw AppException.notFound("Mark scheme not found");
           }
-          return Map.of(
-              "questionId", questionId,
-              "schemeType", rs.getString("scheme_type"),
-              "totalMarks", rs.getShort("total_marks"),
-              "markingPointsJson", rs.getString("points"),
-              "modelAnswer", rs.getString("model_answer"),
-              "levelsJson", rs.getString("levels"));
+          // HashMap: model_answer / levels_json are often null for MCQ_KEY schemes
+          Map<String, Object> m = new HashMap<>();
+          m.put("questionId", questionId);
+          m.put("schemeType", rs.getString("scheme_type"));
+          m.put("totalMarks", rs.getShort("total_marks"));
+          m.put("markingPointsJson", rs.getString("points"));
+          m.put("modelAnswer", rs.getString("model_answer"));
+          m.put("levelsJson", rs.getString("levels"));
+          return m;
         },
         questionId);
   }
@@ -192,7 +203,7 @@ public class MarkingQueryService {
     out.put("provisionalMarks", row.get("marksAwarded"));
     out.put("etaHours", ALevelProvisionalRouter.defaultSlaHours());
     out.put("dueAt", row.get("dueAt"));
-    out.put("message", "Your mark is provisional until a human reviewer confirms (within 48 hours). Accuracy claims remain unvalidated.");
+    out.put("message", "This mark is provisional until an examiner confirms it, usually within 48 hours.");
     return out;
   }
 
@@ -235,7 +246,7 @@ public class MarkingQueryService {
         WHERE response_id = ? AND kind IN ('SELF_MARK','AI_PASS_A','AI_PASS_B','OBJECTIVE','AI_A_LEVEL')
         ORDER BY created_at
         """,
-        (rs, i) -> Map.of("kind", rs.getString("kind"), "marksTotal", rs.getBigDecimal("marks_total")),
+        (rs, i) -> Rows.of("kind", rs.getString("kind"), "marksTotal", rs.getBigDecimal("marks_total")),
         responseId);
     java.math.BigDecimal self = null;
     java.math.BigDecimal ai = null;

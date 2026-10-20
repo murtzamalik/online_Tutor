@@ -13,7 +13,7 @@ export default function TargetGradePage() {
   const params = useParams<{ id: string }>();
   const studentId = params.id;
   const [enrolments, setEnrolments] = useState<
-    { enrolmentId: string; title?: string; specCode?: string; targetGrade?: string | null }[] | null
+    { enrolmentId: string; title?: string | null; specCode?: string; targetGrade?: string | null }[] | null
   >(null);
   const [grades, setGrades] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
@@ -91,9 +91,20 @@ export default function TargetGradePage() {
         </ul>
       )}
       {grades != null && (
-        <pre className="mt-8 overflow-auto rounded-md bg-mist/40 p-3 text-xs">
-          {JSON.stringify(grades, null, 2)}
-        </pre>
+        <div className="mt-8 rounded-md border border-mist bg-white/70 p-4 animate-rise">
+          <h2 className="font-display text-xl">Predicted grades</h2>
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink/80">
+            {Array.isArray(grades) && grades.length > 0 ? (
+              grades.map((g: any, i: number) => (
+                <li key={i}>
+                  {String(g.subject ?? g.name ?? "Subject")}: {String(g.grade ?? g.target ?? "—")}
+                </li>
+              ))
+            ) : (
+              <li>No predicted grades yet.</li>
+            )}
+          </ul>
+        </div>
       )}
       {note && (
         <p className="mt-4 text-sm" role="status">

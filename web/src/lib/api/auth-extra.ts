@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { apiFetch } from "./client";
+import { apiFetch, EmptyResponseSchema } from "./client";
+import { TokenResponseSchema } from "./auth";
 
 export function registerParent(body: {
   email: string;
@@ -18,7 +19,23 @@ export function verifyEmail(email: string, code: string) {
   return apiFetch("/auth/verify-email", {
     method: "POST",
     body: JSON.stringify({ email, code }),
-    schema: z.void().or(z.undefined()).or(z.null()),
+    schema: EmptyResponseSchema,
+  });
+}
+
+export function resendVerificationEmail(email: string) {
+  return apiFetch("/auth/verify-email/resend", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+    schema: EmptyResponseSchema,
+  });
+}
+
+export function resetPassword(token: string, newPassword: string) {
+  return apiFetch("/auth/password/reset", {
+    method: "POST",
+    body: JSON.stringify({ token, newPassword }),
+    schema: EmptyResponseSchema,
   });
 }
 
@@ -26,14 +43,7 @@ export function picturePinLogin(loginHandle: string, pictureSequence: string[]) 
   return apiFetch("/auth/student/picture-pin", {
     method: "POST",
     body: JSON.stringify({ loginHandle, pictureSequence }),
-    schema: z.object({
-      accessToken: z.string().nullable(),
-      refreshToken: z.string().nullable(),
-      tokenType: z.string(),
-      expiresInSeconds: z.number(),
-      mfaRequired: z.boolean(),
-      mfaChallengeToken: z.string().nullable(),
-    }),
+    schema: TokenResponseSchema,
   });
 }
 

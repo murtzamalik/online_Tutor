@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.safety.api;
 
+import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.api.CatalogueRoles;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.safety.application.SafetyService;
@@ -19,7 +20,12 @@ public class SafetyController {
 
   @PostMapping("/internal-svc/safety/classify")
   @CatalogueRoles(id = "SAF-01", roles = "SYS")
-  public Map<String, Object> classify(@RequestBody Map<String, Object> body) {
+  public Map<String, Object> classify(
+      @AuthenticationPrincipal AccountPrincipal principal, @RequestBody Map<String, Object> body) {
+    // SAF-01 is SYS-only; @CatalogueRoles is documentation, not enforcement.
+    if (principal == null || !principal.roles().contains("SYS")) {
+      throw AppException.forbidden("System access required");
+    }
     return safety.classifyInternal(body);
   }
 

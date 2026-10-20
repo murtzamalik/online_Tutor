@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.support.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
@@ -27,7 +28,7 @@ public class HelpChatService {
           SELECT article_id, slug, title, audience, tags
           FROM help_article WHERE published = TRUE ORDER BY title LIMIT 50
           """,
-          (rs, i) -> Map.of(
+          (rs, i) -> Rows.of(
               "articleId", rs.getLong("article_id"),
               "slug", rs.getString("slug"),
               "title", rs.getString("title"),
@@ -42,7 +43,7 @@ public class HelpChatService {
         WHERE published = TRUE AND search_tsv @@ plainto_tsquery('english', ?)
         ORDER BY rank DESC LIMIT 30
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "articleId", rs.getLong("article_id"),
             "slug", rs.getString("slug"),
             "title", rs.getString("title"),
@@ -171,7 +172,7 @@ public class HelpChatService {
         SELECT message_id, sender, body, created_at FROM support_chat_message
         WHERE chat_id = ? ORDER BY created_at
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "messageId", rs.getObject("message_id"),
             "sender", rs.getString("sender"),
             "body", rs.getString("body"),

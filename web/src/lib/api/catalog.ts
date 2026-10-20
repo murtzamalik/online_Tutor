@@ -84,3 +84,22 @@ export function listSpecifications(params?: {
     schema: ItemList(SpecificationSchema),
   });
 }
+
+export type SpecTopic = { topicId: number; number?: string | null; name: string; level?: number };
+
+/** GET /catalog/specifications/{id}/topics — public topic tree for a specification. */
+export function specTopics(specificationId: number | string) {
+  return apiFetch(`/catalog/specifications/${specificationId}/topics`, {
+    method: "GET",
+    schema: z.object({
+      topics: z.array(
+        z.object({
+          topicId: z.coerce.number(),
+          number: z.string().nullish(),
+          name: z.string(),
+          level: z.number().optional(),
+        }).passthrough(),
+      ),
+    }),
+  });
+}

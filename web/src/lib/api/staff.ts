@@ -63,6 +63,16 @@ export function registerPastPaper(body: Record<string, unknown>) {
   });
 }
 
+/** PATCH /internal/past-papers/{id}/files — fileKeyPaper, fileKeyMarkScheme, fileKeyExaminerReport, sha256Paper */
+export function attachPastPaperFiles(paperId: string | number, body: Record<string, unknown>) {
+  return apiFetch(`/internal/past-papers/${paperId}/files`, {
+    method: "PATCH",
+    token: requireToken(),
+    body: JSON.stringify(body),
+    schema: z.record(z.unknown()),
+  });
+}
+
 export function ingestPastPaper(paperId: string | number) {
   return apiFetch(`/internal/past-papers/${paperId}/ingest`, {
     method: "POST",

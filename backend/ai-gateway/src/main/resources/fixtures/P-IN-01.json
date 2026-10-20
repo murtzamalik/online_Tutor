@@ -1,0 +1,48 @@
+{
+  "status": "ok",
+  "paper_ref": "STUB-PAPER",
+  "items": [
+    {
+      "item_ref": "01",
+      "page_from": 2,
+      "page_to": 2,
+      "question_no": "01",
+      "marks": 2,
+      "stem_text": "State what is meant by a mole in chemistry.",
+      "parts": [],
+      "has_diagram": false,
+      "has_table": false,
+      "is_calculation": false,
+      "command_word": "State",
+      "confidence": 0.9
+    },
+    {
+      "item_ref": "02",
+      "page_from": 3,
+      "page_to": 3,
+      "question_no": "02",
+      "marks": 3,
+      "stem_text": "Sodium chloride is an ionic compound.",
+      "parts": [
+        {
+          "part_ref": "a",
+          "marks": 1,
+          "text": "Define ionic bonding."
+        },
+        {
+          "part_ref": "b",
+          "marks": 2,
+          "text": "Explain why sodium chloride dissolves in water."
+        }
+      ],
+      "has_diagram": false,
+      "has_table": false,
+      "is_calculation": false,
+      "command_word": "Explain",
+      "confidence": 0.85
+    }
+  ],
+  "unassigned_pages": [
+    1
+  ]
+}

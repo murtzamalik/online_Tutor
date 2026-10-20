@@ -37,12 +37,25 @@ studyloop:
   ai-gateway:
     base-url: ${AI_GATEWAY_BASE_URL:http://localhost:8090}
     service-token: ${GATEWAY_SERVICE_TOKEN:local_gateway_service_token_change_me}
+    # One gateway run = up to 2 tries on the primary model + 2 on the fallback.
+    read-timeout-seconds: ${AI_GATEWAY_READ_TIMEOUT_SECONDS:200}
+  safety:
+    # P-SF-01/02 model classifiers after the keyword check; failures fail closed (AGENTS.md rule 7).
+    llm-enabled: ${SAFETY_LLM_ENABLED:true}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8080}
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
     publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
+  object-storage:
+    local-root: ${OBJECT_STORAGE_LOCAL_ROOT:${user.dir}/../../data/past_papers/object_store}
+    bucket: ${OBJECT_STORAGE_BUCKET:past-papers}
+  marking:
+    # When false, marking/tutor must succeed via AI gateway (no local stub fallback).
+    allow-local-stub: ${MARKING_ALLOW_LOCAL_STUB:false}
+  embeddings:
+    require-success: ${EMBEDDING_REQUIRE_SUCCESS:false}
 
 springdoc:
   api-docs:

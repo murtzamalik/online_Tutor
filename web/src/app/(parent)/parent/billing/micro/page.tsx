@@ -1,16 +1,34 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AppNav } from "@/components/shell/AppNav";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { CaretLeft } from "@phosphor-icons/react";
 import * as api from "@/lib/api/w4";
+import { ApiError } from "@/lib/api/client";
+import { useSession } from "@/components/shell/session";
+import { AppPage } from "@/components/ui/AppPage";
+import { Button } from "@/components/ui/Button";
+import { Callout, Card, CardBody, CardHeader, Field, KeyValue, PageHeader, Select } from "@/components/ui/primitives";
+import { ForbiddenState } from "@/components/ui/states";
+import { asRecord, errorMessage, formatDate, formatPence, humanise, isForbidden, str } from "@/components/parent/format";
 
 /** C-06 Micro-subscription */
 export default function MicroBillingPage() {
-  const [result, setResult] = useState<any>(null);
+  const session = useSession();
+  const children = (session?.children ?? [])
+    .map((c) => ({ id: String(c.studentId ?? ""), name: typeof c.displayName === "string" ? c.displayName : "Child" }))
+    .filter((c) => c.id);
+  const [childId, setChildId] = useState("");
+  const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [forbidden, setForbidden] = useState(false);
   const [busy, setBusy] = useState(false);
-  const childId = typeof window !== "undefined" ? sessionStorage.getItem("childId") ?? "" : "";
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("childId") ?? "";
+    setChildId(stored || children[0]?.id || "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.children]);
 
   async function purchase() {
     setBusy(true);
@@ -22,31 +40,80 @@ export default function MicroBillingPage() {
         subjectId: 1,
         boardTrack: "AQA_8462",
       });
-      setResult(r);
-    } catch (e: any) {
-      setError(e?.message ?? "Purchase failed");
+      setResult(asRecord(r));
+    } catch (e) {
+      if (isForbidden(e)) setForbidden(true);
+      else if (e instanceof ApiError && e.status === 501) setError("Single-subject plans aren't available yet.");
+      else setError(errorMessage(e, "Purchase failed"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div>
-      <AppNav displayName="Parent" />
-      <main className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="font-display text-4xl">Micro-subscription</h1>
-        <p className="mt-2 text-sm">Single subject / board. Amount in pence from config. Card via SetupIntent — no PAN stored here.</p>
-        {busy && <div className="mt-6"><LoadingState /></div>}
-        {error && <div className="mt-6"><ErrorState body={error} /></div>}
-        <button type="button" className="mt-6 rounded border px-4 py-2" disabled={!childId || busy} onClick={purchase}>
-          Purchase micro-sub
-        </button>
-        {!childId && <p className="mt-2 text-sm" role="status">Select a child session first.</p>}
-        {result && (
-          <pre className="mt-6 overflow-auto rounded border p-4 text-sm" aria-live="polite">{JSON.stringify(result, null, 2)}</pre>
-        )}
-        <p className="mt-6 text-sm"><Link className="underline" href="/parent/billing">Billing home</Link></p>
-      </main>
-    </div>
+    <AppPage width="content">
+      <Link
+        href="/parent/billing"
+        className="mb-3 inline-flex items-center gap-1 text-caption font-semibold text-neutral-600 hover:text-neutral-900"
+      >
+        <CaretLeft size={14} aria-hidden /> Back to billing
+      </Link>
+      <PageHeader
+        title="Single-subject plan"
+        description="One subject on one exam board for one child. Card details go to Stripe only — we never store the card number."
+      />
+
+      {forbidden ? (
+        <ForbiddenState body="Single-subject plans are bought from the parent account." />
+      ) : (
+        <div className="space-y-4" aria-live="polite">
+          <Card>
+            <CardHeader title="Single subject · AQA 8462 track" description="Adaptive practice, marking and tutor help for one subject. The price is shown on your receipt." />
+            <CardBody className="space-y-4">
+              {children.length > 1 ? (
+                <Field label="Child" htmlFor="micro-child">
+                  <Select id="micro-child" value={childId} onChange={(e) => setChildId(e.target.value)}>
+                    {children.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              ) : children.length === 1 ? (
+                <p className="text-[14px] text-neutral-700">
+                  For <strong>{children[0].name}</strong>
+                </p>
+              ) : null}
+              {!childId && (
+                <Callout tone="warning">
+                  Add a child first.{" "}
+                  <Link href="/parent/children/new" className="font-semibold underline">
+                    Add a child
+                  </Link>
+                </Callout>
+              )}
+              {error && <Callout tone="danger">{error}</Callout>}
+              <Button disabled={!childId} loading={busy} onClick={purchase}>
+                Buy single-subject plan
+              </Button>
+            </CardBody>
+          </Card>
+
+          {result && (
+            <Callout tone="success" title="Single-subject plan active">
+              <KeyValue
+                className="mt-2"
+                items={[
+                  ["Status", humanise(result.status)],
+                  ["Price", formatPence(result.amountPence, str(result.currency) ?? "GBP")],
+                  ["Expires", formatDate(result.expiresAt)],
+                ]}
+              />
+            </Callout>
+          )}
+        </div>
+      )}
+    </AppPage>
   );
 }

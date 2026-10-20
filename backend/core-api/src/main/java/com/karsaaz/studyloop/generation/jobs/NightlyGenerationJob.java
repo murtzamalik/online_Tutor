@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * W1 nightly generation substitute. JobRunr is not on the classpath; this {@code @Scheduled}
- * job promotes APPROVED candidates and records a NIGHTLY generation_run when the app is running.
- * Replace with JobRunr recurring job when the dependency is added (noted in W1 gate report).
+ * job generates one item for the least-covered objective, then promotes pending items whose QC1
+ * passed. Replace with a JobRunr recurring job when the dependency is added (noted in W1 gate report).
  */
 @Component
 public class NightlyGenerationJob {
@@ -26,8 +26,14 @@ public class NightlyGenerationJob {
   @Scheduled(cron = "${studyloop.generation.nightly-cron:0 15 2 * * *}")
   public void runNightly() {
     AccountPrincipal sys = new AccountPrincipal(null, null, List.of("SYS", "CNT"), true, null);
-    var run = generationService.createRun(sys, Map.of("kind", "NIGHTLY"));
+    try {
+      var run = generationService.createRun(sys, Map.of("kind", "NIGHTLY"));
+      log.info("Nightly generation runId={} status={}", run.get("runId"), run.get("status"));
+    } catch (Exception e) {
+      // One failed item must not stop promotion of already-checked items.
+      log.warn("Nightly generation run failed: {}", e.getClass().getSimpleName());
+    }
     int promoted = generationService.promoteApprovedPending(20);
-    log.info("W1 nightly generation substitute runId={} promoted={}", run.get("runId"), promoted);
+    log.info("Nightly generation promoted={}", promoted);
   }
 }

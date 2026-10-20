@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.marking.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.db.SqlTime;
 
 import com.karsaaz.studyloop.common.error.AppException;
@@ -113,7 +114,7 @@ public class ReviewService {
           SELECT response_id FROM marking_review_queue WHERE review_id = ?
         ) ORDER BY created_at
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "kind", rs.getString("kind"),
             "marksTotal", rs.getBigDecimal("marks_total"),
             "confidence", rs.getObject("confidence"),
@@ -210,7 +211,7 @@ public class ReviewService {
     Long breached = jdbc.queryForObject(
         "SELECT COUNT(*) FROM marking_review_queue WHERE status IN ('QUEUED','CLAIMED') AND due_at < ?",
         Long.class,
-        now);
+        SqlTime.ts(now));
     Long decided = jdbc.queryForObject(
         "SELECT COUNT(*) FROM marking_review_queue WHERE status IN ('CONFIRMED','ADJUSTED')",
         Long.class);

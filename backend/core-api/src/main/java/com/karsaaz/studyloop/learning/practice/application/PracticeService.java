@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.learning.practice.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.db.SqlTime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,14 +51,15 @@ public class PracticeService {
     UUID sessionId = UUID.randomUUID();
     jdbc.update(
         """
-        INSERT INTO practice_session (session_id, student_id, enrolment_id, mode, status, planned_count)
-        VALUES (?, ?, ?, ?, 'ACTIVE', ?)
+        INSERT INTO practice_session (session_id, student_id, enrolment_id, mode, status, planned_count, topic_ids)
+        VALUES (?, ?, ?, ?, 'ACTIVE', ?, ?::bigint[])
         """,
         sessionId,
         studentId,
         enrolmentId,
         mode,
-        body.get("plannedCount") != null ? Short.parseShort(body.get("plannedCount").toString()) : null);
+        body.get("plannedCount") != null ? Short.parseShort(body.get("plannedCount").toString()) : null,
+        topicIdArray(body.get("topicIds")));
     return Map.of(
         "sessionId", sessionId,
         "status", "ACTIVE",
@@ -338,6 +340,14 @@ public class PracticeService {
           AND q.question_id NOT IN (
             SELECT question_id FROM student_response WHERE student_id = ? AND session_id = ?
           )
+          AND (
+            SELECT CASE WHEN COALESCE(cardinality(ps.topic_ids), 0) = 0 THEN TRUE
+                        ELSE q.topic_id = ANY(ps.topic_ids)
+                          OR EXISTS (SELECT 1 FROM spec_topic st
+                                     WHERE st.topic_id = q.topic_id AND st.parent_topic_id = ANY(ps.topic_ids))
+                   END
+            FROM practice_session ps WHERE ps.session_id = ?
+          )
         ORDER BY COALESCE(m.mastery_probability, 0.3) ASC, q.times_served ASC, q.question_id
         LIMIT 1
         """,
@@ -346,14 +356,25 @@ public class PracticeService {
         specId,
         sessionId,
         studentId,
+        sessionId,
         sessionId);
+  }
+
+  /** Session topic filter; null means "all topics in the enrolment". */
+  private static String topicIdArray(Object raw) {
+    if (!(raw instanceof List<?> list) || list.isEmpty()) {
+      return null;
+    }
+    return list.stream()
+        .map(o -> String.valueOf(Long.parseLong(o.toString())))
+        .collect(java.util.stream.Collectors.joining(",", "{", "}"));
   }
 
   private Map<String, Object> loadQuestion(long questionId) {
     return jdbc.query(
         """
         SELECT question_id, topic_id, question_type, question_text, options_json::text AS options,
-               marks_available, answer_format, diagram_id
+               marks_available, answer_format, diagram_id, source_type, source_reference, past_paper_id
         FROM question WHERE question_id = ?
         """,
         rs -> {
@@ -365,6 +386,9 @@ public class PracticeService {
           m.put("topicId", rs.getLong("topic_id"));
           m.put("questionType", rs.getString("question_type"));
           m.put("questionText", rs.getString("question_text"));
+          m.put("sourceType", rs.getString("source_type"));
+          m.put("sourceReference", rs.getString("source_reference"));
+          m.put("pastPaperId", rs.getObject("past_paper_id"));
           String options = rs.getString("options");
           if (options != null) {
             try {
@@ -485,13 +509,22 @@ public class PracticeService {
   public Map<String, Object> wrongAnswers(AccountPrincipal principal, UUID studentId) {
     UUID sid = access.resolveStudentId(principal, studentId);
     access.assertParentOrStudent(principal, sid);
+    // Latest attempt per question only — a later full-mark response clears the redrill pool.
     List<Map<String, Object>> items = jdbc.query(
         """
-        SELECT sr.response_id, sr.question_id, q.question_text, sr.marks_awarded, sr.marks_available, sr.marked_at
-        FROM student_response sr
-        JOIN question q ON q.question_id = sr.question_id
-        WHERE sr.student_id = ? AND sr.is_correct = FALSE AND sr.marking_status = 'MARKED_FINAL'
-        ORDER BY sr.marked_at DESC NULLS LAST LIMIT 100
+        SELECT response_id, question_id, question_text, marks_awarded, marks_available, marked_at
+        FROM (
+          SELECT DISTINCT ON (sr.question_id)
+            sr.response_id, sr.question_id, q.question_text, sr.marks_awarded, sr.marks_available,
+            sr.marked_at, sr.is_correct
+          FROM student_response sr
+          JOIN question q ON q.question_id = sr.question_id
+          WHERE sr.student_id = ? AND sr.marking_status = 'MARKED_FINAL'
+          ORDER BY sr.question_id, sr.marked_at DESC NULLS LAST
+        ) latest
+        WHERE is_correct = FALSE
+        ORDER BY marked_at DESC NULLS LAST
+        LIMIT 100
         """,
         (rs, i) -> {
           Map<String, Object> m = new HashMap<>();
@@ -570,7 +603,7 @@ public class PracticeService {
         WHERE se.student_id = ? AND se.status = 'ACTIVE'
         ORDER BY t.display_order NULLS LAST
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "topicId", rs.getLong("topic_id"),
             "topicName", rs.getString("topic_name"),
             "topicNumber", rs.getString("topic_number"),
@@ -633,7 +666,7 @@ public class PracticeService {
         SELECT topic_id, topic_name, 'TOPIC' AS kind FROM spec_topic
         WHERE topic_name ILIKE ? ORDER BY topic_name LIMIT 20
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "id", rs.getLong("topic_id"),
             "title", rs.getString("topic_name"),
             "kind", "TOPIC"),
@@ -643,7 +676,7 @@ public class PracticeService {
         SELECT note_id, spec_topic_id, 'NOTE' AS kind FROM revision_note
         WHERE status = 'APPROVED' AND body_md ILIKE ? LIMIT 10
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "id", rs.getLong("note_id"),
             "topicId", rs.getLong("spec_topic_id"),
             "kind", "NOTE",
@@ -654,7 +687,7 @@ public class PracticeService {
         SELECT deck_id, title, 'DECK' AS kind FROM flashcard_deck
         WHERE title ILIKE ? AND (kind = 'SYSTEM' OR owner_student_id = ?) LIMIT 10
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "id", rs.getObject("deck_id"),
             "title", rs.getString("title"),
             "kind", "DECK"),

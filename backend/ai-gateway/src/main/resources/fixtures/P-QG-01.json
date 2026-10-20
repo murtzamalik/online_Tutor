@@ -1,0 +1,50 @@
+{
+  "status": "ok",
+  "spec_point_ref": "4.1.1",
+  "objectives": [
+    {
+      "objective_id": "O1",
+      "objective_text": "State the relative charge of a proton, neutron and electron.",
+      "assessment_objective": "AO1",
+      "tier": "BOTH",
+      "allowed_question_types": [
+        "SHORT_ANSWER",
+        "MULTIPLE_CHOICE"
+      ],
+      "allowed_command_words": [
+        "State",
+        "Give"
+      ],
+      "mark_range": [
+        1,
+        3
+      ],
+      "is_numeric": false,
+      "misconceptions": [
+        "Neutrons are negatively charged"
+      ],
+      "prerequisites": []
+    },
+    {
+      "objective_id": "O2",
+      "objective_text": "Explain why an atom has no overall charge.",
+      "assessment_objective": "AO2",
+      "tier": "BOTH",
+      "allowed_question_types": [
+        "SHORT_ANSWER"
+      ],
+      "allowed_command_words": [
+        "Explain"
+      ],
+      "mark_range": [
+        2,
+        2
+      ],
+      "is_numeric": false,
+      "misconceptions": [],
+      "prerequisites": [
+        "O1"
+      ]
+    }
+  ]
+}

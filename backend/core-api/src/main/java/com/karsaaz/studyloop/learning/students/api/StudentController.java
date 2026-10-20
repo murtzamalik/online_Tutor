@@ -79,7 +79,7 @@ public class StudentController {
   }
 
   @GetMapping("/students/{studentId}/home")
-  @CatalogueRoles(id = "STU-12", roles = "STU")
+  @CatalogueRoles(id = "STU-12", roles = "PAR,STU")
   public Map<String, Object> home(
       @AuthenticationPrincipal AccountPrincipal principal, @PathVariable UUID studentId) {
     return studentService.home(principal, studentId);

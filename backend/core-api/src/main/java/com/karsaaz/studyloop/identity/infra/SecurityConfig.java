@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,14 +32,13 @@ public class SecurityConfig {
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/catalog/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/legal/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/help/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/help/articles/*/feedback").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/v1/cookie-consent").permitAll()
             .requestMatchers("/api/v1/marketing/**").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/stripe").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/ucheck").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/v1/billing/checkout/plan-preview").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/v1/jobs/weekly-reports/run").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/v1/internal-svc/safety/classify").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/v1/tutor/rescue").permitAll()
             .requestMatchers(
                 "/api/v1/auth/register-parent",
                 "/api/v1/auth/verify-email",
@@ -54,6 +55,8 @@ public class SecurityConfig {
             .requestMatchers("/api/v1/auth/mfa/enroll/**", "/api/v1/auth/mfa/recovery-codes/**").authenticated()
             .requestMatchers("/api/v1/me", "/api/v1/me/**").authenticated()
             .anyRequest().authenticated())
+        // No or expired token -> 401 (default was 403), so clients know to refresh rather than show "forbidden".
+        .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }

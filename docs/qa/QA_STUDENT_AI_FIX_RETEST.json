@@ -1,0 +1,97 @@
+{
+  "pass": 11,
+  "fail": 2,
+  "results": [
+    {
+      "area": "AUTH",
+      "scenario": "picture-pin",
+      "code": 200,
+      "pass": true,
+      "detail": "token"
+    },
+    {
+      "area": "AUTH",
+      "scenario": "me",
+      "code": 500,
+      "pass": false,
+      "detail": "{'type': 'about:blank', 'title': 'Error', 'status': 500, 'code': 'INTERNAL_ERROR', 'detail': 'An unexpected error occurred', 'traceId': '56404bc1-5765-4ca2-a2e8-bf2c8b391cf2'}"
+    },
+    {
+      "area": "MARK",
+      "scenario": "old provisional marking 86c59347",
+      "code": 200,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'marksAvailable': 2, 'qualificationCode': 'GCSE', 'markingStatus': 'IN_EXCEPTION', 'results': [{'kind': 'AI_PASS_A', 'confidence': 0.9, 'marksTotal': 1.0, 'pointsJson"
+    },
+    {
+      "area": "MARK",
+      "scenario": "old provisional marking d2e761d7",
+      "code": 200,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'marksAvailable': 1, 'qualificationCode': 'GCSE', 'markingStatus': 'IN_EXCEPTION', 'results': [{'kind': 'AI_PASS_A', 'confidence': 0.9, 'marksTotal': 1.0, 'pointsJson"
+    },
+    {
+      "area": "PRA",
+      "scenario": "start",
+      "code": 201,
+      "pass": true,
+      "detail": "{'sessionId': '39704b7a-a861-46a2-a125-5e785d67b426', 'status': 'ACTIVE', 'mode': 'MIXED', 'startedAt': '2026-09-30T15:02:59.676723924Z'}"
+    },
+    {
+      "area": "MARK",
+      "scenario": "submit SHORT_ANSWER",
+      "code": 202,
+      "pass": false,
+      "detail": "{'sse': True, 'resultUrl': '/api/v1/practice/answers/0168bfef-729e-42b3-853c-c7e140737dc9/result', 'responseId': '0168bfef-729e-42b3-853c-c7e140737dc9', 'status': 'MARKING'}"
+    },
+    {
+      "area": "MARK",
+      "scenario": "poll written",
+      "code": 200,
+      "pass": true,
+      "detail": "{'feedback': {}, 'provisional': False, 'reveal': {'schemeAvailable': True}, 'marks': {'awarded': 1.0, 'available': 1, 'max': 1}, 'markingStatus': 'MARKED_FINAL', 'responseId': '0168bfef-729e-42b3-853c-c7e140737dc9', 'sta"
+    },
+    {
+      "area": "MARK",
+      "scenario": "marking detail after written",
+      "code": 200,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'marksAwarded': 1.0, 'marksAvailable': 1, 'qualificationCode': 'GCSE', 'markingStatus': 'MARKED_FINAL', 'results': [{'kind': 'AI_PASS_A', 'confidence': 0.9, 'marksTot"
+    },
+    {
+      "area": "MARK",
+      "scenario": "mark-scheme",
+      "code": 200,
+      "pass": true,
+      "detail": "{'questionId': 4, 'schemeType': 'POINTS', 'markingPointsJson': '[{\"id\": \"M1\", \"marks\": 1, \"point\": \"Zero / no charge\", \"accept\": [\"0\", \"zero\", \"neutral\"]}]', 'totalMarks': 1}"
+    },
+    {
+      "area": "ENG",
+      "scenario": "events",
+      "code": 200,
+      "pass": true,
+      "detail": "{'nudges': [], 'accepted': 1}"
+    },
+    {
+      "area": "ENG",
+      "scenario": "surprise get",
+      "code": 200,
+      "pass": true,
+      "detail": "{'topicIds': [5], 'status': 'SERVED', 'reason': 'NOT_RECENTLY_TOUCHED', 'quizId': '6414120f-f6dc-4c52-92df-a5e5dbb427ce', 'prompt': 'Quick check \u2014 ready for a 2-question surprise quiz?'}"
+    },
+    {
+      "area": "ENG",
+      "scenario": "surprise complete",
+      "code": 200,
+      "pass": true,
+      "detail": "{'quizId': '6414120f-f6dc-4c52-92df-a5e5dbb427ce', 'status': 'SKIPPED'}"
+    },
+    {
+      "area": "PROG",
+      "scenario": "mastery",
+      "code": 200,
+      "pass": true,
+      "detail": "{'topics': 67}"
+    }
+  ]
+}

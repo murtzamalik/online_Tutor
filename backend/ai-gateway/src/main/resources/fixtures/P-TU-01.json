@@ -1,0 +1,9 @@
+{
+  "status": "ok",
+  "reply_text": "Good question. Start from what a mole measures. What do you already know about Avogadro's number?",
+  "pedagogy_move": "ASK_PROBING",
+  "reveals_final_answer": false,
+  "topic_ref": null,
+  "suggested_next": "CONTINUE",
+  "needs_safety_review": false
+}

@@ -65,7 +65,8 @@ public class DiagnosticService {
   public Map<String, Object> next(AccountPrincipal principal, UUID diagnosticId) {
     access.requireStudent(principal);
     UUID sessionId = requireSession(diagnosticId);
-    Map<String, Object> q = practiceService.nextQuestion(principal, sessionId);
+    // nextQuestion may return Map.of(...) which is immutable — copy before put
+    Map<String, Object> q = new HashMap<>(practiceService.nextQuestion(principal, sessionId));
     q.put("diagnosticId", diagnosticId);
     return q;
   }

@@ -1,0 +1,20 @@
+{
+  "status": "ok",
+  "headline": "A steady week of practice",
+  "paragraphs": [
+    "{{child_name}} answered questions on several days this week.",
+    "Next week, a short daily session on the weakest topic will help most."
+  ],
+  "wins": [
+    "Practised on several days"
+  ],
+  "focus_areas": [
+    "Weakest topic from the plan"
+  ],
+  "suggested_parent_actions": [
+    "Ask {{child_name}} to explain one answer to you."
+  ],
+  "used_fact_ids": [
+    "F1"
+  ]
+}

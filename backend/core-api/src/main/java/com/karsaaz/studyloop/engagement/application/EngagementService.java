@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.engagement.application;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
@@ -16,10 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class EngagementService {
   private final JdbcTemplate jdbc;
   private final StudentAccessHelper access;
+  private final ObjectMapper objectMapper;
 
-  public EngagementService(JdbcTemplate jdbc, StudentAccessHelper access) {
+  public EngagementService(JdbcTemplate jdbc, StudentAccessHelper access, ObjectMapper objectMapper) {
     this.jdbc = jdbc;
     this.access = access;
+    this.objectMapper = objectMapper;
   }
 
   @Transactional
@@ -50,7 +53,7 @@ public class EngagementService {
           VALUES (?,?,?,?,?::jsonb)
           """,
           UUID.randomUUID(), studentId, sessionId, type,
-          ev.get("metadata") == null ? "{}" : ev.get("metadata").toString());
+          toJsonb(ev.get("metadata")));
       if ((offered == null ? 0 : offered) + nudges.size() >= maxNudges) {
         continue;
       }
@@ -125,6 +128,26 @@ public class EngagementService {
           m.put("reason", rs.getString("reason"));
           m.put("status", rs.getString("status"));
           m.put("servedAt", rs.getTimestamp("served_at").toInstant().toString());
+          m.put("prompt", "Quick check — ready for a 2-question surprise quiz?");
+          java.sql.Array topicArr = rs.getArray("topic_ids");
+          List<Long> topicIds = new ArrayList<>();
+          if (topicArr != null) {
+            Object raw = topicArr.getArray();
+            if (raw instanceof long[] longs) {
+              for (long id : longs) {
+                topicIds.add(id);
+              }
+            } else if (raw instanceof Long[] boxed) {
+              topicIds.addAll(List.of(boxed));
+            } else if (raw instanceof Object[] objs) {
+              for (Object o : objs) {
+                if (o instanceof Number n) {
+                  topicIds.add(n.longValue());
+                }
+              }
+            }
+          }
+          m.put("topicIds", topicIds);
           return m;
         },
         sid);
@@ -136,12 +159,18 @@ public class EngagementService {
         SELECT t.topic_id FROM student_enrolment se
         JOIN spec_topic t ON t.specification_id = se.specification_id AND t.topic_level = 1
         WHERE se.student_id = ? AND se.status = 'ACTIVE'
+          AND EXISTS (SELECT 1 FROM question q
+                      WHERE q.topic_id = t.topic_id AND q.review_status = 'APPROVED')
         ORDER BY random() LIMIT 1
         """,
         rs -> rs.next() ? rs.getLong(1) : null,
         sid);
     if (topicId == null) {
-      return Map.of("studentId", sid, "quiz", null, "message", "No surprise quiz ready");
+      Map<String, Object> none = new HashMap<>();
+      none.put("studentId", sid);
+      none.put("quiz", null);
+      none.put("message", "No surprise quiz ready");
+      return none;
     }
     UUID quizId = UUID.randomUUID();
     jdbc.update(
@@ -172,6 +201,7 @@ public class EngagementService {
       AccountPrincipal principal, UUID quizId, Map<String, Object> body) {
     access.requireStudent(principal);
     String status = Boolean.TRUE.equals(body.get("skipped")) ? "SKIPPED" : "COMPLETED";
+    Object resultPayload = body.get("resultJson") != null ? body.get("resultJson") : body.get("result");
     int n = jdbc.update(
         """
         UPDATE surprise_quiz SET status = ?, completed_at = now(),
@@ -179,12 +209,27 @@ public class EngagementService {
         WHERE quiz_id = ? AND student_id = ?
         """,
         status,
-        body.get("resultJson") == null ? "{}" : body.get("resultJson").toString(),
+        toJsonb(resultPayload),
         quizId,
         principal.studentId());
     if (n == 0) {
       throw AppException.notFound("Surprise quiz not found");
     }
     return Map.of("quizId", quizId, "status", status);
+  }
+
+  private String toJsonb(Object value) {
+    if (value == null) {
+      return "{}";
+    }
+    if (value instanceof String s) {
+      String trimmed = s.trim();
+      return trimmed.isEmpty() ? "{}" : trimmed;
+    }
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (Exception e) {
+      return "{}";
+    }
   }
 }

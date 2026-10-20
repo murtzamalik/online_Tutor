@@ -1,9 +1,14 @@
 package com.karsaaz.studyloop.aiops.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.db.SqlTime;
 
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.common.error.ProblemCode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.karsaaz.studyloop.gatewayclient.api.GatewayAiSupport;
+import com.karsaaz.studyloop.gatewayclient.api.GatewayClient;
+import com.karsaaz.studyloop.marking.application.AiMarkParser;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
 import java.math.BigDecimal;
@@ -20,10 +25,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class AiOpsService {
   private final JdbcTemplate jdbc;
   private final Clock clock;
+  private final GatewayClient gateway;
+  private final GatewayAiSupport ai;
+  private final ObjectMapper objectMapper;
 
-  public AiOpsService(JdbcTemplate jdbc, Clock clock) {
+  public AiOpsService(
+      JdbcTemplate jdbc, Clock clock, GatewayClient gateway, GatewayAiSupport ai, ObjectMapper objectMapper) {
     this.jdbc = jdbc;
     this.clock = clock;
+    this.gateway = gateway;
+    this.ai = ai;
+    this.objectMapper = objectMapper;
   }
 
   public Map<String, Object> evalSummary(AccountPrincipal principal) {
@@ -103,63 +115,150 @@ public class AiOpsService {
     return run;
   }
 
+  /**
+   * Q-01 eval: runs P-MK-01 through the gateway on gold items and compares with the examiner per
+   * point. The previous version wrote ai_total = examiner_total, so every run "passed" at 100%.
+   */
   @Transactional
   public Map<String, Object> createEvalRun(AccountPrincipal principal, Map<String, Object> body) {
     requireAiEngineer(principal);
     UUID promptVersionId = jdbc.query(
-        "SELECT prompt_version_id FROM prompt_version WHERE status = 'LIVE' ORDER BY created_at DESC LIMIT 1",
+        """
+        SELECT prompt_version_id FROM prompt_version WHERE prompt_id = 'P-MK-01'
+        ORDER BY (status = 'LIVE') DESC, created_at DESC LIMIT 1
+        """,
         rs -> rs.next() ? (UUID) rs.getObject(1) : null);
     if (promptVersionId == null) {
-      promptVersionId = jdbc.query(
-          "SELECT prompt_version_id FROM prompt_version ORDER BY created_at DESC LIMIT 1",
-          rs -> rs.next() ? (UUID) rs.getObject(1) : UUID.randomUUID());
+      throw AppException.conflict("PROMPT_VERSION_MISSING", "No prompt_version row for P-MK-01; load prompts first");
     }
+    int limit = Math.max(1, Math.min(200, ai.asInt(body.get("limit"), 50)));
     List<Map<String, Object>> gold = jdbc.query(
-        "SELECT gold_id, examiner_total FROM gold_set_item LIMIT 200",
-        (rs, i) -> Map.of("goldId", rs.getObject("gold_id"), "examinerTotal", rs.getBigDecimal("examiner_total")));
+        """
+        SELECT g.gold_id, g.answer_text, g.examiner_points_json::text AS examiner_points, g.examiner_total,
+               q.question_text, q.marks_available,
+               COALESCE(ms.marking_points_json::text, ms.model_answer, '') AS scheme
+        FROM gold_set_item g
+        JOIN question q ON q.question_id = g.question_id
+        LEFT JOIN mark_scheme ms ON ms.question_id = g.question_id
+        WHERE g.question_type NOT IN ('MULTIPLE_CHOICE', 'CALCULATION')
+        ORDER BY g.created_at LIMIT ?
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new HashMap<>();
+          m.put("goldId", rs.getObject("gold_id"));
+          m.put("answer", rs.getString("answer_text"));
+          m.put("examinerPoints", rs.getString("examiner_points"));
+          m.put("examinerTotal", rs.getBigDecimal("examiner_total"));
+          m.put("question", rs.getString("question_text"));
+          m.put("marks", rs.getInt("marks_available"));
+          m.put("scheme", rs.getString("scheme"));
+          return m;
+        },
+        limit);
     if (gold.isEmpty()) {
-      throw AppException.notFound("Gold set empty");
+      throw AppException.notFound("Gold set has no written-answer items");
     }
     UUID evalId = UUID.randomUUID();
     jdbc.update(
         """
-        INSERT INTO eval_run (eval_id, prompt_version_id, task_key, model_id, dataset, n_items, started_at)
-        VALUES (?, ?, 'P-MK-01', 'stub-model', 'gold_set', ?, ?)
+        INSERT INTO eval_run (eval_id, prompt_version_id, task_key, model_id, dataset, n_items, triggered_by, started_at)
+        VALUES (?, ?, 'mk.pass_a', 'pending', 'gold_set', ?, ?, ?)
         """,
         evalId,
         promptVersionId,
         gold.size(),
+        principal.accountId(),
         SqlTime.ts(clock.instant()));
     int agreed = 0;
+    int pointsTotal = 0;
+    int exact = 0;
+    int over = 0;
+    int under = 0;
+    int failed = 0;
+    String model = "unknown";
+    String promptVersion = null;
     for (Map<String, Object> g : gold) {
-      UUID goldId = (UUID) g.get("goldId");
-      BigDecimal examinerTotal = (BigDecimal) g.get("examinerTotal");
-      BigDecimal aiTotal = examinerTotal;
-      boolean exact = true;
-      agreed += exact ? 1 : 0;
+      Map<String, Object> vars = new HashMap<>();
+      vars.put("question_for_student", String.valueOf(g.get("question")));
+      vars.put("mark_scheme", String.valueOf(g.get("scheme")));
+      vars.put("calc_facts", "");
+      vars.put("student_answer", String.valueOf(g.get("answer")));
+      Map<String, Object> result;
+      try {
+        Map<?, ?> gw = gateway.run("P-MK-01", vars, null);
+        model = GatewayAiSupport.model(gw);
+        promptVersion = ai.asText(gw.get("promptVersion"));
+        result = ai.requireResult(gw, "P-MK-01");
+      } catch (Exception e) {
+        failed++;
+        continue;
+      }
+      var parsed = AiMarkParser.points(result, (Integer) g.get("marks"), String.valueOf(g.get("answer")));
+      List<Map<String, Object>> examinerPoints = parseList(String.valueOf(g.get("examinerPoints")));
+      var score = EvalScoring.score(parsed.points(), parsed.marks(), examinerPoints, (BigDecimal) g.get("examinerTotal"));
+      agreed += score.pointsAgreed();
+      pointsTotal += score.pointsTotal();
+      exact += score.exactTotal() ? 1 : 0;
+      over += score.overMarked() ? 1 : 0;
+      under += score.underMarked() ? 1 : 0;
       jdbc.update(
           """
           INSERT INTO eval_result (eval_id, gold_id, ai_points_json, ai_total, points_agreed, points_total, exact_total, over_marked)
-          VALUES (?, ?, '[]'::jsonb, ?, ?, 1, ?, FALSE)
+          VALUES (?, ?, ?::jsonb, ?, ?, ?, ?, ?)
           """,
           evalId,
-          goldId,
-          aiTotal,
-          exact ? 1 : 0,
-          exact);
+          g.get("goldId"),
+          ai.toJson(parsed.points()),
+          parsed.marks(),
+          (short) score.pointsAgreed(),
+          (short) score.pointsTotal(),
+          score.exactTotal(),
+          score.overMarked());
     }
-    BigDecimal exactRate = BigDecimal.valueOf(agreed).divide(BigDecimal.valueOf(gold.size()), 5, java.math.RoundingMode.HALF_UP);
+    int scored = gold.size() - failed;
+    BigDecimal pointAccuracy = ratio(agreed, pointsTotal);
+    BigDecimal exactRate = ratio(exact, scored);
     jdbc.update(
         """
-        UPDATE eval_run SET point_accuracy = ?, exact_total_agreement = ?, finished_at = ?, passes_gate = ?
+        UPDATE eval_run SET model_id = ?, n_items = ?, point_accuracy = ?, exact_total_agreement = ?,
+               over_marking_rate = ?, under_marking_rate = ?, metrics_json = ?::jsonb,
+               finished_at = ?, passes_gate = ?
         WHERE eval_id = ?
         """,
+        model,
+        scored,
+        pointAccuracy,
         exactRate,
-        exactRate,
+        ratio(over, scored),
+        ratio(under, scored),
+        ai.toJson(Map.of("failedItems", failed, "gatewayPromptVersion", promptVersion == null ? "" : promptVersion)),
         SqlTime.ts(clock.instant()),
-        exactRate.compareTo(new BigDecimal("0.95")) >= 0,
+        // Gate (D-19): point accuracy >= 0.95 with every item scored. "Beats live" needs a baseline run.
+        failed == 0 && scored > 0 && pointAccuracy.compareTo(new BigDecimal("0.95")) >= 0,
         evalId);
-    return Map.of("evalId", evalId, "nItems", gold.size(), "exactTotalAgreement", exactRate);
+    Map<String, Object> out = new HashMap<>();
+    out.put("evalId", evalId);
+    out.put("nItems", scored);
+    out.put("failedItems", failed);
+    out.put("pointAccuracy", pointAccuracy);
+    out.put("exactTotalAgreement", exactRate);
+    out.put("model", model);
+    return out;
+  }
+
+  private static BigDecimal ratio(int num, int den) {
+    return den == 0
+        ? BigDecimal.ZERO
+        : BigDecimal.valueOf(num).divide(BigDecimal.valueOf(den), 5, java.math.RoundingMode.HALF_UP);
+  }
+
+  private List<Map<String, Object>> parseList(String json) {
+    try {
+      Object v = objectMapper.readValue(json, Object.class);
+      return ai.asMapList(v);
+    } catch (Exception e) {
+      return List.of();
+    }
   }
 
   public List<Map<String, Object>> listGold(AccountPrincipal principal) {
@@ -169,7 +268,7 @@ public class AiOpsService {
         SELECT gold_id, question_id, specification_id, question_type, examiner_total, origin, is_holdout, verified
         FROM gold_set_item ORDER BY created_at DESC LIMIT 500
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "goldId", rs.getObject("gold_id"),
             "questionId", rs.getLong("question_id"),
             "specificationId", rs.getLong("specification_id"),

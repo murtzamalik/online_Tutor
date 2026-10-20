@@ -1,57 +1,154 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
+import { CheckCircle } from "@phosphor-icons/react";
 import { getMarkScheme } from "@/lib/api/practice";
-import { ApiError } from "@/lib/api/client";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { AppPage } from "@/components/ui/AppPage";
+import { ButtonLink } from "@/components/ui/Button";
+import { Badge, Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
+import { EmptyState, ForbiddenState, LoadingState } from "@/components/ui/states";
+import { FailureView } from "@/components/student/StudentUI";
+import { asArray, isRecord, num, plural, str, toFailure, type LoadFailure } from "@/components/student/studentData";
+
+type Point = { id: string; marks: number | null; text: string; accept: string[]; reject: string[] };
+type Level = { label: string; marks: string; descriptor: string };
+
+function parsePoints(scheme: Record<string, unknown>): Point[] {
+  const raw = Array.isArray(scheme.markingPoints) ? scheme.markingPoints : asArray(scheme.markingPointsJson);
+  return raw.map((mp, i) => {
+    if (!isRecord(mp)) return { id: String(i), marks: null, text: str(mp), accept: [], reject: [] };
+    return {
+      id: str(mp.id, String(i)),
+      marks: num(mp.marks),
+      text: str(mp.text ?? mp.point ?? mp.description, ""),
+      accept: asArray(mp.accept).map((a) => str(a)).filter(Boolean),
+      reject: asArray(mp.reject).map((a) => str(a)).filter(Boolean),
+    };
+  });
+}
+
+function parseLevels(scheme: Record<string, unknown>): Level[] {
+  return asArray(scheme.levelsJson)
+    .filter(isRecord)
+    .map((l, i) => ({
+      label: str(l.level ?? l.label ?? l.name, `Level ${i + 1}`),
+      marks: str(l.marks ?? l.range ?? l.markRange, ""),
+      descriptor: str(l.descriptor ?? l.description ?? l.text, ""),
+    }));
+}
+
+const SCHEME_TYPE: Record<string, string> = {
+  POINTS: "Point-based",
+  LEVELS: "Levels of response",
+  MCQ_KEY: "Multiple-choice key",
+};
 
 /** F-02 — Mark scheme reveal (after attempt) */
 export default function SchemePage() {
   const { sessionId, questionId } = useParams<{ sessionId: string; questionId: string }>();
   const responseId = useSearchParams().get("responseId");
   const [scheme, setScheme] = useState<Record<string, unknown> | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<LoadFailure | null>(null);
 
   useEffect(() => {
     getMarkScheme(questionId)
       .then(setScheme)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Scheme unavailable."));
+      .catch((err: unknown) => setFailure(toFailure(err, "Scheme unavailable.")));
   }, [questionId]);
 
+  const points = scheme ? parsePoints(scheme) : [];
+  const levels = scheme ? parseLevels(scheme) : [];
+  const total = scheme ? num(scheme.totalMarks) : null;
+  const modelAnswer = scheme && scheme.modelAnswer != null ? str(scheme.modelAnswer) : "";
+  const type = scheme ? str(scheme.schemeType) : "";
+
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <h1 className="font-display text-4xl">Mark scheme</h1>
-      <p className="mt-2 text-ink/70">Shown only after you have attempted this question.</p>
-      {!scheme && !error && <div className="mt-8"><LoadingState /></div>}
-      {error && <div className="mt-8"><ErrorState body={error} /></div>}
-      {scheme && (
-        <div className="mt-8 space-y-4">
-          <p className="text-sm">
-            Type: {String(scheme.schemeType ?? "—")} · Total: {String(scheme.totalMarks ?? "—")}
-          </p>
-          {scheme.modelAnswer != null && (
-            <div>
-              <h2 className="font-semibold">Model answer</h2>
-              <p className="mt-1 text-ink/80">{String(scheme.modelAnswer)}</p>
-            </div>
+    <AppPage width="content">
+      <PageHeader
+        eyebrow="After your attempt"
+        title="Mark scheme"
+        description="What examiners look for on this question."
+        actions={
+          <ButtonLink href={responseId ? `/practice/${sessionId}/result/${responseId}` : `/practice/${sessionId}`} variant="tertiary" size="sm">
+            {responseId ? "Back to result" : "Back to practice"}
+          </ButtonLink>
+        }
+      />
+
+      {failure ? (
+        failure.kind === "forbidden" ? (
+          <ForbiddenState body="Have a go at the question first — the mark scheme unlocks after your attempt." />
+        ) : (
+          <FailureView failure={failure} />
+        )
+      ) : !scheme ? (
+        <LoadingState lines={5} />
+      ) : (
+        <div className="animate-rise space-y-5">
+          <div className="flex flex-wrap items-center gap-2">
+            {type && <Badge tone="brand">{SCHEME_TYPE[type] ?? type.replace(/_/g, " ").toLowerCase()}</Badge>}
+            {total != null && <Badge>{plural(total, "mark")} in total</Badge>}
+          </div>
+
+          {points.length > 0 && (
+            <Card>
+              <CardHeader title="Marking points" description="One mark for each point unless shown otherwise." />
+              <ol className="divide-y divide-neutral-100">
+                {points.map((p) => (
+                  <li key={p.id} className="flex items-start gap-3 px-5 py-4">
+                    <CheckCircle size={20} className="mt-0.5 shrink-0 text-answer-correct" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-neutral-900">{p.text || "—"}</p>
+                      {p.accept.length > 0 && (
+                        <p className="mt-1 text-caption text-neutral-600">
+                          <span className="font-semibold text-neutral-700">Also accept:</span> {p.accept.join("; ")}
+                        </p>
+                      )}
+                      {p.reject.length > 0 && (
+                        <p className="mt-0.5 text-caption text-neutral-600">
+                          <span className="font-semibold text-neutral-700">Do not accept:</span> {p.reject.join("; ")}
+                        </p>
+                      )}
+                    </div>
+                    {p.marks != null && <span className="tabular shrink-0 text-caption font-semibold text-neutral-700">{plural(p.marks, "mark")}</span>}
+                  </li>
+                ))}
+              </ol>
+            </Card>
           )}
-          <pre className="overflow-auto rounded-md bg-mist/30 p-3 text-xs">
-            {JSON.stringify(scheme.markingPointsJson ?? scheme.markingPoints ?? scheme, null, 2)}
-          </pre>
+
+          {levels.length > 0 && (
+            <Card>
+              <CardHeader title="Levels" />
+              <ol className="divide-y divide-neutral-100">
+                {levels.map((l, i) => (
+                  <li key={i} className="px-5 py-4">
+                    <p className="flex items-center justify-between gap-3 font-semibold text-neutral-900">
+                      {l.label}
+                      {l.marks && <span className="tabular text-caption text-neutral-700">{l.marks} marks</span>}
+                    </p>
+                    {l.descriptor && <p className="mt-1 text-[14px] text-neutral-700">{l.descriptor}</p>}
+                  </li>
+                ))}
+              </ol>
+            </Card>
+          )}
+
+          {modelAnswer && (
+            <Card>
+              <CardHeader title="Model answer" />
+              <CardBody>
+                <p className="whitespace-pre-wrap leading-relaxed text-neutral-800">{modelAnswer}</p>
+              </CardBody>
+            </Card>
+          )}
+
+          {points.length === 0 && levels.length === 0 && !modelAnswer && (
+            <EmptyState title="No details for this scheme" body="This question is marked automatically against a fixed key." />
+          )}
         </div>
       )}
-      <div className="mt-8 flex gap-4 text-sm">
-        <Link className="underline" href={`/practice/${sessionId}`}>
-          Back to practice
-        </Link>
-        {responseId && (
-          <Link className="underline" href={`/practice/${sessionId}/result/${responseId}`}>
-            Back to result
-          </Link>
-        )}
-      </div>
-    </main>
+    </AppPage>
   );
 }

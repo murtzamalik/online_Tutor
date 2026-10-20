@@ -40,6 +40,15 @@ embedding-service/models/*.onnx
 infra/data/
 *.log
 
+# Large local past-paper archives (keep manifests/README only)
+data/past_papers/*.zip
+data/past_papers/extracted/
+data/past_papers/object_store/
+
+# Machine-local demo credentials (never push)
+docs/LOCAL_DEMO_ACCOUNTS.md
+docs/handoff/LOCAL_DEMO_ACCOUNTS.md
+
 # Generated artefacts
 docs/erd/*.png
 docs/erd/*.svg

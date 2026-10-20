@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.marking.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.db.SqlTime;
 
 import com.karsaaz.studyloop.common.error.AppException;
@@ -36,26 +37,31 @@ public class ExceptionQueueService {
         """
         SELECT exception_id, response_id, trigger, status, created_at, sla_due_at, assigned_to
         FROM marking_exception
-        WHERE (? IS NULL OR status = ?)
+        WHERE (?::text IS NULL OR status = ?::text)
         ORDER BY created_at DESC LIMIT 100
         """,
-        (rs, i) -> Map.of(
-            "exceptionId", rs.getObject("exception_id"),
-            "responseId", rs.getObject("response_id"),
-            "trigger", rs.getString("trigger"),
-            "status", rs.getString("status"),
-            "createdAt", rs.getTimestamp("created_at").toInstant(),
-            "slaDueAt", rs.getTimestamp("sla_due_at"),
-            "assignedTo", rs.getObject("assigned_to")),
+        // HashMap: assigned_to / sla_due_at are null for new exceptions (Map.of throws on null).
+        (rs, i) -> {
+          Map<String, Object> m = new java.util.HashMap<>();
+          m.put("exceptionId", rs.getObject("exception_id"));
+          m.put("responseId", rs.getObject("response_id"));
+          m.put("trigger", rs.getString("trigger"));
+          m.put("status", rs.getString("status"));
+          m.put("createdAt", rs.getTimestamp("created_at").toInstant());
+          m.put("slaDueAt", rs.getTimestamp("sla_due_at") == null ? null : rs.getTimestamp("sla_due_at").toInstant());
+          m.put("assignedTo", rs.getObject("assigned_to"));
+          return m;
+        },
         status,
         status);
   }
 
   public Map<String, Object> detail(AccountPrincipal principal, UUID exceptionId) {
     access.requireOps(principal);
-    return jdbc.query(
+    Map<String, Object> out = jdbc.query(
         """
-        SELECT me.exception_id, me.response_id, me.trigger, me.status, me.original_marks, me.final_marks,
+        SELECT me.exception_id, me.response_id, me.trigger, me.status,
+               COALESCE(me.original_marks, sr.marks_awarded) AS original_marks, me.final_marks,
                sr.answer_text, sr.marks_available, q.question_text, ms.marking_points_json::text AS scheme
         FROM marking_exception me
         JOIN student_response sr ON sr.response_id = me.response_id
@@ -67,18 +73,39 @@ public class ExceptionQueueService {
           if (!rs.next()) {
             throw AppException.notFound("Exception not found");
           }
-          return Map.of(
-              "exceptionId", rs.getObject("exception_id"),
-              "responseId", rs.getObject("response_id"),
-              "trigger", rs.getString("trigger"),
-              "status", rs.getString("status"),
-              "answerText", rs.getString("answer_text"),
-              "questionText", rs.getString("question_text"),
-              "schemeJson", rs.getString("scheme"),
-              "originalMarks", rs.getObject("original_marks"),
-              "marksAvailable", rs.getShort("marks_available"));
+          Map<String, Object> m = new java.util.HashMap<>();
+          m.put("exceptionId", rs.getObject("exception_id"));
+          m.put("responseId", rs.getObject("response_id"));
+          m.put("trigger", rs.getString("trigger"));
+          m.put("status", rs.getString("status"));
+          m.put("answerText", rs.getString("answer_text"));
+          m.put("questionText", rs.getString("question_text"));
+          m.put("schemeJson", rs.getString("scheme"));
+          m.put("originalMarks", rs.getObject("original_marks"));
+          m.put("finalMarks", rs.getObject("final_marks"));
+          m.put("marksAvailable", rs.getShort("marks_available"));
+          return m;
         },
         exceptionId);
+    // The reviewer needs both AI passes (points, evidence, flags) to decide.
+    UUID responseId = (UUID) out.get("responseId");
+    out.put(
+        "aiResults",
+        jdbc.query(
+            """
+            SELECT kind, marks_total, confidence, points_json::text AS points
+            FROM marking_result WHERE response_id = ? ORDER BY created_at
+            """,
+            (rs, i) -> {
+              Map<String, Object> r = new java.util.HashMap<>();
+              r.put("kind", rs.getString("kind"));
+              r.put("marksTotal", rs.getBigDecimal("marks_total"));
+              r.put("confidence", rs.getObject("confidence"));
+              r.put("pointsJson", rs.getString("points"));
+              return r;
+            },
+            responseId));
+    return out;
   }
 
   @Transactional
@@ -171,6 +198,6 @@ public class ExceptionQueueService {
         WHERE created_at > now() - interval '30 days'
         GROUP BY trigger ORDER BY cnt DESC
         """,
-        (rs, i) -> Map.of("trigger", rs.getString("trigger"), "count", rs.getLong("cnt")));
+        (rs, i) -> Rows.of("trigger", rs.getString("trigger"), "count", rs.getLong("cnt")));
   }
 }

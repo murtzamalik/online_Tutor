@@ -1,0 +1,36 @@
+{
+  "status": "ok",
+  "paper_ref": "STUB-PAPER",
+  "schemes": [
+    {
+      "item_ref": "01",
+      "part_ref": null,
+      "scheme_type": "POINTS",
+      "marks": 2,
+      "marking_points": [
+        {
+          "id": "M1",
+          "marks": 1,
+          "point": "amount of substance",
+          "accept": [],
+          "reject": [],
+          "ignore": []
+        },
+        {
+          "id": "M2",
+          "marks": 1,
+          "point": "6.02 x 10^23 particles",
+          "accept": [
+            "Avogadro constant of particles"
+          ],
+          "reject": [],
+          "ignore": []
+        }
+      ],
+      "levels": [],
+      "indicative_content": [],
+      "notes": "",
+      "confidence": 0.9
+    }
+  ]
+}

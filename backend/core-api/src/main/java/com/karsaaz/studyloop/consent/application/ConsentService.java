@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.consent.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.db.SqlTime;
 
 import com.karsaaz.studyloop.common.error.AppException;
@@ -203,7 +204,7 @@ public class ConsentService {
   public Map<String, Object> subProcessors() {
     var items = jdbc.query(
         "SELECT name, purpose, data_categories, location, receives_personal_data FROM sub_processor WHERE active = TRUE",
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "name", rs.getString(1),
             "purpose", rs.getString(2),
             "dataCategories", rs.getString(3),

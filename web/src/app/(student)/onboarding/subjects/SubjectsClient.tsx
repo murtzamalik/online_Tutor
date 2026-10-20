@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { ArrowRight, Flask } from "@phosphor-icons/react";
 import { listSpecifications, listSubjects, SpecificationSchema } from "@/lib/api/catalog";
 import { createEnrolment, listEnrolments, listStudents } from "@/lib/api/students";
 import { ApiError } from "@/lib/api/client";
-import { Button } from "@/components/ui/Button";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { AppPage } from "@/components/ui/AppPage";
+import { Badge, Callout } from "@/components/ui/primitives";
+import { EmptyState, ErrorState, ForbiddenState, LoadingState } from "@/components/ui/states";
+import { SelectCard, StepHeader } from "@/components/student/StudentUI";
 import { z } from "zod";
 
 type Spec = z.infer<typeof SpecificationSchema>;
@@ -21,6 +24,7 @@ export default function OnboardingSubjectsPage() {
   const [chemSubjectId, setChemSubjectId] = useState<string | number | null>(null);
   const [selected, setSelected] = useState<string | number | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "ok">("idle");
+  const [loadFailed, setLoadFailed] = useState<"error" | "forbidden" | null>(null);
   const [message, setMessage] = useState("");
   const [enrolmentId, setEnrolmentId] = useState<string | null>(null);
 
@@ -36,35 +40,37 @@ export default function OnboardingSubjectsPage() {
         setChemSubjectId(chem?.subjectId ?? null);
         const list = await listSpecifications(chem ? { subjectId: chem.subjectId } : undefined);
         setSpecs(list.items);
-      } catch {
+      } catch (err) {
+        setLoadFailed(err instanceof ApiError && err.status === 403 ? "forbidden" : "error");
         setMessage("Could not load catalogue.");
         setStatus("error");
       }
     })();
   }, [studentId]);
 
-  const aqa8462 = useMemo(
-    () => specs?.find((s) => s.specCode === "8462") ?? null,
-    [specs],
-  );
+  const aqa8462 = useMemo(() => specs?.find((s) => s.specCode === "8462") ?? null, [specs]);
 
   async function enrol() {
     if (!studentId || !selected) return;
     setStatus("loading");
+    setMessage("");
     try {
       const existing = await listEnrolments(studentId);
       const hit = existing.items.find((e) => String(e.specificationId) === String(selected));
-      if (hit) {
-        setEnrolmentId(hit.enrolmentId);
-      } else {
-        const created = await createEnrolment(studentId, {
-          specificationId: selected,
-          tier: "HIGHER",
-          goalType: "EXAM_PREP",
-        });
-        setEnrolmentId(created.enrolmentId);
-      }
+      const eid = hit
+        ? hit.enrolmentId
+        : (
+            await createEnrolment(studentId, {
+              specificationId: selected,
+              tier: "HIGHER",
+              goalType: "EXAM_PREP",
+            })
+          ).enrolmentId;
+      setEnrolmentId(eid);
+      sessionStorage.setItem("enrolmentId", eid);
+      sessionStorage.setItem("studentId", studentId);
       setStatus("ok");
+      setMessage("Next, set a goal and a daily target. Practice happens on the child’s own login.");
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof ApiError ? err.message : "Enrolment failed.");
@@ -72,59 +78,76 @@ export default function OnboardingSubjectsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <h1 className="font-display text-4xl">Choose a subject track</h1>
-      <p className="mt-2 text-ink/70">Pilot focus: AQA GCSE Chemistry 8462.</p>
-      {!specs && status !== "error" && <div className="mt-8"><LoadingState label="Loading specifications…" /></div>}
-      {status === "error" && <div className="mt-8"><ErrorState body={message} /></div>}
-      {specs && specs.length === 0 && (
-        <div className="mt-8"><EmptyState title="No specifications" body="Catalogue seed may be missing." /></div>
-      )}
-      {specs && specs.length > 0 && (
-        <ul className="mt-8 space-y-2" role="listbox" aria-label="Specifications">
-          {specs.map((s) => (
-            <li key={String(s.specificationId)}>
-              <button
-                type="button"
+    <AppPage width="content">
+      <StepHeader step={1} title="Choose a subject track" description="Pick the exam board and specification you’re studying. Pilot focus: AQA GCSE Chemistry 8462." />
+
+      {loadFailed === "forbidden" ? (
+        <ForbiddenState body="Only a parent or the student can choose subjects for this profile." />
+      ) : loadFailed === "error" ? (
+        <ErrorState body={message || "Could not load catalogue."} />
+      ) : !specs ? (
+        <LoadingState label="Loading specifications…" lines={4} />
+      ) : specs.length === 0 ? (
+        <EmptyState
+          title="No specifications yet"
+          body="We couldn’t find any courses in the catalogue. Please try again later."
+          action={<ButtonLink href="/home" variant="secondary">Back to Home</ButtonLink>}
+        />
+      ) : (
+        <>
+          <div className="space-y-3" role="listbox" aria-label="Specifications">
+            {specs.map((s) => (
+              <SelectCard
+                key={String(s.specificationId)}
                 role="option"
-                aria-selected={selected === s.specificationId}
-                onClick={() => setSelected(s.specificationId)}
-                className={`w-full rounded-md border px-4 py-3 text-left ${
-                  selected === s.specificationId ? "border-accent bg-accent/10" : "border-mist bg-white"
-                }`}
-              >
-                <span className="font-semibold">{s.specCode}</span>
-                <span className="ml-2 text-ink/70">{s.title ?? s.boardCode}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+                selected={selected === s.specificationId}
+                onSelect={() => setSelected(s.specificationId)}
+                icon={<Flask size={20} />}
+                title={s.title ?? s.boardCode ?? s.specCode}
+                description={[s.boardCode, s.qualificationCode, `Spec ${s.specCode}`].filter(Boolean).join(" · ")}
+                badge={aqa8462 && s.specificationId === aqa8462.specificationId ? <Badge tone="teal">Recommended</Badge> : undefined}
+              />
+            ))}
+          </div>
+          {chemSubjectId == null && (
+            <p className="mt-3 text-caption text-neutral-600">Showing all specifications (Chemistry subject filter unavailable).</p>
+          )}
+        </>
       )}
-      {aqa8462 && selected !== aqa8462.specificationId && (
-        <button
-          type="button"
-          className="mt-4 text-sm font-semibold text-accent underline"
-          onClick={() => setSelected(aqa8462.specificationId)}
-        >
-          Prefer AQA 8462 for the demo
-        </button>
+
+      {status === "error" && !loadFailed && message && (
+        <Callout tone="danger" title="Not enrolled" className="mt-6">
+          {message}
+        </Callout>
       )}
-      <div className="mt-8 flex gap-3">
-        <Button onClick={enrol} disabled={!selected || !studentId || status === "loading"}>
-          Enrol
-        </Button>
-        {enrolmentId && (
-          <Link
-            className="rounded-md border border-mist px-4 py-2 font-semibold"
-            href={`/onboarding/diagnostic?studentId=${studentId}&enrolmentId=${enrolmentId}`}
-          >
-            Start diagnostic
-          </Link>
-        )}
-      </div>
-      {chemSubjectId == null && specs && (
-        <p className="mt-4 text-xs text-ink/50">Showing all specifications (Chemistry subject filter unavailable).</p>
+
+      {status === "ok" && enrolmentId ? (
+        <div className="mt-8 space-y-4" aria-live="polite">
+          <Callout tone="success" title="You’re enrolled">
+            {message || "Enrolled successfully."}
+          </Callout>
+          <div className="flex flex-wrap gap-3">
+            <ButtonLink href={`/onboarding/goals?studentId=${studentId}`} icon={<ArrowRight size={18} />}>
+              Next: set goals
+            </ButtonLink>
+            <ButtonLink href="/child-login" variant="secondary">
+              Child login
+            </ButtonLink>
+            <ButtonLink href="/parent" variant="tertiary">
+              Back to parent home
+            </ButtonLink>
+          </div>
+        </div>
+      ) : (
+        specs &&
+        specs.length > 0 && (
+          <div className="mt-8 flex justify-end">
+            <Button size="lg" onClick={enrol} disabled={!selected || !studentId} loading={status === "loading"}>
+              Enrol
+            </Button>
+          </div>
+        )
       )}
-    </main>
+    </AppPage>
   );
 }

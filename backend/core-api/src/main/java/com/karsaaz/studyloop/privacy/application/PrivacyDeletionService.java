@@ -79,8 +79,8 @@ public class PrivacyDeletionService {
         studentId,
         principal.accountId(),
         scope,
-        now,
-        scheduled);
+        SqlTime.ts(now),
+        SqlTime.ts(scheduled));
     Map<String, Object> out = new HashMap<>();
     out.put("deletionId", deletionId);
     out.put("studentId", studentId);
@@ -167,8 +167,8 @@ public class PrivacyDeletionService {
         studentId,
         principal.accountId(),
         fileKey,
-        now,
-        now.plus(7, ChronoUnit.DAYS));
+        SqlTime.ts(now),
+        SqlTime.ts(now.plus(7, ChronoUnit.DAYS)));
     // Demo: mark READY immediately with a stub payload reference (no personal data in logs).
     return Map.of(
         "exportId",

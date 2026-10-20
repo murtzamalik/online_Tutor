@@ -129,6 +129,16 @@ public class ContentController {
     return contentService.patchLicence(principal, paperId, body);
   }
 
+  /** Attach object-store keys for paper / mark scheme / examiner report PDFs. */
+  @PatchMapping("/internal/past-papers/{paperId}/files")
+  @CatalogueRoles(id = "CNT-12", roles = "CNT")
+  public Map<String, Object> attachFiles(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable long paperId,
+      @RequestBody Map<String, Object> body) {
+    return contentService.attachPastPaperFiles(principal, paperId, body);
+  }
+
   @PatchMapping("/internal/past-paper-items/{itemId}")
   @CatalogueRoles(id = "CNT-18", roles = "CNT")
   public Map<String, Object> patchItem(

@@ -21,6 +21,12 @@ export const NextQuestionSchema = z.object({
   done: z.boolean().optional(),
 });
 
+/** `/next` answers `{ done: true }` with no question when the session has nothing left; callers check `done` first. */
+const NextOrDoneSchema = z.union([
+  NextQuestionSchema,
+  z.object({ done: z.literal(true) }).passthrough(),
+]) as unknown as typeof NextQuestionSchema;
+
 export function startPractice(body: {
   enrolmentId: string;
   mode: string;
@@ -44,7 +50,7 @@ export function nextQuestion(sessionId: string) {
   return apiFetch(`/practice/sessions/${sessionId}/next`, {
     method: "GET",
     token: requireToken(),
-    schema: NextQuestionSchema,
+    schema: NextOrDoneSchema,
   });
 }
 
@@ -72,24 +78,30 @@ export function submitAnswer(
   });
 }
 
+/** Mark result from PRA — API sends reveal as object `{ schemeAvailable }`, not boolean. */
+export const PracticeResultSchema = z.object({
+  status: z.string(),
+  markingStatus: z.string().nullish(),
+  responseId: z.string().nullish(),
+  marks: z
+    .object({
+      awarded: z.number().nullable().optional(),
+      available: z.number().nullable().optional(),
+      max: z.number().nullable().optional(),
+    })
+    .optional(),
+  points: z.array(z.record(z.unknown())).optional(),
+  feedback: z.unknown().optional(),
+  reveal: z.union([z.boolean(), z.record(z.unknown())]).nullish(),
+  provisional: z.boolean().nullish(),
+  isCorrect: z.boolean().nullable().optional(),
+});
+
 export function pollResult(responseId: string) {
   return apiFetch(`/practice/answers/${responseId}/result`, {
     method: "GET",
     token: requireToken(),
-    schema: z.object({
-      status: z.string(),
-      marks: z
-        .object({
-          awarded: z.number().nullable().optional(),
-          available: z.number().nullable().optional(),
-        })
-        .optional(),
-      points: z.array(z.record(z.unknown())).optional(),
-      feedback: z.unknown().optional(),
-      reveal: z.boolean().optional(),
-      provisional: z.boolean().optional(),
-      isCorrect: z.boolean().nullable().optional(),
-    }),
+    schema: PracticeResultSchema,
   });
 }
 
@@ -131,7 +143,7 @@ export function diagnosticNext(diagnosticId: string) {
   return apiFetch(`/diagnostics/${diagnosticId}/next`, {
     method: "GET",
     token: requireToken(),
-    schema: NextQuestionSchema,
+    schema: NextOrDoneSchema,
   });
 }
 
@@ -158,8 +170,11 @@ export function diagnosticResult(diagnosticId: string) {
     method: "GET",
     token: requireToken(),
     schema: z.object({
+      diagnosticId: z.string().optional(),
       theta: z.number().nullable().optional(),
       thetaSe: z.number().nullable().optional(),
+      recommendedTier: z.string().nullish(),
+      topicsSeeded: z.number().nullish(),
       resultJson: z.unknown().optional(),
       completedAt: z.string().nullable().optional(),
       status: z.string().optional(),

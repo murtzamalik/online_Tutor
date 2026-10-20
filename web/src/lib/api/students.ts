@@ -20,6 +20,7 @@ export const EnrolmentSchema = z.object({
   enrolmentId: z.string(),
   specificationId: z.union([z.string(), z.number()]),
   specCode: z.string().optional(),
+  title: z.string().nullable().optional(),
   board: z.string().optional(),
   subject: z.string().optional(),
   tier: z.string().nullable().optional(),
@@ -70,11 +71,8 @@ export function under13Consent(studentId: string, method = "CHECKBOX") {
     method: "POST",
     token: requireToken(),
     body: JSON.stringify({ method, granted: true, documentVersion: "v1" }),
-    schema: z.object({
-      consentId: z.string(),
-      method: z.string(),
-      verifiedAt: z.string().optional(),
-    }),
+    // ConsentController.under13 returns no body.
+    schema: z.unknown(),
   });
 }
 
@@ -110,10 +108,11 @@ export function dailyGoal(studentId: string) {
   return apiFetch(`/students/${studentId}/daily-goal`, {
     method: "GET",
     token: requireToken(),
+    // StudentService.dailyGoalSummary: { target, answered, day }
     schema: z.object({
-      targetQuestions: z.number(),
-      enabled: z.boolean(),
-      progressToday: z.object({ answered: z.number(), target: z.number() }).optional(),
+      target: z.coerce.number(),
+      answered: z.coerce.number(),
+      day: z.string().optional(),
     }),
   });
 }

@@ -1,24 +1,34 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
-import { AppNav } from "@/components/shell/AppNav";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { Microphone, MicrophoneSlash, ShieldCheck } from "@phosphor-icons/react";
+import { AppPage } from "@/components/ui/AppPage";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { Badge, Callout, Card, PageHeader } from "@/components/ui/primitives";
+import { ForbiddenState } from "@/components/ui/states";
+import { errorText, isRecord, str, toFailure, type LoadFailure } from "@/components/student/studentData";
 import * as api from "@/lib/api/w4";
+
+type VoiceSession = { voiceSessionId: string; mode: string; scope: string; status: string };
 
 /** J-02 Verbal discussion mode — consent-gated like voice tutor */
 export default function DiscussionPage() {
-  const [session, setSession] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [session, setSession] = useState<VoiceSession | null>(null);
+  const [failure, setFailure] = useState<LoadFailure | null>(null);
+  const [endError, setEndError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function start() {
     setBusy(true);
-    setError(null);
+    setFailure(null);
     try {
-      const r = await api.startDiscussionVoice({});
-      setSession(r);
-    } catch (e: any) {
-      setError(e?.message ?? "Voice consent / parent toggle required");
+      const r: unknown = await api.startDiscussionVoice({});
+      if (isRecord(r)) {
+        setSession({ voiceSessionId: str(r.voiceSessionId), mode: str(r.mode), scope: str(r.scope), status: str(r.status, "ACTIVE") });
+      }
+    } catch (e: unknown) {
+      setFailure(toFailure(e, "Voice consent / parent toggle required"));
     } finally {
       setBusy(false);
     }
@@ -26,36 +36,100 @@ export default function DiscussionPage() {
 
   async function end() {
     if (!session?.voiceSessionId) return;
-    await api.endVoice(session.voiceSessionId);
-    setSession({ ...session, status: "ENDED" });
+    setBusy(true);
+    setEndError(null);
+    try {
+      await api.endVoice(session.voiceSessionId);
+      setSession({ ...session, status: "ENDED" });
+    } catch (e) {
+      setEndError(errorText(e, "Couldn't end the session. Try again."));
+    } finally {
+      setBusy(false);
+    }
   }
 
+  const live = session && session.status !== "ENDED";
+
   return (
-    <div>
-      <AppNav displayName="Study Loop" />
-      <main className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="font-display text-4xl">Verbal discussion</h1>
-        <p className="mt-2 text-sm">English Lang/Lit discussion mode. Same voice consent and safety as the voice tutor — not a Q&amp;A drill.</p>
-        <p className="mt-2 text-sm">
-          Need consent? <Link className="underline" href="/voice/consent">Grant voice consent (J-06)</Link>
-        </p>
-        {!session && (
-          <button type="button" className="mt-6 rounded border px-4 py-2" onClick={start} disabled={busy}>Start discussion</button>
-        )}
-        {busy && <div className="mt-6"><LoadingState /></div>}
-        {error && <div className="mt-6"><ErrorState body={error} /></div>}
-        {session && (
-          <div className="mt-6 space-y-3 animate-rise" aria-live="polite">
-            <p>Mode: {session.mode}</p>
-            <p className="text-sm">{session.scope}</p>
-            <p className="text-sm">WS: {session.wsUrl}</p>
-            {session.status !== "ENDED" && (
-              <button type="button" className="rounded border px-3 py-2" onClick={end}>End session</button>
-            )}
-          </div>
-        )}
-        <p className="mt-6 text-sm"><Link className="underline" href="/home">Home</Link></p>
-      </main>
-    </div>
+    <AppPage width="content">
+      <PageHeader
+        eyebrow="Tutor · Voice"
+        title="Talk it through"
+        description="A spoken discussion for English Language and Literature — ideas, themes and quotes. It isn’t a question drill."
+      />
+
+      {failure?.kind === "forbidden" ? (
+        <div className="space-y-4">
+          <ForbiddenState body={`${failure.message}. Voice needs a parent’s consent and the voice setting switched on.`} />
+          <p className="text-center text-[14px] text-neutral-600">
+            Parent?{" "}
+            <Link href="/voice/consent" className="font-semibold text-brand-navy hover:underline">
+              Give voice consent
+            </Link>
+          </p>
+        </div>
+      ) : (
+        <Card className="p-6 text-center sm:p-10">
+          <span
+            className={
+              "mx-auto flex h-20 w-20 items-center justify-center rounded-full " +
+              (live ? "bg-brand-teal text-white shadow-raised" : "bg-brand-tealSoft text-brand-teal")
+            }
+          >
+            {session?.status === "ENDED" ? <MicrophoneSlash size={34} /> : <Microphone size={34} weight={live ? "fill" : "regular"} />}
+          </span>
+
+          {!session ? (
+            <>
+              <h2 className="mt-5 text-h2">Ready when you are</h2>
+              <p className="mx-auto mt-1 max-w-md text-neutral-600">Find a quiet spot. Your tutor will ask questions to help you build your own argument.</p>
+              {failure && (
+                <Callout tone="danger" className="mt-5 text-left">
+                  {failure.message}
+                </Callout>
+              )}
+              <div className="mt-6 flex justify-center">
+                <Button size="lg" onClick={start} loading={busy} icon={<Microphone size={18} />}>
+                  Start discussion
+                </Button>
+              </div>
+            </>
+          ) : live ? (
+            <div aria-live="polite">
+              <div className="mt-5 flex justify-center">
+                <Badge tone="teal">Session open</Badge>
+              </div>
+              <h2 className="mt-3 text-h2">You’re connected</h2>
+              {session.scope && <p className="mx-auto mt-1 max-w-md text-neutral-600">{session.scope}</p>}
+              {endError && (
+                <Callout tone="danger" className="mt-5 text-left">
+                  {endError}
+                </Callout>
+              )}
+              <div className="mt-6 flex justify-center">
+                <Button variant="secondary" size="lg" onClick={end} loading={busy}>
+                  End session
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div aria-live="polite">
+              <h2 className="mt-5 text-h2">Session ended</h2>
+              <p className="mx-auto mt-1 max-w-md text-neutral-600">Nice work talking it through.</p>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <ButtonLink href="/home">Back to Home</ButtonLink>
+                <Button variant="secondary" onClick={() => setSession(null)}>
+                  Start another
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      <p className="mt-6 flex items-center justify-center gap-1.5 text-caption text-neutral-600">
+        <ShieldCheck size={16} aria-hidden /> Same consent and safety checks as the voice tutor.
+      </p>
+    </AppPage>
   );
 }

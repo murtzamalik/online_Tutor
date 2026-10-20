@@ -10,18 +10,46 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * School tables are under row-level security (V011): a row is visible only when the transaction has
+ * {@code app.school_id} set to its school, or {@code app.rls_bypass = 'on'}. Every public method therefore
+ * runs in a transaction, and {@link #requireSchoolRole} sets the scope after the caller is authorised.
+ */
 @Service
+@Transactional
 public class SchoolService {
   public static final UUID PILOT_SCHOOL = UUID.fromString("a1000000-0000-4000-8000-000000000001");
   private final JdbcTemplate jdbc;
 
-  public SchoolService(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+  private final ObjectMapper mapper;
+
+  public SchoolService(JdbcTemplate jdbc, ObjectMapper mapper) {
+    this.jdbc = jdbc;
+    this.mapper = mapper;
+  }
+
+  /** jsonb values must be real JSON (Map.toString() / hand-escaped strings are not). */
+  private String json(Object value) {
+    try {
+      return mapper.writeValueAsString(value == null ? Map.of() : value);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("JSON serialize failed", e);
+    }
+  }
 
   private void requireSchoolRole(AccountPrincipal p, UUID schoolId) {
+    authoriseSchool(p, schoolId);
+    // Transaction-local (is_local = true), so pooled connections never carry it into another request.
+    jdbc.queryForObject("SELECT set_config('app.school_id', ?, true)", String.class, schoolId.toString());
+  }
+
+  private void authoriseSchool(AccountPrincipal p, UUID schoolId) {
     if (StudentAccessHelper.hasOpsRole(p.roles()) || StudentAccessHelper.hasOwnerRole(p.roles())) return;
     Integer n = jdbc.queryForObject(
         "SELECT COUNT(*) FROM school_member WHERE school_id = ? AND account_id = ?",
@@ -58,12 +86,16 @@ public class SchoolService {
   public Map<String, Object> listClasses(AccountPrincipal p, UUID schoolId) {
     requireSchoolRole(p, schoolId);
     List<Map<String, Object>> items = jdbc.query(
-        "SELECT class_id, name, year_group, academic_year, archived_at FROM school_class WHERE school_id = ? AND archived_at IS NULL",
-        (rs, i) -> Map.of(
+        """
+        SELECT class_id, name, year_group, academic_year, specification_id
+        FROM school_class WHERE school_id = ? AND archived_at IS NULL ORDER BY name
+        """,
+        (rs, i) -> row(
             "classId", rs.getObject(1).toString(),
             "name", rs.getString(2),
             "yearGroup", rs.getString(3) == null ? "" : rs.getString(3),
-            "academicYear", rs.getString(4)),
+            "academicYear", rs.getString(4),
+            "specificationId", rs.getObject(5)),
         schoolId);
     return Map.of("items", items);
   }
@@ -107,7 +139,7 @@ public class SchoolService {
         JOIN student_profile sp ON sp.student_id = cp.student_id
         WHERE cp.class_id = ? AND cp.left_at IS NULL
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> row(
             "studentId", rs.getObject(1).toString(),
             "displayName", rs.getString(2),
             "yearGroup", rs.getString(3) == null ? "" : rs.getString(3)),
@@ -168,7 +200,7 @@ public class SchoolService {
     requireSchoolRole(p, schoolOfClass(classId));
     List<Map<String, Object>> items = jdbc.query(
         "SELECT assignment_id, title, status, due_at, question_count FROM assignment WHERE class_id = ? ORDER BY due_at DESC",
-        (rs, i) -> Map.of(
+        (rs, i) -> row(
             "assignmentId", rs.getObject(1).toString(),
             "title", rs.getString(2),
             "status", rs.getString(3),
@@ -183,7 +215,7 @@ public class SchoolService {
         "SELECT assignment_id, class_id, title, status, due_at FROM assignment WHERE assignment_id = ?",
         rs -> {
           if (!rs.next()) throw AppException.notFound("Assignment not found");
-          return Map.<String, Object>of(
+          return row(
               "assignmentId", rs.getObject(1).toString(),
               "classId", rs.getObject(2).toString(),
               "title", rs.getString(3),
@@ -193,7 +225,7 @@ public class SchoolService {
     requireSchoolRole(p, schoolOfClass(UUID.fromString(a.get("classId").toString())));
     List<Map<String, Object>> targets = jdbc.query(
         "SELECT student_id, status, score_pct FROM assignment_target WHERE assignment_id = ?",
-        (rs, i) -> Map.of(
+        (rs, i) -> row(
             "studentId", rs.getObject(1).toString(),
             "status", rs.getString(2),
             "scorePct", rs.getObject(3)),
@@ -227,7 +259,7 @@ public class SchoolService {
         JOIN assignment_target t ON t.assignment_id = a.assignment_id
         WHERE t.student_id = ? AND a.status = 'PUBLISHED'
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> row(
             "assignmentId", rs.getObject(1).toString(),
             "title", rs.getString(2),
             "dueAt", rs.getTimestamp(3) == null ? null : rs.getTimestamp(3).toString(),
@@ -240,12 +272,18 @@ public class SchoolService {
     requireSchoolRole(p, schoolOfClass(classId));
     List<Map<String, Object>> cells = jdbc.query(
         """
-        SELECT m.topic_id, AVG(m.mastery_probability) AS avg_p, COUNT(*) AS n
+        SELECT m.topic_id, AVG(m.mastery_probability) AS avg_p, COUNT(*) AS n, t.topic_name, t.topic_number
         FROM mastery_state m
         JOIN class_pupil cp ON cp.student_id = m.student_id AND cp.class_id = ? AND cp.left_at IS NULL
-        GROUP BY m.topic_id ORDER BY avg_p ASC LIMIT 50
+        JOIN spec_topic t ON t.topic_id = m.topic_id
+        GROUP BY m.topic_id, t.topic_name, t.topic_number ORDER BY avg_p ASC LIMIT 50
         """,
-        (rs, i) -> Map.of("topicId", rs.getLong(1), "avgMastery", rs.getBigDecimal(2), "pupils", rs.getLong(3)),
+        (rs, i) -> row(
+            "topicId", rs.getLong(1),
+            "avgMastery", rs.getBigDecimal(2),
+            "pupils", rs.getLong(3),
+            "topicName", rs.getString(4),
+            "topicNumber", rs.getString(5)),
         classId);
     return Map.of("heatmap", cells);
   }
@@ -260,7 +298,7 @@ public class SchoolService {
         WHERE e.day >= CURRENT_DATE - 14
         GROUP BY e.student_id
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> row(
             "studentId", rs.getObject(1).toString(),
             "minutes", rs.getBigDecimal(2),
             "answered", rs.getLong(3)),
@@ -277,8 +315,12 @@ public class SchoolService {
       return Map.of("studentId", studentId.toString(), "visible", false, "message", "Parent privacy settings hide detail");
     }
     List<Map<String, Object>> mastery = jdbc.query(
-        "SELECT topic_id, mastery_probability, mastery_level FROM mastery_state WHERE student_id = ? ORDER BY mastery_probability ASC LIMIT 20",
-        (rs, i) -> Map.of("topicId", rs.getLong(1), "p", rs.getBigDecimal(2), "level", rs.getShort(3)),
+        """
+        SELECT m.topic_id, m.mastery_probability, m.mastery_level, t.topic_name
+        FROM mastery_state m JOIN spec_topic t ON t.topic_id = m.topic_id
+        WHERE m.student_id = ? ORDER BY m.mastery_probability ASC LIMIT 20
+        """,
+        (rs, i) -> row("topicId", rs.getLong(1), "p", rs.getBigDecimal(2), "level", rs.getShort(3), "topicName", rs.getString(4)),
         studentId);
     return Map.of("studentId", studentId.toString(), "visible", true, "mastery", mastery);
   }
@@ -301,7 +343,23 @@ public class SchoolService {
 
   public Map<String, Object> insightSummary(AccountPrincipal p, UUID classId) {
     requireSchoolRole(p, schoolOfClass(classId));
-    return Map.of("classId", classId.toString(), "summary", "Pilot insights: focus on lowest-mastery topics first.");
+    // Computed from the class's mastery (no model call): the three topics with the lowest average.
+    List<Map<String, Object>> weakest = jdbc.query(
+        """
+        SELECT t.topic_name, AVG(m.mastery_probability) AS avg_p, COUNT(DISTINCT m.student_id) AS pupils
+        FROM class_pupil cp
+        JOIN mastery_state m ON m.student_id = cp.student_id AND m.model_type = 'BKT'
+        JOIN spec_topic t ON t.topic_id = m.topic_id
+        WHERE cp.class_id = ? AND cp.left_at IS NULL
+        GROUP BY t.topic_name ORDER BY avg_p ASC LIMIT 3
+        """,
+        (rs, i) -> row("topicName", rs.getString(1), "avgMastery", rs.getBigDecimal(2), "pupils", rs.getLong(3)),
+        classId);
+    String summary = weakest.isEmpty()
+        ? "Not enough practice yet — insights appear once pupils have answered some questions."
+        : "Lowest class mastery: " + String.join(", ", weakest.stream().map(w -> String.valueOf(w.get("topicName"))).toList())
+            + ". Consider setting a short assignment on these.";
+    return Map.of("classId", classId.toString(), "summary", summary, "weakestTopics", weakest);
   }
 
   @Transactional
@@ -327,12 +385,12 @@ public class SchoolService {
           VALUES (?,?,?,?::jsonb,?,?)
           """,
           UUID.randomUUID(), importId, i + 1,
-          "{\\\"displayName\\\":\\\"" + name.replace("\"", "") + "\\\"}",
+          json(Map.of("displayName", name)),
           status, "ERROR".equals(status) ? "displayName required" : null);
     }
     jdbc.update(
         "UPDATE roster_import SET status = 'VALIDATED', stats_json = ?::jsonb WHERE import_id = ?",
-        "{\\\"rows\\\":" + rows.size() + ",\\\"valid\\\":" + valid + ",\\\"errors\\\":" + err + "}",
+        json(Map.of("rows", rows.size(), "valid", valid, "errors", err)),
         importId);
     return Map.of("importId", importId.toString(), "valid", valid, "errors", err);
   }
@@ -355,16 +413,19 @@ public class SchoolService {
     requireSchoolRole(p, schoolId);
     List<Map<String, Object>> rows = jdbc.query(
         "SELECT row_id, raw_json FROM roster_import_row WHERE import_id = ? AND status = 'VALID'",
-        (rs, i) -> Map.of("rowId", rs.getObject(1), "raw", rs.getString(2)),
+        (rs, i) -> row("rowId", rs.getObject(1), "raw", rs.getString(2)),
         importId);
     int created = 0;
     for (var row : rows) {
       UUID studentId = UUID.randomUUID();
       String name = "Pupil";
-      String raw = String.valueOf(row.get("raw"));
-      int idx = raw.indexOf("displayName");
-      if (idx >= 0) {
-        name = raw.replaceAll("(?s).*displayName\\\"?\\s*[:=]\\s*\\\"?([^\\\"},]+).*", "$1");
+      try {
+        Object parsed = mapper.readValue(String.valueOf(row.get("raw")), Map.class).get("displayName");
+        if (parsed != null && !parsed.toString().isBlank()) {
+          name = parsed.toString().trim();
+        }
+      } catch (Exception ignored) {
+        // keep the placeholder name; the row was validated on import
       }
       jdbc.update(
           "INSERT INTO student_profile (student_id, display_name, school_id, age_band, status) VALUES (?,?,?,'13_15','ACTIVE')",
@@ -380,7 +441,7 @@ public class SchoolService {
     requireSchoolRole(p, schoolId);
     List<Map<String, Object>> items = jdbc.query(
         "SELECT sso_id, provider, domain, enabled, audience FROM sso_connection WHERE school_id = ?",
-        (rs, i) -> Map.of(
+        (rs, i) -> row(
             "ssoId", rs.getObject(1).toString(),
             "provider", rs.getString(2),
             "domain", rs.getString(3),
@@ -527,7 +588,7 @@ public class SchoolService {
         VALUES (?,?,?,?::jsonb,?)
         """,
         id, schoolId, body.getOrDefault("packVersion", "kcsie-2026-v1").toString(),
-        body.get("answers") == null ? "{}" : body.get("answers").toString(),
+        json(body.get("answers")),
         p.accountId());
     return Map.of("confirmationId", id.toString(), "status", "CONFIRMED");
   }
@@ -539,7 +600,7 @@ public class SchoolService {
     }
     List<Map<String, Object>> items = jdbc.query(
         "SELECT school_id, name, status, seats_purchased FROM school ORDER BY name",
-        (rs, i) -> Map.of(
+        (rs, i) -> row(
             "schoolId", rs.getObject(1).toString(),
             "name", rs.getString(2),
             "status", rs.getString(3),
@@ -557,9 +618,21 @@ public class SchoolService {
     return Map.of("schoolId", id.toString());
   }
 
+  /** Like Map.of but allows null values (Map.of throws on a null due date). */
+  private static Map<String, Object> row(Object... kv) {
+    Map<String, Object> m = new HashMap<>();
+    for (int i = 0; i < kv.length; i += 2) {
+      m.put((String) kv[i], kv[i + 1]);
+    }
+    return m;
+  }
+
   private UUID schoolOfClass(UUID classId) {
+    // Finding which school a class belongs to must see past RLS; access is checked right after by the caller.
+    jdbc.queryForObject("SELECT set_config('app.rls_bypass', 'on', true)", String.class);
     UUID sid = jdbc.query("SELECT school_id FROM school_class WHERE class_id = ?",
         rs -> rs.next() ? (UUID) rs.getObject(1) : null, classId);
+    jdbc.queryForObject("SELECT set_config('app.rls_bypass', 'off', true)", String.class);
     if (sid == null) throw AppException.notFound("Class not found");
     return sid;
   }

@@ -88,11 +88,8 @@ public class VoiceService {
     if (tutorId != null) {
       jdbc.update("UPDATE tutor_session SET status = 'ENDED', ended_at = now() WHERE tutor_session_id = ?", tutorId);
     }
-    // Metrics only — STT/TTS usage reported via gateway; no audio stored here
-    try {
-      gateway.run("P-VO-02", Map.of("event", "session_end"), null);
-    } catch (Exception ignored) {
-    }
+    // No transcript exists yet (STT/TTS not built), so P-VO-02 has nothing to summarise; the old call
+    // sent {"event":"session_end"} to a model and paid for a meaningless answer.
     return Map.of("status", "ENDED", "voiceSessionId", voiceSessionId.toString());
   }
 
@@ -102,9 +99,8 @@ public class VoiceService {
     out.put("networkOk", true);
     out.put("gatewayReachable", true);
     out.put("errorClass", null);
-    try {
-      gateway.run("P-VO-01", Map.of("ping", "1"), null);
-    } catch (Exception e) {
+    // Health endpoint only: a connectivity check must not spend model tokens.
+    if (!gateway.isHealthy()) {
       out.put("gatewayReachable", false);
       out.put("errorClass", "GATEWAY_UNAVAILABLE");
       out.put("degraded", true);

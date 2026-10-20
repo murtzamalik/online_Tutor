@@ -107,8 +107,8 @@ public class ReportingController {
 
   @PostMapping("/jobs/weekly-reports/run")
   @CatalogueRoles(id = "RPT-13", roles = "SYS")
-  public Map<String, Object> weeklyJob() {
-    return reportingService.runWeeklyReports();
+  public Map<String, Object> weeklyJob(@AuthenticationPrincipal AccountPrincipal principal) {
+    return reportingService.runWeeklyReports(principal);
   }
 
   @GetMapping("/students/{studentId}/ai-transcripts")

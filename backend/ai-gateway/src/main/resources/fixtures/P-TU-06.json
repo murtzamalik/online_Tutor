@@ -1,0 +1,24 @@
+{
+  "status": "ok",
+  "question_understood_as": "Calculate the relative formula mass of a compound shown in the photo.",
+  "steps": [
+    {
+      "step_no": 1,
+      "guidance": "Write down the formula of the compound.",
+      "prompt_to_student": "What is the formula given in the question?"
+    },
+    {
+      "step_no": 2,
+      "guidance": "Find the relative atomic mass of each element from the periodic table.",
+      "prompt_to_student": "What Ar values do you need?"
+    },
+    {
+      "step_no": 3,
+      "guidance": "Multiply each Ar by the number of atoms and add them up.",
+      "prompt_to_student": "Try the sum — what do you get?"
+    }
+  ],
+  "reveals_final_answer": false,
+  "transcription_confidence": 0.9,
+  "ask_student_to_confirm": false
+}

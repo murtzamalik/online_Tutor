@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.mastery.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.db.SqlTime;
 
 import com.karsaaz.studyloop.common.error.AppException;
@@ -96,7 +97,7 @@ public class MasteryService {
     }
   }
 
-  public Map<String, Object> masteryTree(AccountPrincipal principal, UUID studentId, Long enrolmentId) {
+  public Map<String, Object> masteryTree(AccountPrincipal principal, UUID studentId, UUID enrolmentId) {
     UUID sid = access.resolveStudentId(principal, studentId);
     access.assertParentOrStudentOrTeacher(principal, sid);
     Long specId = null;
@@ -136,7 +137,11 @@ public class MasteryService {
         sid,
         specId,
         specId);
-    return Map.of("studentId", sid, "enrolmentId", enrolmentId, "topics", topics);
+    Map<String, Object> out = new HashMap<>();
+    out.put("studentId", sid);
+    out.put("enrolmentId", enrolmentId);
+    out.put("topics", topics);
+    return out;
   }
 
   public Map<String, Object> predictedGrades(AccountPrincipal principal, UUID studentId) {
@@ -177,7 +182,7 @@ public class MasteryService {
         ORDER BY m.next_review_due_at
         LIMIT 50
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "topicId", rs.getLong("topic_id"),
             "topicName", rs.getString("topic_name"),
             "masteryLevel", rs.getShort("mastery_level"),

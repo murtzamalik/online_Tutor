@@ -2,15 +2,18 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { Eye, EyeSlash } from "@phosphor-icons/react";
 import { registerParent } from "@/lib/api/auth-extra";
-import { ApiError } from "@/lib/api/client";
+import { ApiError, SchemaParseError } from "@/lib/api/client";
+import { AuthCard } from "@/components/shell/AuthLayout";
 import { Button } from "@/components/ui/Button";
-import { ErrorState, LoadingState } from "@/components/ui/states";
+import { Callout, Checkbox, Field, Input } from "@/components/ui/primitives";
 
 /** B-01 — Parent signup */
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "ok">("idle");
@@ -26,72 +29,116 @@ export default function SignupPage() {
       window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
     } catch (err) {
       setStatus("error");
-      setMessage(err instanceof ApiError ? err.message : "Unable to register.");
+      if (err instanceof ApiError) {
+        setMessage(err.message);
+      } else if (err instanceof SchemaParseError) {
+        setMessage("Registration response could not be read. Try again or contact support.");
+      } else {
+        setMessage("Unable to register.");
+      }
     }
   }
 
+  const tooShort = password.length > 0 && password.length < 10;
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
-      <h1 className="font-display text-4xl">Create a parent account</h1>
-      <p className="mt-2 text-ink/70">You will verify your email before adding children.</p>
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
-        <label className="block text-sm font-semibold">
-          Your name
-          <input
-            className="mt-1 w-full rounded-md border border-mist bg-white px-3 py-3"
-            required
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-          />
-        </label>
-        <label className="block text-sm font-semibold">
-          Email
-          <input
-            className="mt-1 w-full rounded-md border border-mist bg-white px-3 py-3"
+    <AuthCard
+      audience="family"
+      title="Create a parent account"
+      description="Start your free trial. You’ll verify your email before adding children."
+      footer={
+        <div className="space-y-2">
+          <p>
+            Already have an account?{" "}
+            <Link href="/login" className="font-semibold text-brand-navy hover:underline">
+              Log in
+            </Link>
+          </p>
+          <p>
+            Aged 13 or over and signing up yourself?{" "}
+            <Link href="/student/signup" className="font-semibold text-brand-navy hover:underline">
+              Student sign-up
+            </Link>
+          </p>
+        </div>
+      }
+    >
+      <form onSubmit={onSubmit} className="animate-rise space-y-5">
+        <Field label="Your name" htmlFor="su-name">
+          <Input id="su-name" required autoComplete="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+        </Field>
+        <Field label="Email" htmlFor="su-email">
+          <Input
+            id="su-email"
             type="email"
             required
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
           />
-        </label>
-        <label className="block text-sm font-semibold">
-          Password
-          <input
-            className="mt-1 w-full rounded-md border border-mist bg-white px-3 py-3"
-            type="password"
-            required
-            minLength={10}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        <label className="flex items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="mt-1"
-            checked={acceptTerms}
-            onChange={(e) => setAcceptTerms(e.target.checked)}
-            required
-          />
-          <span>
-            I accept the{" "}
-            <Link href="/legal/terms" className="underline">
-              terms
-            </Link>{" "}
-            and privacy notice.
-          </span>
-        </label>
-        {status === "loading" && <LoadingState label="Creating account…" />}
-        {status === "error" && <ErrorState body={message} />}
-        <Button type="submit" className="w-full">
-          Sign up
+        </Field>
+        <Field
+          label="Password"
+          htmlFor="su-password"
+          hint="At least 10 characters. A short phrase is easier to remember."
+          error={tooShort ? `At least 10 characters — ${10 - password.length} to go.` : undefined}
+        >
+          <div className="relative">
+            <Input
+              id="su-password"
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={10}
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pr-11"
+              aria-invalid={tooShort || undefined}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-neutral-400 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy/30"
+            >
+              {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+        </Field>
+        <Checkbox
+          checked={acceptTerms}
+          onChange={(e) => setAcceptTerms(e.target.checked)}
+          required
+          label={
+            <>
+              I accept the{" "}
+              <Link href="/legal/terms" className="font-medium text-brand-navy underline">
+                terms
+              </Link>{" "}
+              and{" "}
+              <Link href="/legal/privacy" className="font-medium text-brand-navy underline">
+                privacy notice
+              </Link>
+              .
+            </>
+          }
+        />
+
+        <div aria-live="polite">
+          {status === "error" && (
+            <Callout tone="danger" title="We couldn't create your account">
+              {message}
+            </Callout>
+          )}
+          {status === "ok" && <Callout tone="success">Account created — taking you to email verification…</Callout>}
+        </div>
+
+        <Button type="submit" size="lg" className="w-full" loading={status === "loading" || status === "ok"}>
+          Create account
         </Button>
       </form>
-      <Link href="/login" className="mt-6 text-sm text-ink/70 underline">
-        Already have an account?
-      </Link>
-    </main>
+    </AuthCard>
   );
 }

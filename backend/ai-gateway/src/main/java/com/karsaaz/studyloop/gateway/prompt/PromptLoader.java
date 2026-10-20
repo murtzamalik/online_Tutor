@@ -1,60 +1,35 @@
 package com.karsaaz.studyloop.gateway.prompt;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+/** Reads the single LIVE {@code prompt_version} row for a prompt (Q-03 promotion flow). */
 @Component
 public class PromptLoader {
-  private final Path promptsPath;
+  private static final Logger log = LoggerFactory.getLogger(PromptLoader.class);
   private final JdbcTemplate jdbc;
-  private final Map<String, String> cache = new ConcurrentHashMap<>();
 
-  public PromptLoader(@Value("${studyloop.gateway.prompts-path}") String promptsPath, JdbcTemplate jdbc) {
-    this.promptsPath = Path.of(promptsPath);
+  public PromptLoader(JdbcTemplate jdbc) {
     this.jdbc = jdbc;
   }
 
-  public String loadBody(String promptId) {
-    return cache.computeIfAbsent(promptId, this::resolve);
-  }
+  public record LiveBody(String version, String body) {}
 
-  private String resolve(String promptId) {
+  public Optional<LiveBody> liveBody(String promptId) {
     try {
-      String fromDb = jdbc.query(
-          "SELECT body_text FROM prompt_version WHERE prompt_id = ? AND status = 'LIVE' LIMIT 1",
-          rs -> rs.next() ? rs.getString(1) : null,
-          promptId);
-      if (fromDb != null && !fromDb.isBlank()) {
-        return fromDb;
-      }
-    } catch (Exception ignored) {
-      // DB may be empty in early W0
+      return Optional.ofNullable(
+          jdbc.query(
+              "SELECT version, body_text FROM prompt_version WHERE prompt_id = ? AND status = 'LIVE' LIMIT 1",
+              rs -> rs.next() && rs.getString(2) != null && !rs.getString(2).isBlank()
+                  ? new LiveBody(rs.getString(1), rs.getString(2))
+                  : null,
+              promptId));
+    } catch (Exception e) {
+      log.warn("prompt_version lookup failed for {}; using repo file", promptId);
+      return Optional.empty();
     }
-    try {
-      if (Files.isDirectory(promptsPath)) {
-        try (var stream = Files.walk(promptsPath)) {
-          return stream
-              .filter(p -> p.getFileName().toString().startsWith(promptId))
-              .findFirst()
-              .map(p -> {
-                try {
-                  return Files.readString(p);
-                } catch (IOException e) {
-                  return "PROMPT_MISSING";
-                }
-              })
-              .orElse("PROMPT_STUB:" + promptId);
-        }
-      }
-    } catch (IOException e) {
-      return "PROMPT_STUB:" + promptId;
-    }
-    return "PROMPT_STUB:" + promptId;
   }
 }

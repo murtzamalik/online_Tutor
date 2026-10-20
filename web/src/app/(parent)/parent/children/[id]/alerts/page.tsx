@@ -1,55 +1,115 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
+
+import { useState } from "react";
 import { useParams } from "next/navigation";
-import { AppNav } from "@/components/shell/AppNav";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import * as api from "@/lib/api/w4";
+import { AppPage } from "@/components/ui/AppPage";
+import { Button } from "@/components/ui/Button";
+import { Badge, Callout, Table, Td, Th, type Tone } from "@/components/ui/primitives";
+import { EmptyState } from "@/components/ui/states";
+import { ChildHeader } from "@/components/parent/ChildHeader";
+import { LoadView, useLoad } from "@/components/parent/useLoad";
+import { asRecord, errorMessage, formatDateTime, humanise, str } from "@/components/parent/format";
+
+type Alert = { alertId: string; kind?: string; severity?: string; message?: string; status?: string; createdAt?: unknown };
+
+const SEVERITY_TONE: Record<string, Tone> = { HIGH: "danger", MEDIUM: "warning", LOW: "info" };
 
 /** H-05 Early-warning drift alerts */
 export default function AlertsPage() {
   const { id } = useParams<{ id: string }>();
-  const [items, setItems] = useState<any[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    api.getAlerts(id)
-      .then((r) => setItems(r.items ?? []))
-      .catch((e) => setError(e?.message ?? "Could not load alerts"))
-      .finally(() => setLoading(false));
-  }, [id]);
+  const { state, retry, setData } = useLoad<Alert[]>(
+    async () => {
+      const r = await api.getAlerts(id);
+      return (r.items ?? []).map((v) => {
+        const a = asRecord(v);
+        return {
+          alertId: str(a.alertId) ?? "",
+          kind: str(a.kind),
+          severity: str(a.severity),
+          message: str(a.message),
+          status: str(a.status),
+          createdAt: a.createdAt,
+        };
+      });
+    },
+    [id],
+    "Could not load alerts",
+  );
 
   async function ack(alertId: string) {
-    await api.ackAlert(alertId);
-    setItems((prev) => prev.map((a) => (a.alertId === alertId ? { ...a, status: "ACK" } : a)));
+    if (state.status !== "ready") return;
+    setBusy(alertId);
+    setActionError(null);
+    try {
+      await api.ackAlert(alertId);
+      setData(state.data.map((a) => (a.alertId === alertId ? { ...a, status: "ACK" } : a)));
+    } catch (e) {
+      setActionError(errorMessage(e, "Could not acknowledge that alert. Try again."));
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
-    <div>
-      <AppNav displayName="Parent" />
-      <main className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="font-display text-4xl">Early-warning alerts</h1>
-        <p className="mt-2 text-sm">At most one alert per kind per 7 days (server-enforced).</p>
-        {loading && <div className="mt-8"><LoadingState /></div>}
-        {error && <div className="mt-8"><ErrorState body={error} /></div>}
-        {!loading && !error && items.length === 0 && (
-          <div className="mt-8"><EmptyState title="No alerts" body="Nothing to review right now." /></div>
-        )}
-        <ul className="mt-8 space-y-3" role="list">
-          {items.map((a) => (
-            <li key={a.alertId} className="rounded border p-4">
-              <p className="font-medium">{a.kind} · {a.severity}</p>
-              <p className="text-sm mt-1">{a.message}</p>
-              <p className="text-xs mt-1 opacity-60">{a.status}</p>
-              {a.status === "NEW" && (
-                <button type="button" className="mt-2 text-sm underline" onClick={() => ack(a.alertId)}>Acknowledge</button>
-              )}
-            </li>
-          ))}
-        </ul>
-        <p className="mt-6 text-sm"><Link className="underline" href={`/parent/children/${id}`}>Back</Link></p>
-      </main>
-    </div>
+    <AppPage>
+      <ChildHeader
+        studentId={id}
+        active="alerts"
+        title="Early-warning alerts"
+        description="We flag changes such as practice dropping off. At most one alert of each kind every 7 days."
+      />
+      <div aria-live="polite" className="space-y-4">
+        {actionError && <Callout tone="danger">{actionError}</Callout>}
+        <LoadView state={state} onRetry={retry}>
+          {(items) =>
+            items.length === 0 ? (
+              <EmptyState title="No alerts" body="Nothing to review right now. We'll tell you here and by email if anything changes." />
+            ) : (
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>Alert</Th>
+                    <Th className="hidden md:table-cell">Severity</Th>
+                    <Th className="hidden sm:table-cell">Raised</Th>
+                    <Th>Status</Th>
+                    <Th>
+                      <span className="sr-only">Action</span>
+                    </Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((a) => (
+                    <tr key={a.alertId}>
+                      <Td>
+                        <p className="font-semibold">{humanise(a.kind, "Alert")}</p>
+                        <p className="mt-0.5 text-[14px] text-neutral-700">{a.message ?? "—"}</p>
+                      </Td>
+                      <Td className="hidden md:table-cell">
+                        <Badge tone={SEVERITY_TONE[a.severity ?? ""] ?? "neutral"}>{humanise(a.severity)}</Badge>
+                      </Td>
+                      <Td className="tabular hidden whitespace-nowrap text-neutral-600 sm:table-cell">{formatDateTime(a.createdAt)}</Td>
+                      <Td>
+                        <Badge tone={a.status === "NEW" ? "info" : "neutral"}>{a.status === "NEW" ? "New" : a.status === "ACK" ? "Acknowledged" : humanise(a.status)}</Badge>
+                      </Td>
+                      <Td className="text-right">
+                        {a.status === "NEW" && (
+                          <Button variant="secondary" size="sm" loading={busy === a.alertId} onClick={() => ack(a.alertId)}>
+                            Acknowledge
+                          </Button>
+                        )}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )
+          }
+        </LoadView>
+      </div>
+    </AppPage>
   );
 }

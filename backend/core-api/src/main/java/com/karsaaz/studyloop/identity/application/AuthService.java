@@ -264,14 +264,15 @@ public class AuthService {
             + "FROM auth_session WHERE refresh_hash = ?",
         rs -> {
           if (!rs.next()) return null;
-          return Map.of(
-              "sessionId", rs.getObject("session_id"),
-              "accountId", rs.getObject("account_id"),
-              "studentId", rs.getObject("student_id"),
-              "family", rs.getObject("token_family_id"),
-              "revoked", rs.getTimestamp("revoked_at") != null,
-              "expires", rs.getTimestamp("expires_at").toInstant(),
-              "mfa", rs.getBoolean("mfa_satisfied"));
+          Map<String, Object> m = new HashMap<>();
+          m.put("sessionId", rs.getObject("session_id"));
+          m.put("accountId", rs.getObject("account_id"));
+          m.put("studentId", rs.getObject("student_id"));
+          m.put("family", rs.getObject("token_family_id"));
+          m.put("revoked", rs.getTimestamp("revoked_at") != null);
+          m.put("expires", rs.getTimestamp("expires_at").toInstant());
+          m.put("mfa", rs.getBoolean("mfa_satisfied"));
+          return m;
         },
         hash);
     if (session == null) {
@@ -361,6 +362,7 @@ public class AuthService {
       Map<String, Boolean> flags = loadFeatureFlags();
       return new AuthDtos.MeResponse(
           null,
+          principal.studentId(),
           null,
           (String) student.get("displayName"),
           "STUDENT",
@@ -369,17 +371,21 @@ public class AuthService {
           List.of(),
           List.of(),
           flags,
-          principal.mfaSatisfied());
+          principal.mfaSatisfied(),
+          null);
     }
     var account = jdbc.query(
-        "SELECT email, display_name, kind, status FROM account WHERE account_id = ?",
+        "SELECT email, display_name, kind, status, school_id FROM account WHERE account_id = ?",
         rs -> {
           if (!rs.next()) return null;
-          return Map.of(
-              "email", rs.getString("email"),
-              "displayName", rs.getString("display_name"),
-              "kind", rs.getString("kind"),
-              "status", rs.getString("status"));
+          Map<String, Object> m = new HashMap<>();
+          m.put("email", rs.getString("email"));
+          m.put("displayName", rs.getString("display_name"));
+          m.put("kind", rs.getString("kind"));
+          m.put("status", rs.getString("status"));
+          // Teachers and school admins belong to one school; the web console scopes every call to it.
+          m.put("schoolId", rs.getObject("school_id"));
+          return m;
         },
         principal.accountId());
     if (account == null) {
@@ -412,6 +418,7 @@ public class AuthService {
     }
     return new AuthDtos.MeResponse(
         principal.accountId(),
+        null,
         (String) account.get("email"),
         (String) account.get("displayName"),
         (String) account.get("kind"),
@@ -420,7 +427,8 @@ public class AuthService {
         children,
         List.of(),
         loadFeatureFlags(),
-        principal.mfaSatisfied());
+        principal.mfaSatisfied(),
+        (UUID) account.get("schoolId"));
   }
 
   @Transactional
@@ -568,13 +576,14 @@ public class AuthService {
           if (!rs.next()) {
             return null;
           }
-          return Map.of(
-              "credentialId", rs.getObject("credential_id"),
-              "studentId", rs.getObject("student_id"),
-              "secretHash", rs.getString("secret_hash"),
-              "failed", rs.getShort("failed_attempts"),
-              "lockedUntil", rs.getTimestamp("locked_until"),
-              "status", rs.getString("status"));
+          Map<String, Object> m = new HashMap<>();
+          m.put("credentialId", rs.getObject("credential_id"));
+          m.put("studentId", rs.getObject("student_id"));
+          m.put("secretHash", rs.getString("secret_hash"));
+          m.put("failed", rs.getShort("failed_attempts"));
+          m.put("lockedUntil", rs.getTimestamp("locked_until"));
+          m.put("status", rs.getString("status"));
+          return m;
         },
         req.loginHandle().toLowerCase());
     if (cred == null) {
@@ -677,6 +686,11 @@ public class AuthService {
         "SELECT role FROM account_role WHERE account_id = ?",
         (rs, i) -> rs.getString(1),
         accountId);
+    // Standalone students log in via account email; attach student_profile for STU APIs.
+    UUID studentId = jdbc.query(
+        "SELECT student_id FROM student_profile WHERE login_account_id = ? LIMIT 1",
+        rs -> rs.next() ? (UUID) rs.getObject(1) : null,
+        accountId);
     UUID sessionId = UUID.randomUUID();
     String refresh = HexFormat.of().formatHex(randomBytes(32));
     Instant expires = clock.instant().plus(30, ChronoUnit.DAYS);
@@ -684,7 +698,7 @@ public class AuthService {
         "INSERT INTO auth_session (session_id, account_id, token_family_id, refresh_hash, mfa_satisfied, expires_at) "
             + "VALUES (?, ?, ?, ?, ?, ?)",
         sessionId, accountId, familyId, sha256(refresh), mfaSatisfied, SqlTime.ts(expires));
-    AccountPrincipal principal = new AccountPrincipal(accountId, null, roles, mfaSatisfied, sessionId);
+    AccountPrincipal principal = new AccountPrincipal(accountId, studentId, roles, mfaSatisfied, sessionId);
     String access = jwtService.createAccessToken(principal);
     auditLogService.append(accountId, roles.isEmpty() ? null : roles.get(0), "LOGIN", "account", accountId.toString(), Map.of());
     return AuthDtos.TokenResponse.tokens(access, refresh, 15 * 60);
@@ -716,7 +730,9 @@ public class AuthService {
       msg.setFrom("noreply@studyloop.local");
       mailSender.send(msg);
     } catch (Exception e) {
-      // local/dev: mailpit may be down; do not fail the flow for W0 skeleton
+      // local/dev: do not fail signup if SMTP is unreachable
+      org.slf4j.LoggerFactory.getLogger(AuthService.class)
+          .warn("Failed to send mail to {}: {}", to, e.toString());
     }
   }
 

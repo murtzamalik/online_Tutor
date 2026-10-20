@@ -1,7 +1,8 @@
 :80 {
   encode gzip
 
-  handle_path /api/* {
+  # Keep /api prefix — core-api serves /api/v1/*
+  handle /api/* {
     reverse_proxy core-api:8080
   }
 

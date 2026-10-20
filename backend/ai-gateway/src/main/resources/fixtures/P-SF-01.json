@@ -1,0 +1,9 @@
+{
+  "status": "ok",
+  "category": "NONE",
+  "severity": "NONE",
+  "confidence": 0.95,
+  "evidence": "",
+  "recommended_action": "ALLOW",
+  "rationale": "Stub fixture: on-topic study message."
+}

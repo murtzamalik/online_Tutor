@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.learning.students.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.db.SqlTime;
 
 import com.karsaaz.studyloop.common.error.AppException;
@@ -170,6 +171,9 @@ public class StudentService {
     if (requiresUnder13Consent(sid)) {
       throw AppException.forbidden("Under-13 parental consent required before enrolment");
     }
+    if (req == null || req.get("specificationId") == null || req.get("specificationId").toString().isBlank()) {
+      throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "specificationId required");
+    }
     long specificationId = Long.parseLong(req.get("specificationId").toString());
     String tier = req.get("tier") != null ? req.get("tier").toString() : null;
     ensureComplimentaryEntitlement(sid, specificationId);
@@ -201,22 +205,32 @@ public class StudentService {
   }
 
   public Map<String, Object> home(AccountPrincipal principal, UUID studentId) {
-    access.requireStudent(principal);
     UUID sid = access.resolveStudentId(principal, studentId);
+    access.assertParentOrStudent(principal, sid);
     var goal = dailyGoalSummary(principal, sid);
     List<Map<String, Object>> due = jdbc.query(
         """
         SELECT topic_id, next_review_due_at FROM mastery_state
         WHERE student_id = ? AND next_review_due_at <= ? LIMIT 5
         """,
-        (rs, i) -> Map.of("topicId", rs.getLong("topic_id"), "dueAt", rs.getTimestamp("next_review_due_at")),
+        (rs, i) -> Rows.of("topicId", rs.getLong("topic_id"), "dueAt", rs.getTimestamp("next_review_due_at")),
         sid,
         SqlTime.ts(clock.instant()));
-    return Map.of(
-        "studentId", sid,
-        "dailyGoal", goal,
-        "reviewsDue", due,
-        "continueSession", null);
+    UUID activeEnrolmentId = jdbc.query(
+        """
+        SELECT enrolment_id FROM student_enrolment
+        WHERE student_id = ? AND status = 'ACTIVE'
+        ORDER BY created_at DESC LIMIT 1
+        """,
+        rs -> rs.next() ? (UUID) rs.getObject(1) : null,
+        sid);
+    Map<String, Object> out = new HashMap<>();
+    out.put("studentId", sid);
+    out.put("dailyGoal", goal);
+    out.put("reviewsDue", due);
+    out.put("continueSession", null);
+    out.put("activeEnrolmentId", activeEnrolmentId);
+    return out;
   }
 
   public Map<String, Object> dailyGoal(AccountPrincipal principal, UUID studentId) {
@@ -424,6 +438,25 @@ public class StudentService {
     m.put("status", rs.getString("status"));
     m.put("avatarKey", rs.getString("avatar_key"));
     m.put("requiresUnder13Consent", "U13".equals(rs.getString("age_band")) && !hasUnder13Consent(studentId));
+    List<Map<String, Object>> enrolments = jdbc.query(
+        """
+        SELECT e.enrolment_id, e.specification_id, e.status, s.spec_code, s.title
+        FROM student_enrolment e
+        JOIN specification s ON s.specification_id = e.specification_id
+        WHERE e.student_id = ? AND e.status <> 'ENDED'
+        ORDER BY e.created_at DESC
+        """,
+        (ers, i) -> {
+          Map<String, Object> em = new HashMap<>();
+          em.put("enrolmentId", ers.getObject("enrolment_id"));
+          em.put("specificationId", ers.getLong("specification_id"));
+          em.put("status", ers.getString("status"));
+          em.put("specCode", ers.getString("spec_code"));
+          em.put("title", ers.getString("title"));
+          return em;
+        },
+        studentId);
+    m.put("enrolments", enrolments);
     return m;
   }
 

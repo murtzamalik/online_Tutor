@@ -1,0 +1,44 @@
+{
+  "status": "ok",
+  "board": "AQA",
+  "paper_types": [
+    {
+      "name": "Paper 1",
+      "duration_minutes": 105,
+      "marks": 100,
+      "structure": "mixed"
+    }
+  ],
+  "command_word_usage": [
+    {
+      "word": "State",
+      "typical_marks": [
+        1,
+        2
+      ],
+      "example_phrasing": "State one…"
+    }
+  ],
+  "notation": {
+    "volume_unit": "cm3",
+    "concentration_unit": "mol/dm3",
+    "decimal_style": "dot",
+    "state_symbols_required": true,
+    "spelling_notes": [
+      "sulfur"
+    ]
+  },
+  "ar_values_source": "periodic table provided",
+  "typical_context_types": [
+    "lab",
+    "industrial"
+  ],
+  "six_mark_scheme_format": "levels of response",
+  "fixed_phrases": [
+    "Give your answer to 3 significant figures"
+  ],
+  "evidence_papers": [
+    "STUB"
+  ],
+  "confidence": 0.8
+}

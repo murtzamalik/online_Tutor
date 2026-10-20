@@ -5,15 +5,19 @@ import hashlib
 import math
 import os
 import struct
-from typing import List
+from typing import List, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 DIM = 768
 STUB = os.getenv("EMBEDDING_STUB", "true").lower() in {"1", "true", "yes"}
+MODEL_NAME = os.getenv("EMBEDDING_MODEL", "BAAI/bge-base-en-v1.5")
 
 app = FastAPI(title="studyloop-embedding-service", version="0.1.0")
+
+_real_model = None
+_real_backend: Optional[str] = None
 
 
 class EmbedRequest(BaseModel):
@@ -24,6 +28,7 @@ class EmbedResponse(BaseModel):
     model: str
     dimensions: int
     vectors: List[List[float]]
+    stub: bool = False
 
 
 def stub_embed(text: str) -> List[float]:
@@ -43,13 +48,63 @@ def stub_embed(text: str) -> List[float]:
     return [v / norm for v in values]
 
 
+def _load_real_model():
+    global _real_model, _real_backend
+    if _real_model is not None:
+        return
+    try:
+        from fastembed import TextEmbedding  # type: ignore
+
+        _real_model = TextEmbedding(model_name=MODEL_NAME)
+        _real_backend = "fastembed"
+        return
+    except Exception:
+        pass
+    try:
+        from sentence_transformers import SentenceTransformer  # type: ignore
+
+        _real_model = SentenceTransformer(MODEL_NAME)
+        _real_backend = "sentence_transformers"
+        return
+    except Exception as e:
+        raise RuntimeError(
+            "EMBEDDING_STUB=false but neither fastembed nor sentence-transformers could load "
+            f"{MODEL_NAME}: {e}"
+        ) from e
+
+
+def real_embed(texts: List[str]) -> List[List[float]]:
+    _load_real_model()
+    assert _real_model is not None
+    if _real_backend == "fastembed":
+        return [list(map(float, vec)) for vec in _real_model.embed(texts)]
+    vectors = _real_model.encode(texts, normalize_embeddings=True)
+    return [list(map(float, row)) for row in vectors]
+
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "stub": STUB, "model": "bge-base-en-v1.5"}
+    return {
+        "status": "ok",
+        "stub": STUB,
+        "model": MODEL_NAME,
+        "backend": "stub" if STUB else (_real_backend or "lazy"),
+    }
 
 
 @app.post("/embed", response_model=EmbedResponse)
 def embed(req: EmbedRequest):
-    # Production path loads ONNX bge-base-en-v1.5; W0 ships stub for compose/CI.
-    vectors = [stub_embed(t or "") for t in req.texts]
-    return EmbedResponse(model="bge-base-en-v1.5", dimensions=DIM, vectors=vectors)
+    if STUB:
+        vectors = [stub_embed(t or "") for t in req.texts]
+        return EmbedResponse(model=MODEL_NAME, dimensions=DIM, vectors=vectors, stub=True)
+    try:
+        vectors = real_embed([t or "" for t in req.texts])
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    # Truncating or zero-padding changes what a vector means; a wrong model must fail loudly.
+    if vectors and len(vectors[0]) != DIM:
+        raise HTTPException(
+            status_code=503,
+            detail=f"{MODEL_NAME} returned {len(vectors[0])} dimensions; question_embedding expects {DIM}",
+        )
+    return EmbedResponse(model=MODEL_NAME, dimensions=DIM, vectors=vectors, stub=False)

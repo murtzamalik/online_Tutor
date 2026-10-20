@@ -1,0 +1,300 @@
+{
+  "generated": "2026-09-30T12:47:44.905054Z",
+  "handle": "learner-e9ae-7469",
+  "studentId": "e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3",
+  "enrolmentId": "c125b773-bdb3-416a-9d38-cc43a047cef5",
+  "results": [
+    {
+      "uc": "UC-08",
+      "step": "picture-pin login",
+      "code": 200,
+      "pass": true,
+      "detail": "token ok",
+      "extra": null
+    },
+    {
+      "uc": "UC-08",
+      "step": "wrong PIN rejected",
+      "code": 401,
+      "pass": true,
+      "detail": "Invalid credentials",
+      "extra": null
+    },
+    {
+      "uc": "UC-08",
+      "step": "GET /me has studentId",
+      "code": 200,
+      "pass": true,
+      "detail": "studentId=e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3 roles=['STU']",
+      "extra": null
+    },
+    {
+      "uc": "Shell-01",
+      "step": "student home aggregate",
+      "code": 200,
+      "pass": true,
+      "detail": "activeEnrolmentId=c125b773-bdb3-416a-9d38-cc43a047cef5",
+      "extra": null
+    },
+    {
+      "uc": "Shell-01",
+      "step": "daily goal",
+      "code": 200,
+      "pass": true,
+      "detail": "{'target': 10, 'day': '2026-09-30', 'answered': 1}",
+      "extra": null
+    },
+    {
+      "uc": "UC-05",
+      "step": "list enrolments",
+      "code": 200,
+      "pass": true,
+      "detail": "count=1",
+      "extra": null
+    },
+    {
+      "uc": "UC-05",
+      "step": "patch enrolment targetGrade",
+      "code": 500,
+      "pass": false,
+      "detail": "An unexpected error occurred",
+      "extra": {
+        "note": "404 means endpoint missing"
+      }
+    },
+    {
+      "uc": "UC-06",
+      "step": "start diagnostic",
+      "code": 201,
+      "pass": true,
+      "detail": "{'status': 'IN_PROGRESS', 'diagnosticId': 'e9ee0d7a-7526-4daa-94b5-49a5b62ab914', 'sessionId': '55be",
+      "extra": null
+    },
+    {
+      "uc": "UC-06",
+      "step": "diagnostic next question",
+      "code": 200,
+      "pass": true,
+      "detail": "keys=['selectionReason', 'question', 'diagnosticId', 'sessionQuestionId', 'done', 'seq']",
+      "extra": null
+    },
+    {
+      "uc": "UC-06",
+      "step": "diagnostic answer",
+      "code": 202,
+      "pass": true,
+      "detail": "{'theta': -0.25, 'status': 'MARKING', 'responseId': '56d33390-ea78-4c33-af85-43c",
+      "extra": null
+    },
+    {
+      "uc": "UC-06",
+      "step": "diagnostic result",
+      "code": 200,
+      "pass": true,
+      "detail": "{'theta': -0.25, 'recommendedTier': 'FOUNDATION', 'topicsSeeded': 1, 'diagnosticId': 'e9ee0d7a-7526-",
+      "extra": null
+    },
+    {
+      "uc": "UC-07",
+      "step": "GET weekly-plan",
+      "code": 500,
+      "pass": false,
+      "detail": "An unexpected error occurred",
+      "extra": null
+    },
+    {
+      "uc": "UC-07",
+      "step": "POST generate",
+      "code": 201,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'rationaleText': 'This week focuses on Bonding",
+      "extra": null
+    },
+    {
+      "uc": "UC-14",
+      "step": "start practice session",
+      "code": 201,
+      "pass": true,
+      "detail": "{'sessionId': 'c1993da6-fa3e-4b59-b32b-ae8575ac3f08', 'startedAt': '2026-09-30T12:47:44.375674801Z',",
+      "extra": null
+    },
+    {
+      "uc": "UC-14",
+      "step": "next question",
+      "code": 200,
+      "pass": true,
+      "detail": "q=5 type=MULTIPLE_CHOICE",
+      "extra": null
+    },
+    {
+      "uc": "UC-14",
+      "step": "submit answer",
+      "code": 202,
+      "pass": true,
+      "detail": "responseId=a388ef19-4b90-4d3c-8516-0a7751b7d825 bodyKeys=['questionId', 'answer']",
+      "extra": null
+    },
+    {
+      "uc": "UC-14",
+      "step": "answer result",
+      "code": 500,
+      "pass": false,
+      "detail": "An unexpected error occurred",
+      "extra": null
+    },
+    {
+      "uc": "F-02",
+      "step": "mark scheme",
+      "code": 500,
+      "pass": false,
+      "detail": "An unexpected error occurred",
+      "extra": null
+    },
+    {
+      "uc": "UC-14",
+      "step": "end session",
+      "code": 200,
+      "pass": true,
+      "detail": "{'status': 'COMPLETED', 'summary': {'answered': 1}, 'sessionId': 'c1993da6-fa3e-",
+      "extra": null
+    },
+    {
+      "uc": "UC-17",
+      "step": "wrong-answers pool",
+      "code": 200,
+      "pass": true,
+      "detail": "{'items': [{'questionId': 5, 'marksAwarded': 0.0, 'marksAvailable': 1, 'question",
+      "extra": null
+    },
+    {
+      "uc": "UC-17",
+      "step": "redrill WRONG_ONLY session",
+      "code": 201,
+      "pass": true,
+      "detail": "{'sessionId': '36f0b4a4-1975-44a5-821f-5a9fb19b0baf', 'startedAt': '2026-09-30T12:47:44.436125718Z',",
+      "extra": null
+    },
+    {
+      "uc": "D-10",
+      "step": "keep-going session",
+      "code": 500,
+      "pass": false,
+      "detail": "An unexpected error occurred",
+      "extra": null
+    },
+    {
+      "uc": "UC-16",
+      "step": "create mock",
+      "code": 201,
+      "pass": true,
+      "detail": "{'durationMinutes': 30, 'baseDurationMinutes': 30, 'extendedTimePct': 0, 'extendedTime': False, 'moc",
+      "extra": null
+    },
+    {
+      "uc": "UC-16",
+      "step": "start mock",
+      "code": 200,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'durationMinutes': 30, 'so",
+      "extra": null
+    },
+    {
+      "uc": "UC-24",
+      "step": "revision notes",
+      "code": 500,
+      "pass": false,
+      "detail": "An unexpected error occurred",
+      "extra": null
+    },
+    {
+      "uc": "UC-24",
+      "step": "list decks",
+      "code": 200,
+      "pass": true,
+      "detail": "{'items': [{'topicId': 1, 'deckId': '866a2ea5-bbb4-47e3-abeb-c02f199d6d62', 'kin",
+      "extra": null
+    },
+    {
+      "uc": "UC-24",
+      "step": "create deck",
+      "code": 201,
+      "pass": true,
+      "detail": "{'title': 'QA Deck', 'deckId': 'ebdec93b-1335-48f6-8cf5-97176f6c40de', 'cardCoun",
+      "extra": null
+    },
+    {
+      "uc": "UC-21",
+      "step": "start tutor session",
+      "code": 201,
+      "pass": true,
+      "detail": "{'tutorSessionId': '36f929ba-c695-4768-8cbb-de596158dcf2', 'status': 'ACTIVE', 'channel': 'CHAT'}",
+      "extra": null
+    },
+    {
+      "uc": "UC-23",
+      "step": "surprise quiz",
+      "code": 500,
+      "pass": false,
+      "detail": "An unexpected error occurred",
+      "extra": null
+    },
+    {
+      "uc": "UC-23",
+      "step": "nudges",
+      "code": 500,
+      "pass": false,
+      "detail": "An unexpected error occurred",
+      "extra": null
+    },
+    {
+      "uc": "Progress",
+      "step": "mastery map",
+      "code": 500,
+      "pass": false,
+      "detail": "An unexpected error occurred",
+      "extra": null
+    },
+    {
+      "uc": "UC-25",
+      "step": "get accessibility",
+      "code": 200,
+      "pass": true,
+      "detail": "{'accessibilityJson': '{}', 'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3'}",
+      "extra": null
+    },
+    {
+      "uc": "UC-25",
+      "step": "put accessibility",
+      "code": 200,
+      "pass": true,
+      "detail": "ok",
+      "extra": null
+    },
+    {
+      "uc": "UC-22",
+      "step": "feature flags present",
+      "code": 200,
+      "pass": true,
+      "detail": "photo=True mock=True surprise=True a_level=True",
+      "extra": null
+    },
+    {
+      "uc": "UC-14",
+      "step": "parent blocked from practice",
+      "code": 403,
+      "pass": true,
+      "detail": "Student access required",
+      "extra": null
+    },
+    {
+      "uc": "UC-06",
+      "step": "parent blocked from start diagnostic",
+      "code": 403,
+      "pass": true,
+      "detail": "Student access required",
+      "extra": null
+    }
+  ],
+  "pass": 27,
+  "fail": 9
+}

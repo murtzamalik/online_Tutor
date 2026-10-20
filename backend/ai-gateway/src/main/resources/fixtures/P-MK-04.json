@@ -1,0 +1,26 @@
+{
+  "status": "ok",
+  "question_id": "STUB",
+  "provisional_marks": 1,
+  "max_marks": 1,
+  "marking_trail": [
+    {
+      "step": "Point 1",
+      "ao": "AO1",
+      "evidence": "",
+      "credit": "Stub credit",
+      "marks": 1
+    }
+  ],
+  "level_or_points_reasoning": "Stub fixture.",
+  "uncertainty": {
+    "range_low": 0,
+    "range_high": 1,
+    "why": "Stub fixture."
+  },
+  "review_focus": [
+    "Stub fixture — review all points."
+  ],
+  "confidence": 0.8,
+  "flags": []
+}

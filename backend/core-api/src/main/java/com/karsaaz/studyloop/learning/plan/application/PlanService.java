@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.learning.plan.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.gatewayclient.api.GatewayClient;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
@@ -13,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class PlanService {
+  /** Code-owned weekly shape: one activity per day (Mon..Sun). */
+  static final String[] KINDS = {"PRACTICE", "FLASHCARDS", "NOTES", "PRACTICE", "REVIEW", "PRACTICE", "MOCK"};
+  static final short[] MINUTES = {20, 10, 15, 25, 15, 20, 45};
+  private static final org.slf4j.Logger log = LoggerFactory.getLogger(PlanService.class);
+
   private final JdbcTemplate jdbc;
   private final StudentAccessHelper access;
   private final GatewayClient gateway;
@@ -66,7 +74,7 @@ public class PlanService {
         ORDER BY p ASC, t.display_order NULLS LAST
         LIMIT 5
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "topicId", rs.getLong("topic_id"),
             "topicName", rs.getString("topic_name"),
             "mastery", rs.getBigDecimal("p")),
@@ -80,13 +88,13 @@ public class PlanService {
           WHERE se.enrolment_id = ?
           ORDER BY t.display_order NULLS LAST LIMIT 3
           """,
-          (rs, i) -> Map.of(
+          (rs, i) -> Rows.of(
               "topicId", rs.getLong("topic_id"),
               "topicName", rs.getString("topic_name"),
               "mastery", rs.getBigDecimal("p")),
           enrolmentId);
     }
-    String rationale = buildRationale(weakTopics);
+    String rationale = buildRationale(weakTopics, enrolmentId);
     jdbc.update(
         """
         INSERT INTO weekly_plan (plan_id, student_id, enrolment_id, week_start, rationale_text, status)
@@ -97,8 +105,8 @@ public class PlanService {
         enrolmentId,
         weekStart,
         rationale);
-    String[] kinds = {"PRACTICE", "FLASHCARDS", "NOTES", "PRACTICE", "REVIEW", "PRACTICE", "MOCK"};
-    short[] minutes = {20, 10, 15, 25, 15, 20, 45};
+    String[] kinds = KINDS;
+    short[] minutes = MINUTES;
     List<Map<String, Object>> items = new ArrayList<>();
     for (int day = 1; day <= 7; day++) {
       Map<String, Object> topic = weakTopics.get((day - 1) % weakTopics.size());
@@ -209,24 +217,67 @@ public class PlanService {
     return Map.of("itemId", itemId, "updated", true);
   }
 
-  /** Deterministic plan slots; rationale text may use gateway with anonymous topic stats only. */
-  String buildRationale(List<Map<String, Object>> weakTopics) {
+  /**
+   * The plan is built by code; P-RP-04 only writes the explanation. The model gets the same items
+   * with reason codes (topic names and minutes, no identity) and may not change them.
+   */
+  String buildRationale(List<Map<String, Object>> weakTopics, UUID enrolmentId) {
     List<String> names = weakTopics.stream().map(t -> String.valueOf(t.get("topicName"))).toList();
-    try {
-      Map<?, ?> resp = gateway.run(
-          "P-RP-04",
-          Map.of("weakTopicLabels", names, "itemCount", weakTopics.size()),
-          "weekly_plan_rationale_v1");
-      Object result = resp.get("result");
-      if (result instanceof Map<?, ?> m && m.get("rationale") != null) {
-        return m.get("rationale").toString();
-      }
-    } catch (Exception ignored) {
-      // fall through to code rationale
+    String fallback =
+        "This week focuses on "
+            + String.join(", ", names)
+            + " based on your current mastery (built in code; accuracy claims remain unvalidated).";
+    if (weakTopics.isEmpty()) {
+      return fallback;
     }
-    return "This week focuses on "
-        + String.join(", ", names)
-        + " based on your current mastery (built in code; accuracy claims remain unvalidated).";
+    List<Map<String, Object>> planItems = new ArrayList<>();
+    for (int day = 1; day <= 7; day++) {
+      Map<String, Object> topic = weakTopics.get((day - 1) % weakTopics.size());
+      Map<String, Object> item = new HashMap<>();
+      item.put("item_id", "D" + day);
+      item.put("day_of_week", day);
+      item.put("topic", topic.get("topicName"));
+      item.put("activity", KINDS[day - 1]);
+      item.put("minutes", MINUTES[day - 1]);
+      item.put("reason_code", "MOCK".equals(KINDS[day - 1]) ? "EXAM_PRACTICE" : "WEAK_TOPIC");
+      planItems.add(item);
+    }
+    Map<String, Object> goal = new HashMap<>();
+    jdbc.query(
+        "SELECT goal_type, target_grade, exam_date FROM student_enrolment WHERE enrolment_id = ?",
+        rs -> {
+          goal.put("goal_type", rs.getString("goal_type"));
+          goal.put("target_grade", rs.getString("target_grade"));
+          java.sql.Date exam = rs.getDate("exam_date");
+          goal.put("exam_in_days", exam == null ? null : java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(clock), exam.toLocalDate()));
+        },
+        enrolmentId);
+    try {
+      Map<String, Object> vars = new HashMap<>();
+      vars.put("plan_json", planItems);
+      vars.put("goal_context", goal);
+      Map<?, ?> resp = gateway.run("P-RP-04", vars, null);
+      Object result = resp.get("result");
+      // Schema key is "summary" (the old code read "rationale", so the AI text was never used).
+      if (result instanceof Map<?, ?> m && m.get("summary") != null && !m.get("summary").toString().isBlank()) {
+        // D-15: the model only sees {{child_name}}; the student's own name is filled in by code.
+        String name = jdbc.query(
+            """
+            SELECT sp.display_name FROM student_enrolment e
+            JOIN student_profile sp ON sp.student_id = e.student_id WHERE e.enrolment_id = ?
+            """,
+            rs -> rs.next() ? rs.getString(1) : null,
+            enrolmentId);
+        return withChildName(m.get("summary").toString(), name);
+      }
+    } catch (Exception e) {
+      log.warn("P-RP-04 failed for enrolment {}: {}", enrolmentId, e.getClass().getSimpleName());
+    }
+    return fallback;
+  }
+
+  static String withChildName(String text, String displayName) {
+    return text.replace("{{child_name}}", displayName == null || displayName.isBlank() ? "you" : displayName);
   }
 
   /** Pure helper for unit tests — plan day count and minutes are code-owned. */

@@ -188,7 +188,12 @@ public class MarketingService {
 
   public Map<String, Object> planQuiz(Map<String, Object> body) {
     String goal = body.get("goal") != null ? body.get("goal").toString() : "EXAM_PREP";
-    String plan = "EXAM_PREP".equalsIgnoreCase(goal) ? "EXAM_PREP" : "ENGLISH_MATHS_SCIENCE";
+    // Goals map 1:1 to pricing_plan codes; "mocks" previously fell through to the cheapest plan.
+    String plan = switch (goal.toUpperCase()) {
+      case "EXAM_PREP" -> "EXAM_PREP";
+      case "EXAM_PREP_PLUS", "MOCKS" -> "EXAM_PREP_PLUS";
+      default -> "ENGLISH_MATHS_SCIENCE";
+    };
     return Map.of("recommendedPlan", plan, "goal", goal);
   }
 

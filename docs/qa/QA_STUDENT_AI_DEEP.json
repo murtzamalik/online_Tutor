@@ -1,0 +1,490 @@
+{
+  "generated": "2026-09-30T14:10:42.333361Z",
+  "studentId": "e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3",
+  "enrolmentId": "c125b773-bdb3-416a-9d38-cc43a047cef5",
+  "gatewayStub": true,
+  "results": [
+    {
+      "area": "AUTH",
+      "scenario": "picture-pin",
+      "code": 200,
+      "pass": true,
+      "detail": "token",
+      "extra": null
+    },
+    {
+      "area": "AUTH",
+      "scenario": "parent login",
+      "code": 200,
+      "pass": true,
+      "detail": "ok",
+      "extra": null
+    },
+    {
+      "area": "PREP",
+      "scenario": "start MIXED x8",
+      "code": 201,
+      "pass": true,
+      "detail": "{'startedAt': '2026-09-30T14:10:41.286037471Z', 'mode': 'MIXED', 'status': 'ACTIVE', 'sessionId': '5493d0b5-8392-49a9-bbe3-ff20f947d289'}",
+      "extra": null
+    },
+    {
+      "area": "PREP",
+      "scenario": "end session",
+      "code": 200,
+      "pass": true,
+      "detail": "{'summary': {'answered': 10}, 'sessionId': '5493d0b5-8392-49a9-bbe3-ff20f947d289', 'status': 'COMPLETED'}",
+      "extra": null
+    },
+    {
+      "area": "PREP",
+      "scenario": "answers submitted",
+      "code": 200,
+      "pass": true,
+      "detail": "n=10 final=6 provisional=4 exception=4",
+      "extra": null
+    },
+    {
+      "area": "PREP",
+      "scenario": "wrong-answers pool",
+      "code": 200,
+      "pass": true,
+      "detail": "count=9",
+      "extra": null
+    },
+    {
+      "area": "PREP",
+      "scenario": "redrill WRONG_ONLY",
+      "code": 201,
+      "pass": true,
+      "detail": "{'startedAt': '2026-09-30T14:10:41.597016221Z', 'mode': 'WRONG_ONLY', 'status': 'ACTIVE', 'sessionId': 'd0f78acf-29de-4ab6-a0eb-a5df817872f3'}",
+      "extra": null
+    },
+    {
+      "area": "PREP",
+      "scenario": "redrill next Q",
+      "code": 200,
+      "pass": true,
+      "detail": "MULTIPLE_CHOICE",
+      "extra": null
+    },
+    {
+      "area": "PREP",
+      "scenario": "TARGET_GRADE session",
+      "code": 201,
+      "pass": true,
+      "detail": "{'startedAt': '2026-09-30T14:10:41.609220512Z', 'mode': 'TARGET_GRADE', 'status': 'ACTIVE', 'sessionId': 'd09bfaa6-2a5f-42d9-911d-2cbe53db5118'}",
+      "extra": null
+    },
+    {
+      "area": "MOCK",
+      "scenario": "create",
+      "code": 201,
+      "pass": true,
+      "detail": "{'durationMinutes': 20, 'baseDurationMinutes': 20, 'extendedTimePct': 0, 'extendedTime': False, 'mockId': '99349bc2-1b6f-41c3-a328-83a105c628bc', 'status': 'SETUP', 'itemCount': 10}",
+      "extra": null
+    },
+    {
+      "area": "MOCK",
+      "scenario": "start",
+      "code": 200,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'durationMinutes': 20, 'sourceKind': 'GENERATED', 'enrolmentId': 'c125b773-bdb3-416a-9d38-cc43a047cef5', 'startedAt': '2026-09-30T14:10:41.628+00:00', 'items': [{'que",
+      "extra": null
+    },
+    {
+      "area": "MOCK",
+      "scenario": "answer one",
+      "code": 500,
+      "pass": false,
+      "detail": "{'type': 'about:blank', 'title': 'Error', 'status': 500, 'code': 'INTERNAL_ERROR', 'detail': 'An unexpected error occurred', 'traceId': '3994eec3-ac90-41f8-b1c3-9b0a7f5e920c'}",
+      "extra": null
+    },
+    {
+      "area": "MOCK",
+      "scenario": "submit",
+      "code": 200,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'resultJson': '{\"note\": \"Auto-scored demo mock\", \"overallPct\": 60}', 'result': {'note': 'Auto-scored demo mock', 'overallPct': 60}, 'score': 12.0, 'enrolmentId': 'c12",
+      "extra": null
+    },
+    {
+      "area": "MOCK",
+      "scenario": "results",
+      "code": 200,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'resultJson': '{\"note\": \"Auto-scored demo mock\", \"overallPct\": 60}', 'result': {'note': 'Auto-scored demo mock', 'overallPct': 60}, 'score': 12.0, 'enrolmentId': 'c12",
+      "extra": null
+    },
+    {
+      "area": "MOCK",
+      "scenario": "photo-pages disabled?",
+      "code": 501,
+      "pass": true,
+      "detail": "{'type': 'about:blank', 'title': 'Not Implemented', 'status': 501, 'code': 'FEATURE_DISABLED', 'detail': 'Mock photo upload (MOC-07) is FEATURE_DISABLED with PRA-06 camera pipeline.', 'traceId': 'c9449f8f-72ff-455b-a13e-",
+      "extra": null
+    },
+    {
+      "area": "DIA",
+      "scenario": "start",
+      "code": 201,
+      "pass": true,
+      "detail": "{'diagnosticId': '92eebd7c-35fb-4bd6-91a6-ebe58d3fc5b1', 'sessionId': 'bcc1c98c-5b03-4db6-a620-0470ddd4eb48', 'status': 'IN_PROGRESS'}",
+      "extra": null
+    },
+    {
+      "area": "DIA",
+      "scenario": "answer Q1 (SHORT_ANSWER)",
+      "code": 202,
+      "pass": true,
+      "detail": "{'responseId': 'af9047e7-0343-475b-9070-1b2404ba0988', 'theta': -0.25, 'status': 'MARKING'}",
+      "extra": null
+    },
+    {
+      "area": "DIA",
+      "scenario": "answer Q2 (SHORT_ANSWER)",
+      "code": 202,
+      "pass": true,
+      "detail": "{'responseId': 'a47027c9-ba63-4ed2-a1bf-7e4e23de1f78', 'theta': -0.5, 'status': 'MARKING'}",
+      "extra": null
+    },
+    {
+      "area": "DIA",
+      "scenario": "answer Q3 (MULTIPLE_CHOICE)",
+      "code": 202,
+      "pass": true,
+      "detail": "{'responseId': '03ea281b-3da3-4f55-bf17-94611f472321', 'theta': -0.75, 'status': 'MARKING'}",
+      "extra": null
+    },
+    {
+      "area": "DIA",
+      "scenario": "answer Q4 (MULTIPLE_CHOICE)",
+      "code": 202,
+      "pass": true,
+      "detail": "{'responseId': 'f785a894-44cc-40bd-ba47-fad6e82ba40d', 'theta': -1.0, 'status': 'MARKING'}",
+      "extra": null
+    },
+    {
+      "area": "DIA",
+      "scenario": "result theta/tier",
+      "code": 200,
+      "pass": true,
+      "detail": "{'theta': -1.0, 'recommendedTier': 'FOUNDATION', 'topicsSeeded': 1, 'diagnosticId': '92eebd7c-35fb-4bd6-91a6-ebe58d3fc5b1'}",
+      "extra": null
+    },
+    {
+      "area": "PLAN",
+      "scenario": "get/generate",
+      "code": 200,
+      "pass": true,
+      "detail": "items=7 rationale=This week focuses on Bonding, Structure & the Properties of ",
+      "extra": null
+    },
+    {
+      "area": "MARK",
+      "scenario": "MCQ result",
+      "code": 200,
+      "pass": true,
+      "detail": "{'feedback': {}, 'provisional': False, 'reveal': {'schemeAvailable': True}, 'marks': {'max': 1, 'available': 1, 'awarded': 0.0}, 'markingStatus': 'MARKED_FINAL', 'responseId': '3d79ddcf-6698-454f-a22e-73ba948fb802', 'sta",
+      "extra": null
+    },
+    {
+      "area": "MARK",
+      "scenario": "SHORT_ANSWER AI result",
+      "code": 200,
+      "pass": true,
+      "detail": "status=PROVISIONAL_EXCEPTION marks={'max': 2, 'available': 2, 'awarded': 0} provisional=True",
+      "extra": null
+    },
+    {
+      "area": "MARK",
+      "scenario": "GET marking detail",
+      "code": 500,
+      "pass": false,
+      "detail": "{'type': 'about:blank', 'title': 'Error', 'status': 500, 'code': 'INTERNAL_ERROR', 'detail': 'An unexpected error occurred', 'traceId': 'b53630a7-7a37-411c-ab18-b5d2be377d2e'}",
+      "extra": null
+    },
+    {
+      "area": "MARK",
+      "scenario": "review-status (A-level flag)",
+      "code": 200,
+      "pass": true,
+      "detail": "{'responseId': '8499b7fa-15b3-44d5-b5b5-c9aed2da92f7', 'status': 'NOT_APPLICABLE', 'feature': 'NOT_APPLICABLE'}",
+      "extra": null
+    },
+    {
+      "area": "MARK",
+      "scenario": "self-mark",
+      "code": 200,
+      "pass": true,
+      "detail": "{'responseId': '8499b7fa-15b3-44d5-b5b5-c9aed2da92f7', 'status': 'SELF_MARKED', 'selfMarks': 1.0}",
+      "extra": null
+    },
+    {
+      "area": "MARK",
+      "scenario": "self-mark-compare",
+      "code": 200,
+      "pass": true,
+      "detail": "{'selfMarks': 1.0, 'calibrationNote': 'Compare your self-mark with the system mark for learning \u2014 numbers are computed in code.', 'delta': 1.0, 'aiMarks': 0.0, 'responseId': '8499b7fa-15b3-44d5-b5b5-c9aed2da92f7'}",
+      "extra": null
+    },
+    {
+      "area": "MARK",
+      "scenario": "dispute",
+      "code": 200,
+      "pass": true,
+      "detail": "{'exceptionId': '283b302b-fbda-4930-88e5-e75341d0a1bc', 'disputeId': '15c9c659-fc46-48d2-9ef9-2c586f49bef6'}",
+      "extra": null
+    },
+    {
+      "area": "MARK",
+      "scenario": "mark-scheme",
+      "code": 500,
+      "pass": false,
+      "detail": "{'type': 'about:blank', 'title': 'Error', 'status': 500, 'code': 'INTERNAL_ERROR', 'detail': 'An unexpected error occurred', 'traceId': '9211bf36-7a5c-4e67-bf05-6027bb19dfe8'}",
+      "extra": null
+    },
+    {
+      "area": "HINT",
+      "scenario": "level 1",
+      "code": 200,
+      "pass": true,
+      "detail": "{'hintText': 'Re-read the question and identify the command word.', 'level': 1}",
+      "extra": null
+    },
+    {
+      "area": "HINT",
+      "scenario": "level 2",
+      "code": 200,
+      "pass": true,
+      "detail": "{'hintText': 'Recall the key definition or formula for this topic.', 'level': 2}",
+      "extra": null
+    },
+    {
+      "area": "HINT",
+      "scenario": "level 3",
+      "code": 200,
+      "pass": true,
+      "detail": "{'hintText': 'Break the problem into steps; write what you know first.', 'level': 3}",
+      "extra": null
+    },
+    {
+      "area": "ENG",
+      "scenario": "post events",
+      "code": 500,
+      "pass": false,
+      "detail": "{'type': 'about:blank', 'title': 'Error', 'status': 500, 'code': 'INTERNAL_ERROR', 'detail': 'An unexpected error occurred', 'traceId': 'ff0ad06f-0f73-4869-b42a-228a7cd7829b'}",
+      "extra": null
+    },
+    {
+      "area": "ENG",
+      "scenario": "surprise-quiz GET",
+      "code": 200,
+      "pass": true,
+      "detail": "{'prompt': 'Quick check \u2014 ready for a 2-question surprise quiz?', 'quizId': '0242d58d-9ecc-4936-9082-5da14755e078', 'reason': 'NOT_RECENTLY_TOUCHED', 'status': 'SERVED', 'topicIds': [1]}",
+      "extra": null
+    },
+    {
+      "area": "ENG",
+      "scenario": "surprise complete",
+      "code": 500,
+      "pass": false,
+      "detail": "{'type': 'about:blank', 'title': 'Error', 'status': 500, 'code': 'INTERNAL_ERROR', 'detail': 'An unexpected error occurred', 'traceId': 'be04d98d-81b2-451d-8126-d0acc113d2fe'}",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "start SOCRATIC",
+      "code": 201,
+      "pass": true,
+      "detail": "{'channel': 'CHAT', 'tutorSessionId': '38422be1-d2ae-48ec-b8ac-d0fb8e2b06bd', 'status': 'ACTIVE'}",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "Socratic message",
+      "code": 200,
+      "pass": true,
+      "detail": "{'blocked': False, 'text': \"Let's think about the next step together. What do you already know about this topic?\", 'messageId': '32cec55a-d28a-4261-ac9b-92b393bb0629'}",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "safety crisis message",
+      "code": 200,
+      "pass": true,
+      "detail": "{'templateId': 'SG-T-01', 'blocked': True, 'flagRef': 'SF-A79FF583', 'scriptedText': \"Thank you for telling me. I'm an AI tutor, so I'm not the right one to help with this, but it's important that you talk to someone who",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "explain-back",
+      "code": 200,
+      "pass": true,
+      "detail": "{'blocked': False, 'text': \"Let's think about the next step together. What do you already know about this topic?\", 'messageId': 'f1682bf3-7486-476f-9002-d496a2dbe160'}",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "re-explain",
+      "code": 200,
+      "pass": true,
+      "detail": "{'text': 'Here is another way to see it: start from what the question asks, then check units, then compute.', 'format': 'WORKED_EXAMPLE'}",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "photo-walkthrough with mask",
+      "code": 200,
+      "pass": true,
+      "detail": "{'tutorSessionId': '78f38e59-069b-4a87-8aad-05042b480a60', 'fullAnswerRevealed': False, 'visionPath': 'stub_or_gateway', 'photoId': '0be412eb-e2d6-4fd3-abd3-cdef18015c1a', 'walkthrough': 'Step 1: Restate what the questio",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "photo-walkthrough no mask \u2192 400",
+      "code": 400,
+      "pass": true,
+      "detail": "{'type': 'about:blank', 'title': 'Bad Request', 'status': 400, 'code': 'MASK_REQUIRED', 'detail': 'Client-side mask report is mandatory (PRA-06 rules)', 'traceId': '8bc9ed8e-2c78-4bc1-b3f4-d2b03a563fe4'}",
+      "extra": null
+    },
+    {
+      "area": "PHOTO",
+      "scenario": "practice photos FEATURE_DISABLED",
+      "code": 501,
+      "pass": true,
+      "detail": "{'type': 'about:blank', 'title': 'Not Implemented', 'status': 501, 'code': 'FEATURE_DISABLED', 'detail': 'Photograph-to-score (PRA-06) is FEATURE_DISABLED until the camera pipeline is ready. Use typed practice instead.',",
+      "extra": null
+    },
+    {
+      "area": "VOICE",
+      "scenario": "parent voice consent",
+      "code": 200,
+      "pass": true,
+      "detail": "{'status': 'GRANTED', 'voiceConsentId': 'c40e2344-64ab-45f7-a431-2b9758f3cd79'}",
+      "extra": null
+    },
+    {
+      "area": "VOICE",
+      "scenario": "get ai-controls",
+      "code": 200,
+      "pass": true,
+      "detail": "{'dailyGoalNudge': False, 'chatEnabled': True, 'voiceEnabled': True}",
+      "extra": null
+    },
+    {
+      "area": "VOICE",
+      "scenario": "connectivity-check",
+      "code": 200,
+      "pass": true,
+      "detail": "{'micOk': True, 'gatewayReachable': True, 'networkOk': True}",
+      "extra": null
+    },
+    {
+      "area": "VOICE",
+      "scenario": "start DISCUSSION",
+      "code": 201,
+      "pass": true,
+      "detail": "{'mode': 'DISCUSSION', 'voiceSessionId': '761a5590-6b18-4a26-a197-57163b4e0aa8', 'tutorSessionId': '089dd6c5-5717-4afd-86a1-343fc7bee477', 'wsUrl': '/api/v1/voice/sessions/761a5590-6b18-4a26-a197-57163b4e0aa8/stream', 't",
+      "extra": null
+    },
+    {
+      "area": "VOICE",
+      "scenario": "fallback-to-text",
+      "code": 200,
+      "pass": true,
+      "detail": "{'channel': 'CHAT', 'tutorSessionId': '089dd6c5-5717-4afd-86a1-343fc7bee477'}",
+      "extra": null
+    },
+    {
+      "area": "VOICE",
+      "scenario": "end session",
+      "code": 200,
+      "pass": true,
+      "detail": "{'status': 'ENDED', 'voiceSessionId': '761a5590-6b18-4a26-a197-57163b4e0aa8'}",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "parent disable chat",
+      "code": 500,
+      "pass": false,
+      "detail": "{'type': 'about:blank', 'title': 'Error', 'status': 500, 'code': 'INTERNAL_ERROR', 'detail': 'An unexpected error occurred', 'traceId': '44264295-44ec-4979-b26a-f5f003e75d9d'}",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "start after chat disabled",
+      "code": 201,
+      "pass": true,
+      "detail": "{'channel': 'CHAT', 'tutorSessionId': '9e4969db-d735-41ec-9fd9-7e507d4eb54e', 'status': 'ACTIVE'}",
+      "extra": null
+    },
+    {
+      "area": "PROG",
+      "scenario": "skill-map after practice",
+      "code": 200,
+      "pass": true,
+      "detail": "nodes=10",
+      "extra": null
+    },
+    {
+      "area": "PROG",
+      "scenario": "mastery tree",
+      "code": 500,
+      "pass": false,
+      "detail": "{'type': 'about:blank', 'title': 'Error', 'status': 500, 'code': 'INTERNAL_ERROR', 'detail': 'An unexpected error occurred', 'traceId': '230de757-04db-4806-b528-e4ae0f0ca4aa'}",
+      "extra": null
+    },
+    {
+      "area": "PROG",
+      "scenario": "misconceptions",
+      "code": 200,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'items': [{'plainEnglish': 'Keep practising \u2014 misconceptions appear here in plain English when the marking engine flags them.', 'label': 'No misconceptions recorded y",
+      "extra": null
+    },
+    {
+      "area": "PROG",
+      "scenario": "predicted-grades",
+      "code": 200,
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'gradeLow': '4', 'status': 'PREDICTED_STUB', 'gradeHigh': '6'}",
+      "extra": null
+    },
+    {
+      "area": "REV",
+      "scenario": "notes topic 1",
+      "code": 200,
+      "pass": true,
+      "detail": "{'topicId': 1, 'note': {'readingLevel': 'GCSE', 'noteId': 1, 'version': 1, 'bodyMd': '# Atomic structure\\n\\n- Atoms have a nucleus of protons and neutrons.\\n- Electrons occupy shells.\\n- Atomic number = protons; mass num",
+      "extra": null
+    },
+    {
+      "area": "REV",
+      "scenario": "cheat-sheet",
+      "code": 200,
+      "pass": true,
+      "detail": "{'topicId': 1, 'sheet': {'sheetId': 1, 'contentJson': '{\"sections\": [{\"items\": [\"proton\", \"neutron\", \"electron\", \"isotope\"], \"title\": \"Key terms\"}, {\"items\": [\"Confusing mass number with atomic number\"], \"title\": \"Common",
+      "extra": null
+    },
+    {
+      "area": "REV",
+      "scenario": "create deck",
+      "code": 201,
+      "pass": true,
+      "detail": "{'cardCount': 0, 'title': 'AI QA Deck', 'deckId': 'ada194e6-3be3-42e9-92d6-13ec92822415'}",
+      "extra": null
+    },
+    {
+      "area": "TUTOR",
+      "scenario": "rescue as student (expect deny)",
+      "code": 500,
+      "pass": false,
+      "detail": "{'type': 'about:blank', 'title': 'Error', 'status': 500, 'code': 'INTERNAL_ERROR', 'detail': 'An unexpected error occurred', 'traceId': '0bbdac2a-f462-41e7-a825-c7c2fdc9be7f'}",
+      "extra": null
+    }
+  ],
+  "pass": 52,
+  "fail": 8
+}

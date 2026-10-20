@@ -1,19 +1,47 @@
 "use client";
-import Link from "next/link";
-import { AppNav } from "@/components/shell/AppNav";
-import { ErrorState } from "@/components/ui/states";
-import { AccessibilityForm } from "@/components/a11y/AccessibilityForm";
+
+import { useEffect, useState } from "react";
+import { ArrowRight } from "@phosphor-icons/react";
+import { AppPage } from "@/components/ui/AppPage";
+import { ButtonLink } from "@/components/ui/Button";
+import { EmptyState, LoadingState } from "@/components/ui/states";
+import { AccessibilityPanel } from "@/components/student/AccessibilityPanel";
+import { StepHeader } from "@/components/student/StudentUI";
+import { readSession } from "@/components/student/studentData";
 
 /** B-09 Onboarding accessibility */
 export default function OnboardingAccessibilityPage() {
-  const studentId = typeof window !== "undefined" ? sessionStorage.getItem("studentId") ?? "" : "";
+  const [studentId, setStudentId] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    setStudentId(readSession("studentId") ?? null);
+  }, []);
+
   return (
-    <div>
-      <AppNav displayName="Study Loop" />
-      <main className="mx-auto max-w-2xl px-4 py-10">
-        {!studentId ? <ErrorState body="Sign in as a student first." /> : <AccessibilityForm title="Accessibility preferences" studentId={studentId} />}
-        <p className="mt-6 text-sm"><Link className="underline" href="/settings/accessibility">Open settings panel (J-03)</Link></p>
-      </main>
-    </div>
+    <AppPage width="content">
+      <StepHeader
+        step={3}
+        title="Make it comfortable"
+        description="Choose what helps you read and work. You can change these any time in Settings."
+      />
+      {studentId === undefined ? (
+        <LoadingState />
+      ) : !studentId ? (
+        <EmptyState
+          title="Sign in as a student first"
+          body="These settings belong to a student profile."
+          action={<ButtonLink href="/child-login">Student login</ButtonLink>}
+        />
+      ) : (
+        <AccessibilityPanel
+          studentId={studentId}
+          footer={
+            <ButtonLink href="/onboarding/diagnostic" variant="tertiary" icon={<ArrowRight size={16} />}>
+              Next: diagnostic
+            </ButtonLink>
+          }
+        />
+      )}
+    </AppPage>
   );
 }

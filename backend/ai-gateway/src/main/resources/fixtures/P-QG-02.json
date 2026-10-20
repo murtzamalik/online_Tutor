@@ -1,0 +1,69 @@
+{
+  "status": "ok",
+  "blueprint_id": "BP-STUB",
+  "question_type": "SHORT_ANSWER",
+  "command_word": "State",
+  "marks": 2,
+  "context_text": null,
+  "question_text": "State the colour of hydrated copper(II) sulfate crystals and the colour after they are heated.",
+  "options": null,
+  "answer_format": "TEXT",
+  "mark_scheme": {
+    "scheme_type": "POINTS",
+    "marking_points": [
+      {
+        "id": "M1",
+        "marks": 1,
+        "point": "blue (before heating)",
+        "accept": [
+          "blue crystals"
+        ],
+        "reject": [
+          "green"
+        ],
+        "ignore": [
+          "hydrated"
+        ]
+      },
+      {
+        "id": "M2",
+        "marks": 1,
+        "point": "white (after heating)",
+        "accept": [
+          "white powder"
+        ],
+        "reject": [
+          "colourless"
+        ],
+        "ignore": []
+      }
+    ],
+    "levels": null,
+    "indicative_content": null,
+    "marking_notes": null
+  },
+  "model_answer": "Blue, then white.",
+  "common_errors": [
+    {
+      "answer": "Green",
+      "marks_awarded": 0,
+      "why": "Confuses with copper carbonate."
+    },
+    {
+      "answer": "Blue then colourless",
+      "marks_awarded": 1,
+      "why": "Colourless is not white."
+    }
+  ],
+  "diagram_request": null,
+  "grounding": {
+    "exemplar_ids": [],
+    "spec_phrases": [
+      "copper sulfate"
+    ]
+  },
+  "self_estimate": {
+    "difficulty_grade_band": "3-4",
+    "time_seconds": 45
+  }
+}

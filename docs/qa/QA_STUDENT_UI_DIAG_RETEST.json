@@ -1,0 +1,86 @@
+{
+  "pass": 16,
+  "fail": 0,
+  "results": [
+    {
+      "name": "auth",
+      "pass": true,
+      "detail": "{'accessToken': 'eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJTVFUiXSwibWZhIjpmYWxzZSwic2lkIjoiY2RiNTlhMzItMGRmMC00ZmE4LWI3MWYtMjI5NDhiOGNjNzY2IiwiaWF0IjoxNzkwOTM5Mzc5LCJleHAiOjE3OTA5NDAyNzksInN1YiI6ImU5YWVhYm"
+    },
+    {
+      "name": "plan items",
+      "pass": true,
+      "detail": "7"
+    },
+    {
+      "name": "wrong-answers items",
+      "pass": true,
+      "detail": "45"
+    },
+    {
+      "name": "surprise has quizId+topicIds+prompt",
+      "pass": "Quick check \u2014 ready for a 2-question surprise quiz?",
+      "detail": "{'reason': 'NOT_RECENTLY_TOUCHED', 'quizId': '6434379d-2eb7-4710-817c-5daea615ea86', 'topicIds': [4], 'servedAt': '2026-10-01T12:05:13.256461Z', 'prompt': 'Quick check \u2014 ready for a 2-question surpris"
+    },
+    {
+      "name": "WRONG_ONLY start",
+      "pass": true,
+      "detail": "{'mode': 'WRONG_ONLY', 'startedAt': '2026-10-02T11:09:39.850662256Z', 'sessionId': 'd93ed703-54a1-45db-954f-f269692e1c41', 'status': 'ACTIVE'}"
+    },
+    {
+      "name": "submit SHORT_ANSWER",
+      "pass": true,
+      "detail": "{'sse': True, 'resultUrl': '/api/v1/practice/answers/9596a220-88d6-4d6f-b02d-a54c4eb4f14d/result', 'responseId': '9596a220-88d6-4d6f-b02d-a54c4eb4f14d', 'status': 'MARKING'}"
+    },
+    {
+      "name": "written FINAL/poll",
+      "pass": true,
+      "detail": "{'feedback': {}, 'provisional': False, 'reveal': {'schemeAvailable': True}, 'marks': {'available': 2, 'max': 2, 'awarded': 1.0}, 'markingStatus': 'MARKED_FINAL', 'responseId': '9596a220-88d6-4d6f-b02d"
+    },
+    {
+      "name": "written marking detail",
+      "pass": true,
+      "detail": "{'studentId': 'e9aeabd1-37d8-4628-8dd9-d2fd7173a3d3', 'marksAwarded': 1.0, 'marksAvailable': 2, 'qualificationCode': 'GCSE', 'markingStatus': 'MARKED_FINAL', 'results': [{'kind': 'AI_PASS_A', 'confide"
+    },
+    {
+      "name": "diagnostic start",
+      "pass": "c0891a47-b443-4110-bb3f-e1ab7d6d6be4",
+      "detail": "{'sessionId': '52714a6f-8c5d-45ed-9d45-0bb85eab6098', 'diagnosticId': 'c0891a47-b443-4110-bb3f-e1ab7d6d6be4', 'status': 'IN_PROGRESS'}"
+    },
+    {
+      "name": "diagnostic answer#0",
+      "pass": true,
+      "detail": "{'responseId': 'af2513fb-3900-48f1-9a40-f43e90da1e7a', 'status': 'MARKING', 'theta': -0.25}"
+    },
+    {
+      "name": "diagnostic answer#1",
+      "pass": true,
+      "detail": "{'responseId': 'ac1a7b29-9ad4-434c-9db2-958c5bd75a07', 'status': 'MARKING', 'theta': -0.5}"
+    },
+    {
+      "name": "diagnostic answer#2",
+      "pass": true,
+      "detail": "{'responseId': '735d0eb9-55be-4eb3-8583-27149207c59d', 'status': 'MARKING', 'theta': -0.75}"
+    },
+    {
+      "name": "diagnostic answer#3",
+      "pass": true,
+      "detail": "{'responseId': '7cdb3b6d-94b4-4101-8922-90274c1288d5', 'status': 'MARKING', 'theta': -1.0}"
+    },
+    {
+      "name": "diagnostic answer#4",
+      "pass": true,
+      "detail": "{'responseId': '6b100b16-b560-42ed-8c81-ee7ca231aae2', 'status': 'MARKING', 'theta': -1.25}"
+    },
+    {
+      "name": "diagnostic answer#5",
+      "pass": true,
+      "detail": "{'responseId': '8c4b6c21-36f0-4592-9de9-07ed55062856', 'status': 'MARKING', 'theta': -1.5}"
+    },
+    {
+      "name": "diagnostic result",
+      "pass": true,
+      "detail": "{'topicsSeeded': 2, 'recommendedTier': 'FOUNDATION', 'theta': -1.5, 'diagnosticId': 'c0891a47-b443-4110-bb3f-e1ab7d6d6be4'}"
+    }
+  ]
+}

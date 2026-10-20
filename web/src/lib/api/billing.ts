@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { apiFetch } from "./client";
 
-const token = () => (typeof window !== "undefined" ? localStorage.getItem("accessToken") ?? undefined : undefined);
+const token = () =>
+  typeof window !== "undefined"
+    ? sessionStorage.getItem("accessToken") ?? localStorage.getItem("accessToken") ?? undefined
+    : undefined;
 
 export async function planPreview(body: Record<string, unknown>) {
   return apiFetch("/billing/checkout/plan-preview", {

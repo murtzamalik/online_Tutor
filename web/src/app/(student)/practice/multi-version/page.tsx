@@ -1,54 +1,107 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { AppNav } from "@/components/shell/AppNav";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowRight } from "@phosphor-icons/react";
+import { AppPage } from "@/components/ui/AppPage";
+import { ButtonLink } from "@/components/ui/Button";
+import { Badge, Card, PageHeader } from "@/components/ui/primitives";
+import { EmptyState, LoadingState } from "@/components/ui/states";
+import { FailureView } from "@/components/student/StudentUI";
+import { asArray, isRecord, num, plural, questionTypeLabel, str, toFailure, type LoadFailure } from "@/components/student/studentData";
 import * as api from "@/lib/api/w3";
-import { getSampleQuestion, answerSampleQuestion, listOutcomes } from "@/lib/api/marketing";
-import { startPractice } from "@/lib/api/practice";
+
+type Version = { version: number; questionId: string; questionText: string; questionType: string; marks: number | null };
+type Drill = { sessionId: string | null; versions: Version[] };
+
+function parseDrill(res: unknown): Drill {
+  if (!isRecord(res)) return { sessionId: null, versions: [] };
+  const versions = asArray(res.versions)
+    .filter(isRecord)
+    .map((v, i) => {
+      const q = isRecord(v.question) ? v.question : {};
+      return {
+        version: num(v.version) ?? i + 1,
+        questionId: str(v.questionId ?? q.questionId),
+        questionText: str(q.questionText, "Question"),
+        questionType: str(q.questionType),
+        marks: num(q.marksAvailable),
+      };
+    });
+  return { sessionId: res.sessionId ? str(res.sessionId) : null, versions };
+}
 
 /** D-05 — Multi-version drill */
 export default function Page() {
-  const params = useParams() as Record<string, string>;
-  const [data, setData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const token = typeof window !== "undefined" ? sessionStorage.getItem("accessToken") ?? undefined : undefined;
-  const studentId = typeof window !== "undefined" ? sessionStorage.getItem("studentId") : null;
-  const childId = typeof window !== "undefined" ? (sessionStorage.getItem("childId") || params.id || studentId) : params.id;
+  const [data, setData] = useState<Drill | null>(null);
+  const [failure, setFailure] = useState<LoadFailure | null>(null);
+  const started = useRef(false);
+
+  const load = useCallback(async () => {
+    setFailure(null);
+    setData(null);
+    try {
+      const token = sessionStorage.getItem("accessToken") ?? undefined;
+      const enrolmentId = sessionStorage.getItem("enrolmentId");
+      if (!enrolmentId) throw new Error("enrolmentId required");
+      const result: unknown = await api.multiVersion({ enrolmentId, versions: 3 }, token);
+      setData(parseDrill(result));
+    } catch (e: unknown) {
+      const f = toFailure(e, "Could not load");
+      setFailure(f.message === "enrolmentId required" ? { kind: "error", message: "No active subject yet — open Home first." } : f);
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-
-        const enrolmentId = sessionStorage.getItem("enrolmentId");
-        if (!enrolmentId) throw new Error("enrolmentId required");
-        const result = await api.multiVersion({ enrolmentId, versions: 3 }, token);
-
-        if (!cancelled) setData(result);
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Could not load");
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [token, studentId, childId, params.mockId, params.sessionId, params.responseId, params.questionId, params.tutorSessionId, params.deckId, params.topicId, params.reportId, params.id]);
+    // Each call creates a practice session, so only request once per visit.
+    if (started.current) return;
+    started.current = true;
+    void load();
+  }, [load]);
 
   return (
-    <div>
-      <AppNav displayName="Study Loop" />
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="font-display text-4xl">Multi-version drill</h1>
-        {!data && !error && <div className="mt-8"><LoadingState /></div>}
-        {error && <div className="mt-8"><ErrorState body={error} /></div>}
-        {data && (
-          <div className="mt-8 space-y-4 animate-rise">
-            <p className="text-sm text-ink/70">Wired to live API.</p>
-            <pre className="overflow-auto rounded border border-mist bg-white/70 p-4 text-sm" aria-live="polite">{JSON.stringify(data, null, 2)}</pre>
+    <AppPage width="content">
+      <PageHeader
+        eyebrow="Practice"
+        title="Same skill, new versions"
+        description="Answer several versions of one kind of question. Spotting what stays the same is how the method sticks."
+      />
+
+      {failure ? (
+        <FailureView failure={failure} onRetry={() => void load()} />
+      ) : !data ? (
+        <LoadingState label="Preparing your versions…" lines={4} />
+      ) : data.versions.length === 0 || !data.sessionId ? (
+        <EmptyState
+          title="No versions available yet"
+          body="We couldn’t find enough approved questions for this drill. Try a mixed set instead."
+          action={<ButtonLink href="/practice">Back to practice</ButtonLink>}
+        />
+      ) : (
+        <div className="animate-rise space-y-5">
+          <ol className="space-y-3">
+            {data.versions.map((v) => (
+              <li key={`${v.version}-${v.questionId}`}>
+                <Card className="p-5">
+                  <div className="flex items-center justify-between text-caption text-neutral-600">
+                    <span className="inline-flex items-center gap-2">
+                      <Badge tone="brand">Version {v.version}</Badge>
+                      {questionTypeLabel(v.questionType)}
+                    </span>
+                    {v.marks != null && <span>{plural(v.marks, "mark")}</span>}
+                  </div>
+                  <p className="mt-3 line-clamp-3 text-neutral-900">{v.questionText}</p>
+                </Card>
+              </li>
+            ))}
+          </ol>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[14px] text-neutral-600">{plural(data.versions.length, "question")} · marked as you go</p>
+            <ButtonLink href={`/practice/${data.sessionId}`} size="lg" icon={<ArrowRight size={18} />}>
+              Start drill
+            </ButtonLink>
           </div>
-        )}
-        <p className="mt-6 text-sm"><Link className="underline" href="/home">Back</Link></p>
-      </main>
-    </div>
+        </div>
+      )}
+    </AppPage>
   );
 }

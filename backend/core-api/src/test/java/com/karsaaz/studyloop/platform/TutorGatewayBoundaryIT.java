@@ -46,4 +46,15 @@ class TutorGatewayBoundaryIT {
       st.executeQuery("SELECT 1 FROM prompt_version LIMIT 1").close();
     }
   }
+
+  /** V012's default privileges leaked SELECT on later tables (V017 billing) until V020. */
+  @Test
+  void gatewayCannotSelectTablesAddedAfterV012() throws Exception {
+    try (var c = DriverManager.getConnection(postgres.getJdbcUrl(), "tutor_gateway_login", "gw");
+         var st = c.createStatement()) {
+      assertThatThrownBy(() -> st.executeQuery("SELECT * FROM micro_subscription"))
+          .isInstanceOf(Exception.class);
+      st.executeUpdate("DELETE FROM ai_gateway_payload WHERE expires_at < now()");
+    }
+  }
 }

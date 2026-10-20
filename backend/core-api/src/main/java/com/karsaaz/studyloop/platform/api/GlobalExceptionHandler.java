@@ -14,7 +14,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -51,6 +55,22 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<ApiProblem> handleDenied(AccessDeniedException ex) {
     return problem(403, ProblemCode.FORBIDDEN, "Forbidden");
+  }
+
+  /** Malformed client input (bad UUID in the path, unreadable JSON) is a 400, not a server error. */
+  @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class})
+  public ResponseEntity<ApiProblem> handleBadInput(Exception ex) {
+    return problem(400, ProblemCode.VALIDATION_FAILED, "Request could not be read");
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<ApiProblem> handleMethod(HttpRequestMethodNotSupportedException ex) {
+    return problem(405, ProblemCode.VALIDATION_FAILED, "Method not allowed");
+  }
+
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<ApiProblem> handleNoRoute(NoResourceFoundException ex) {
+    return problem(404, ProblemCode.NOT_FOUND, "Not found");
   }
 
   @ExceptionHandler(Exception.class)

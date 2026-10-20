@@ -27,7 +27,7 @@ public class MasteryController {
   public Map<String, Object> tree(
       @AuthenticationPrincipal AccountPrincipal principal,
       @PathVariable UUID studentId,
-      @RequestParam(required = false) Long enrolmentId) {
+      @RequestParam(required = false) UUID enrolmentId) {
     return masteryService.masteryTree(principal, studentId, enrolmentId);
   }
 

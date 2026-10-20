@@ -64,6 +64,7 @@ public final class AuthDtos {
 
   public record MeResponse(
       UUID accountId,
+      UUID studentId,
       String email,
       String displayName,
       String kind,
@@ -72,6 +73,7 @@ public final class AuthDtos {
       List<Map<String, Object>> children,
       List<Map<String, Object>> entitlements,
       Map<String, Boolean> featureFlags,
-      boolean mfaSatisfied
+      boolean mfaSatisfied,
+      UUID schoolId
   ) {}
 }

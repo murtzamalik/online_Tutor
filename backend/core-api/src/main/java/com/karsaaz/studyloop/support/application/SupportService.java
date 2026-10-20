@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.support.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import com.karsaaz.studyloop.common.error.AppException;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import java.util.HashMap;
@@ -38,7 +39,7 @@ public class SupportService {
         WHERE lower(coalesce(email,'')) LIKE ? OR lower(display_name) LIKE ?
         ORDER BY account_id DESC LIMIT 50
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "accountId", rs.getObject(1).toString(),
             "email", rs.getString(2) == null ? "" : rs.getString(2),
             "displayName", rs.getString(3),
@@ -67,7 +68,7 @@ public class SupportService {
         SELECT s.student_id, s.display_name FROM student_profile s
         JOIN parent_student_link l ON l.student_id = s.student_id WHERE l.parent_account_id = ?
         """,
-        (rs, i) -> Map.of("studentId", rs.getObject(1).toString(), "displayName", rs.getString(2)),
+        (rs, i) -> Rows.of("studentId", rs.getObject(1).toString(), "displayName", rs.getString(2)),
         accountId);
     // no answers/transcripts for support (P-03)
     return Map.of("account", account, "children", children, "learningContent", "REDACTED");
@@ -159,7 +160,7 @@ public class SupportService {
     requireCmp(p);
     List<Map<String, Object>> rows = jdbc.query(
         "SELECT audit_id, prev_hash, row_hash FROM audit_log ORDER BY audit_id ASC LIMIT 500",
-        (rs, i) -> Map.of("id", rs.getLong(1), "prev", rs.getString(2) == null ? "" : rs.getString(2), "hash", rs.getString(3)));
+        (rs, i) -> Rows.of("id", rs.getLong(1), "prev", rs.getString(2) == null ? "" : rs.getString(2), "hash", rs.getString(3)));
     boolean ok = true;
     String prev = "";
     for (Map<String, Object> r : rows) {

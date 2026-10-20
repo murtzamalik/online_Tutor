@@ -432,7 +432,7 @@
   "id": "STU-12",
   "method": "GET",
   "path": "/students/{studentId}/home",
-  "roles": "STU",
+  "roles": "PAR,STU",
   "summary": "Student home aggregate (goal, continue, due reviews, recent mastery, assignments)",
   "tables": "daily_goal_progress,mastery_state,student_enrolment,assignment_target",
   "prompts": "",

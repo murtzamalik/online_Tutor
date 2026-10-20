@@ -1,0 +1,17 @@
+{
+  "status": "ok",
+  "board": "AQA",
+  "qualification": "GCSE",
+  "subject": "Chemistry",
+  "spec_code": "8462",
+  "paper_code": "8462/1H",
+  "tier": "HIGHER",
+  "series": "JUN2024",
+  "year": 2024,
+  "duration_minutes": 105,
+  "total_marks": 100,
+  "calculator_allowed": "YES",
+  "evidence": "Stub fixture cover page.",
+  "confidence": 0.9,
+  "needs_human_verification": []
+}

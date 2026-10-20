@@ -1,0 +1,35 @@
+# LiteLLM proxy for Study Loop pilot free stack.
+# Aliases match model_routing.model_id / fallback_model_id (V019).
+# Provider model IDs verified against live Groq/Gemini list APIs (Oct 2026).
+model_list:
+  - model_name: gemini-flash
+    litellm_params:
+      model: gemini/gemini-3.8-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: groq-llama70b
+    litellm_params:
+      model: groq/openai/gpt-oss-120b
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: groq-llama8b
+    litellm_params:
+      model: groq/openai/gpt-oss-20b
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: ollama-llama8b
+    litellm_params:
+      model: ollama/llama3.1:8b
+      api_base: os.environ/OLLAMA_API_BASE
+
+  - model_name: ollama-qwen14b
+    litellm_params:
+      model: ollama/qwen2.5:14b
+      api_base: os.environ/OLLAMA_API_BASE
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

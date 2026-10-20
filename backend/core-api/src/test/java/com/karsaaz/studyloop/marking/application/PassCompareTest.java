@@ -21,6 +21,13 @@ class PassCompareTest {
   }
 
   @Test
+  void confidenceBelowSpecFloorIsLow() {
+    PassCompare.Decision d = PassCompare.compare(
+        BigDecimal.valueOf(2), 0.72, BigDecimal.valueOf(2), 0.8, BigDecimal.valueOf(4));
+    assertThat(d.outcome()).isEqualTo(PassCompare.Outcome.LOW_CONFIDENCE);
+  }
+
+  @Test
   void flagsPassDisagreementOnMarks() {
     PassCompare.Decision d = PassCompare.compare(
         BigDecimal.valueOf(1), 0.9, BigDecimal.valueOf(3), 0.9, BigDecimal.valueOf(4));

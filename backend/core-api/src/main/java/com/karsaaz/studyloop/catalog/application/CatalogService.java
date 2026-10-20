@@ -1,5 +1,6 @@
 package com.karsaaz.studyloop.catalog.application;
 
+import com.karsaaz.studyloop.common.db.Rows;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ public class CatalogService {
   public List<Map<String, Object>> qualifications() {
     return jdbc.query(
         "SELECT qualification_id, code, display_name, visual_tier FROM qualification ORDER BY qualification_id",
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "qualificationId", rs.getLong("qualification_id"),
             "code", rs.getString("code"),
             "displayName", rs.getString("display_name"),
@@ -37,7 +38,7 @@ public class CatalogService {
         """;
     return jdbc.query(
         sql,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "boardId", rs.getLong("board_id"),
             "code", rs.getString("code"),
             "displayName", rs.getString("display_name")),
@@ -75,7 +76,7 @@ public class CatalogService {
           AND (?::bigint IS NULL OR subject_id = ?)
         ORDER BY title
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "specificationId", rs.getLong("specification_id"),
             "specCode", rs.getString("spec_code"),
             "title", rs.getString("title"),
@@ -134,10 +135,10 @@ public class CatalogService {
         """
         SELECT exam_date_id, qualification_id, region, exam_name, exam_on
         FROM exam_date
-        WHERE (? IS NULL OR region = ?)
+        WHERE (CAST(? AS text) IS NULL OR region = ?)
         ORDER BY exam_on
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "examDateId", rs.getLong("exam_date_id"),
             "qualificationId", rs.getLong("qualification_id"),
             "region", rs.getString("region"),
@@ -155,7 +156,7 @@ public class CatalogService {
         JOIN pricing_price pr ON pr.plan_id = p.plan_id
         ORDER BY p.sort_order NULLS LAST, p.plan_id
         """,
-        (rs, i) -> Map.of(
+        (rs, i) -> Rows.of(
             "planId", rs.getLong("plan_id"),
             "code", rs.getString("code"),
             "displayName", rs.getString("display_name"),
