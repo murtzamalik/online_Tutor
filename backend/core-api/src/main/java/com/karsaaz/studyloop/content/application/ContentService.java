@@ -180,6 +180,22 @@ public class ContentService {
   @Transactional
   public void approveQuestion(AccountPrincipal principal, long questionId) {
     requireContent(principal);
+    // A written-answer question with nothing to mark against would be marked blind (GAP-002).
+    Boolean noScheme = jdbc.query(
+        """
+        SELECT q.question_type <> 'MULTIPLE_CHOICE'
+           AND NOT EXISTS (SELECT 1 FROM mark_scheme ms WHERE ms.question_id = q.question_id
+                           AND (COALESCE(jsonb_array_length(CASE WHEN jsonb_typeof(ms.marking_points_json) = 'array'
+                                                                THEN ms.marking_points_json END), 0) > 0
+                                OR NULLIF(btrim(ms.model_answer), '') IS NOT NULL
+                                OR ms.levels_json IS NOT NULL))
+        FROM question q WHERE q.question_id = ?
+        """,
+        rs -> rs.next() ? rs.getBoolean(1) : null,
+        questionId);
+    if (Boolean.TRUE.equals(noScheme)) {
+      throw AppException.conflict(ProblemCode.VALIDATION_FAILED, "Add a mark scheme first: this question has nothing to mark against.");
+    }
     int updated = jdbc.update(
         """
         UPDATE question SET review_status = 'APPROVED', reviewed_by = ?, reviewed_at = ?, updated_at = ?
@@ -533,24 +549,24 @@ public class ContentService {
         }
         List<Map<String, Object>> schemeHit =
             schemeByRef.getOrDefault(ai.asText(item.get("item_ref")), schemeByRef.get(qRef));
-        if (schemeHit != null) {
-          raw.append("\n\n[mark scheme]\n").append(ai.toJson(schemeHit));
-        }
         if (raw.toString().isBlank()) {
           continue;
         }
+        // The stem is what pupils read; the scheme is stored separately (it used to be appended to the stem).
         jdbc.update(
             """
-            INSERT INTO past_paper_item (paper_id, q_ref, raw_text, status, proposed_topic_id)
-            VALUES (?, ?, ?, 'NEEDS_REVIEW', ?)
+            INSERT INTO past_paper_item (paper_id, q_ref, raw_text, scheme_json, status, proposed_topic_id)
+            VALUES (?, ?, ?, ?::jsonb, 'NEEDS_REVIEW', ?)
             ON CONFLICT (paper_id, q_ref) DO UPDATE
               SET status = 'NEEDS_REVIEW',
                   raw_text = EXCLUDED.raw_text,
+                  scheme_json = EXCLUDED.scheme_json,
                   proposed_topic_id = COALESCE(EXCLUDED.proposed_topic_id, past_paper_item.proposed_topic_id)
             """,
             paperId,
             qRef,
             raw.toString().trim(),
+            schemeHit == null ? null : ai.toJson(schemeHit),
             topicId);
         count++;
       }
@@ -736,7 +752,8 @@ public class ContentService {
     requireContent(principal);
     Map<String, Object> item = jdbc.query(
         """
-        SELECT i.item_id, i.paper_id, i.q_ref, i.raw_text, i.status, i.proposed_topic_id, i.question_id,
+        SELECT i.item_id, i.paper_id, i.q_ref, i.raw_text, i.scheme_json::text AS scheme_json, i.status,
+               i.proposed_topic_id, i.question_id,
                p.specification_id, p.series, p.exam_year, p.paper_code, p.tier
         FROM past_paper_item i
         JOIN past_paper p ON p.paper_id = i.paper_id
@@ -751,6 +768,7 @@ public class ContentService {
           m.put("paperId", rs.getLong("paper_id"));
           m.put("qRef", rs.getString("q_ref"));
           m.put("rawText", rs.getString("raw_text"));
+          m.put("schemeJson", rs.getString("scheme_json"));
           m.put("status", rs.getString("status"));
           m.put("proposedTopicId", rs.getObject("proposed_topic_id"));
           m.put("questionId", rs.getObject("question_id"));
@@ -802,15 +820,26 @@ public class ContentService {
             item.get("series"),
             item.get("examYear"),
             qRef);
-    String questionText =
-        item.get("rawText") != null && !item.get("rawText").toString().isBlank()
-            ? item.get("rawText").toString()
-            : "Past paper item " + sourceRef;
+    // Only a real stem and a real mark scheme become a servable question; never a placeholder.
+    String questionText = item.get("rawText") == null ? "" : item.get("rawText").toString().trim();
+    if (questionText.isBlank() || questionText.startsWith("[file-backed ingest]")) {
+      throw AppException.conflict(
+          ProblemCode.VALIDATION_FAILED, "Item has no question text. Re-run extraction or edit the text first.");
+    }
+    List<Map<String, Object>> points = schemePoints(item.get("schemeJson"));
+    if (points.isEmpty()) {
+      throw AppException.conflict(
+          ProblemCode.VALIDATION_FAILED, "No mark scheme was extracted for this item. It cannot be approved yet.");
+    }
+    int totalMarks = 0;
+    for (Map<String, Object> pt : points) {
+      totalMarks += pt.get("marks") instanceof Number n ? n.intValue() : 1;
+    }
     String tier =
         item.get("tier") != null && !item.get("tier").toString().isBlank()
             ? mapTier(item.get("tier").toString())
             : "HIGHER";
-    short marks = 2;
+    short marks = (short) Math.max(1, Math.min(totalMarks, 30));
 
     Long questionId = jdbc.query(
         """
@@ -839,12 +868,11 @@ public class ContentService {
     jdbc.update(
         """
         INSERT INTO mark_scheme (question_id, scheme_type, total_marks, marking_points_json, model_answer, origin)
-        VALUES (?, 'POINTS', ?, '[{"id":"mp1","marks":2,"point":"Accept valid chemistry response"}]'::jsonb,
-                ?, 'OFFICIAL')
+        VALUES (?, 'POINTS', ?, ?::jsonb, NULL, 'OFFICIAL')
         """,
         questionId,
         marks,
-        "See official mark scheme for " + sourceRef);
+        ai.toJson(points));
 
     jdbc.update(
         """
@@ -861,6 +889,42 @@ public class ContentService {
     Map<String, Object> out = patchPastPaperItem(principal, itemId, Map.of());
     out.put("questionId", questionId);
     out.put("sourceReference", sourceRef);
+    return out;
+  }
+
+  /**
+   * Marking points from P-IN-02 output for one item: entries may be points themselves or carry
+   * {@code points} / {@code marking_points} lists. LEVELS schemes are not converted here.
+   */
+  @SuppressWarnings("unchecked")
+  private List<Map<String, Object>> schemePoints(Object schemeJson) {
+    List<Map<String, Object>> out = new java.util.ArrayList<>();
+    if (schemeJson == null || schemeJson.toString().isBlank()) {
+      return out;
+    }
+    Object parsed = ai.parseJson(schemeJson.toString());
+    if (!(parsed instanceof List<?> entries)) {
+      return out;
+    }
+    for (Object e : entries) {
+      if (!(e instanceof Map<?, ?> m)) {
+        continue;
+      }
+      Object nested = m.get("points") != null ? m.get("points") : m.get("marking_points");
+      if (nested instanceof List<?> list) {
+        for (Object p : list) {
+          if (p instanceof Map<?, ?> pm && pm.get("point") != null) {
+            out.add(new HashMap<>((Map<String, Object>) pm));
+          }
+        }
+      } else if (m.get("point") != null) {
+        out.add(new HashMap<>((Map<String, Object>) m));
+      }
+    }
+    for (int i = 0; i < out.size(); i++) {
+      out.get(i).putIfAbsent("id", "M" + (i + 1));
+      out.get(i).putIfAbsent("marks", 1);
+    }
     return out;
   }
 

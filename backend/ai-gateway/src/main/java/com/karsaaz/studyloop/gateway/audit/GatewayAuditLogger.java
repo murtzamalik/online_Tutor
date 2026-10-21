@@ -45,7 +45,17 @@ public class GatewayAuditLogger {
       String status,
       String errorCode,
       Map<String, Object> redactedVariables,
-      List<RedactionPipeline.Event> redactions) {}
+      List<RedactionPipeline.Event> redactions,
+      String route) {
+    /** Text or image prompt run; the route is derived from {@code hasImages}. */
+    public Entry(
+        String requestToken, String taskKey, String promptId, String promptVersion, String vendor, String model,
+        boolean hasImages, Integer tokensIn, Integer tokensOut, long latencyMs, String status, String errorCode,
+        Map<String, Object> redactedVariables, List<RedactionPipeline.Event> redactions) {
+      this(requestToken, taskKey, promptId, promptVersion, vendor, model, hasImages, tokensIn, tokensOut, latencyMs,
+          status, errorCode, redactedVariables, redactions, hasImages ? "IMAGE" : "TEXT");
+    }
+  }
 
   public void record(Entry e) {
     try {
@@ -64,7 +74,7 @@ public class GatewayAuditLogger {
           e.promptVersion(),
           e.vendor() == null ? "UNKNOWN" : e.vendor(),
           e.model(),
-          e.hasImages() ? "IMAGE" : "TEXT",
+          e.route(),
           e.tokensIn(),
           e.tokensOut(),
           (int) Math.min(Integer.MAX_VALUE, e.latencyMs()),

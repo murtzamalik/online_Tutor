@@ -3,7 +3,8 @@
 -- exercised on a developer machine. Password for all: ReviewerDemo!23 (same argon2id hash as the
 -- V016/V018 demo reviewer and content admin). MFA is off for these demo logins only.
 --
---   docker exec -i studyloop-postgres-1 psql -U studyloop_owner -d studyloop < infra/scripts/seed_local_demo_roles.sql
+--   infra/scripts/seed_local_demo.sh   (or: docker exec -i studyloop-postgres-1 psql -U studyloop_owner -d studyloop < infra/scripts/seed_local_demo_roles.sql)
+-- Safe to run more than once.
 -- =============================================================================
 
 DO $$
@@ -13,6 +14,8 @@ DECLARE
   v_spec   BIGINT;
   v_class  UUID := 'c4000000-0000-4000-8000-000000000001';
   v_alex   UUID;
+  v_id     UUID;
+  v_teacher UUID;
   rec      RECORD;
 BEGIN
   SELECT school_id INTO v_school FROM school ORDER BY created_at LIMIT 1;
@@ -34,10 +37,18 @@ BEGIN
       ('b4000000-0000-4000-8000-000000000008'::uuid, 'owner@studyloop.local',      'Demo Product Owner',    'STAFF',        'PRODUCT_OWNER',     FALSE)
     ) AS t(id, email, name, kind, role, school)
   LOOP
-    INSERT INTO account (account_id, email, password_hash, display_name, kind, status, mfa_required, email_verified_at, school_id)
-    VALUES (rec.id, rec.email, v_hash, rec.name, rec.kind, 'ACTIVE', FALSE, now(), CASE WHEN rec.school THEN v_school END)
-    ON CONFLICT (account_id) DO NOTHING;
-    INSERT INTO account_role (account_id, role) VALUES (rec.id, rec.role) ON CONFLICT DO NOTHING;
+    -- Re-runnable: an existing account with this email (any id) is reused, never duplicated.
+    SELECT account_id INTO v_id FROM account WHERE email = rec.email;
+    IF v_id IS NULL THEN
+      INSERT INTO account (account_id, email, password_hash, display_name, kind, status, mfa_required, email_verified_at, school_id)
+      VALUES (rec.id, rec.email, v_hash, rec.name, rec.kind, 'ACTIVE', FALSE, now(), CASE WHEN rec.school THEN v_school END)
+      ON CONFLICT (account_id) DO NOTHING;
+      v_id := rec.id;
+    END IF;
+    INSERT INTO account_role (account_id, role) VALUES (v_id, rec.role) ON CONFLICT DO NOTHING;
+    IF rec.role = 'TEACHER' THEN
+      v_teacher := v_id;
+    END IF;
   END LOOP;
 
   SELECT specification_id INTO v_spec FROM specification WHERE spec_code = '8462' LIMIT 1;
@@ -45,7 +56,7 @@ BEGIN
   VALUES (v_class, v_school, '10C Chemistry', 'Y10', v_spec, '2026/27')
   ON CONFLICT (class_id) DO NOTHING;
   INSERT INTO class_teacher (class_id, account_id, is_owner)
-  VALUES (v_class, 'b4000000-0000-4000-8000-000000000001', TRUE)
+  VALUES (v_class, v_teacher, TRUE)
   ON CONFLICT DO NOTHING;
 
   SELECT student_id INTO v_alex FROM student_profile WHERE display_name = 'Alex' ORDER BY created_at LIMIT 1;

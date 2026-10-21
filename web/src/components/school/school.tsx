@@ -7,12 +7,12 @@ import { Badge, Card } from "@/components/ui/primitives";
 import { str, type Row } from "@/components/staff/format";
 import { useSession } from "@/components/shell/session";
 
-/** Pilot school, used only when the signed-in account has no school of its own (platform staff). */
-export const PILOT_SCHOOL_ID = "a1000000-0000-4000-8000-000000000001";
-
-/** The signed-in teacher's / school admin's school (GET /me schoolId). */
+/**
+ * The signed-in teacher's / school admin's school (GET /me schoolId). School pages only render once
+ * the shell has confirmed a school account with a school, so this is set wherever it is used.
+ */
 export function useSchoolId(): string {
-  return useSession()?.schoolId ?? PILOT_SCHOOL_ID;
+  return useSession()?.schoolId ?? "";
 }
 
 export const SCHOOL_ADMIN_FORBIDDEN =

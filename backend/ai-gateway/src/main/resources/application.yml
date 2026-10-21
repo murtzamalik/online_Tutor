@@ -17,8 +17,8 @@ studyloop:
     stub: ${AI_GATEWAY_STUB:true}
     prompts-path: ${PROMPTS_PATH:../../ai_prompts}
     embedding-url: ${EMBEDDING_SERVICE_URL:http://localhost:8100}
-    # Per vendor HTTP call; core-api's gateway client waits 120s for the whole run (retry + fallback).
-    vendor-timeout-seconds: ${AI_VENDOR_TIMEOUT_SECONDS:45}
+    # Per vendor HTTP call (long notes on a busy model can take a minute); core-api waits up to 200s per run.
+    vendor-timeout-seconds: ${AI_VENDOR_TIMEOUT_SECONDS:75}
     payload-purge-cron: "0 30 3 * * *"
     anthropic:
       api-key: ${ANTHROPIC_API_KEY:}
@@ -29,6 +29,10 @@ studyloop:
     litellm:
       base-url: ${LITELLM_BASE_URL:http://localhost:4000}
       api-key: ${LITELLM_MASTER_KEY:}
+    # Voice tutor speech (model_routing voice.stt / voice.tts, vendor GEMINI).
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
 
 management:
   endpoints:

@@ -41,6 +41,21 @@ public class VoiceController {
     return voice.connectivityCheck(principal);
   }
 
+  @PostMapping("/voice/sessions/{voiceSessionId}/turns")
+  @CatalogueRoles(id = "VOX-06", roles = "STU")
+  public Map<String, Object> turn(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @PathVariable UUID voiceSessionId,
+      @RequestBody Map<String, Object> body) {
+    return voice.turn(principal, voiceSessionId, body);
+  }
+
+  @GetMapping("/voice/status")
+  @CatalogueRoles(id = "VOX-07", roles = "STU")
+  public Map<String, Object> status(@AuthenticationPrincipal AccountPrincipal principal) {
+    return voice.status(principal);
+  }
+
   @PostMapping("/voice/sessions/{voiceSessionId}/fallback-to-text")
   @CatalogueRoles(id = "VOX-05", roles = "STU")
   public Map<String, Object> fallback(

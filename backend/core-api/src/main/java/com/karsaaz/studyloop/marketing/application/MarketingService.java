@@ -126,6 +126,7 @@ public class MarketingService {
         """
         SELECT question_id, question_text, question_type, options_json, marks_available
         FROM question WHERE review_status = 'APPROVED' AND question_type = 'MULTIPLE_CHOICE'
+          AND licence_status IN ('OWN','OFFICIAL_TEACHING_USE','BOARD_LICENSED')
         ORDER BY question_id LIMIT 1
         """,
         rs -> {

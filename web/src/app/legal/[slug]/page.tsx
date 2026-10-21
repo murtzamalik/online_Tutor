@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Cookie, FileText } from "@phosphor-icons/react";
 import { PublicFrame } from "@/components/shell/PublicFrame";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -13,6 +13,7 @@ import { Markdown, headingId, parseMarkdown } from "@/components/marketing/Markd
 import { formatDate } from "@/components/marketing/format";
 import { getLegal, postCookieConsent } from "@/lib/api/marketing";
 import { ApiError } from "@/lib/api/client";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 type LegalDoc = { title: string; bodyMd: string; version: string; publishedAt?: string | null };
 
@@ -23,22 +24,32 @@ const LEGAL_LINKS: Array<[string, string]> = [
   ["ai-data", "AI and your data"],
 ];
 
+/** Short or legacy slugs that should open a canonical document. */
+const SLUG_ALIASES: Record<string, string> = { ai: "ai-data" };
+
 /** Shell-10 — Legal document + cookie banner hook */
 export default function LegalPage() {
   const params = useParams<{ slug: string }>();
+  const router = useRouter();
+  const alias = SLUG_ALIASES[params.slug];
   const [doc, setDoc] = useState<LegalDoc | null>(null);
+  usePageTitle(doc?.title ?? "Legal");
   const [error, setError] = useState<string | null>(null);
   const [cookieNote, setCookieNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [savingCookies, setSavingCookies] = useState<"all" | "essential" | null>(null);
   const [currentChoice, setCurrentChoice] = useState<string | null>(null);
 
   useEffect(() => {
+    if (alias) {
+      router.replace(`/legal/${alias}`);
+      return;
+    }
     setDoc(null);
     setError(null);
     getLegal(params.slug)
       .then((d) => setDoc(d))
       .catch((err) => setError(err instanceof ApiError ? err.message : "Document not found"));
-  }, [params.slug]);
+  }, [params.slug, alias, router]);
 
   useEffect(() => {
     try {

@@ -142,7 +142,7 @@ public class MockService {
         SqlTime.ts(clock.instant()),
         resultJson);
     Long qid = jdbc.query(
-        "SELECT question_id FROM question WHERE review_status = 'APPROVED' ORDER BY question_id LIMIT 1",
+        "SELECT question_id FROM question WHERE review_status = 'APPROVED' AND licence_status IN ('OWN','OFFICIAL_TEACHING_USE','BOARD_LICENSED') ORDER BY question_id LIMIT 1",
         rs -> rs.next() ? rs.getLong(1) : null);
     if (qid != null) {
       jdbc.update(
@@ -214,6 +214,7 @@ public class MockService {
         SELECT q.question_id FROM question q
         JOIN student_enrolment se ON se.specification_id = q.specification_id
         WHERE se.enrolment_id = ? AND q.review_status = 'APPROVED'
+          AND q.licence_status IN ('OWN','OFFICIAL_TEACHING_USE','BOARD_LICENSED')
         ORDER BY random() LIMIT 10
         """,
         (rs, i) -> rs.getLong(1),

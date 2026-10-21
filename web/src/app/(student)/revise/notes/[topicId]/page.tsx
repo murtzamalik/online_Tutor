@@ -25,7 +25,21 @@ function readNotes(data: unknown): { bodies: string[]; readingLevel: string } {
   return { bodies: direct ? [direct] : list, readingLevel: str(note?.readingLevel) };
 }
 
-const READING_LEVEL: Record<string, string> = { "Y10-11": "GCSE level", "Y12-13": "A-Level" };
+const READING_LEVEL: Record<string, string> = {
+  "Y10-11": "GCSE level",
+  "Y12-13": "A-Level",
+  GCSE: "GCSE",
+  "A-LEVEL": "A-Level",
+  A_LEVEL: "A-Level",
+};
+
+/** Known bands get a friendly label; anything else (seeded or future values) is humanised, not shown raw. */
+function readingLevelLabel(value: string): string {
+  const known = READING_LEVEL[value] ?? READING_LEVEL[value.toUpperCase()];
+  if (known) return known;
+  const words = value.replace(/[_-]+/g, " ").trim().toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 /** I-03 — Revision notes */
 export default function Page() {
@@ -76,7 +90,7 @@ export default function Page() {
         <div className="animate-rise space-y-4">
           {readingLevel && (
             <div>
-              <Badge tone="teal">{READING_LEVEL[readingLevel] ?? readingLevel}</Badge>
+              <Badge tone="teal">{readingLevelLabel(readingLevel)}</Badge>
             </div>
           )}
           {bodies.map((b, i) => (

@@ -248,6 +248,8 @@
 | VOX-03 | POST | `/voice/sessions/{voiceSessionId}/end` | STU | End and finalise metrics | voice_session,tutor_session | P-VO-02 | J-01, J-02 |
 | VOX-04 | POST | `/voice/connectivity-check` | STU,PAR | Mic/network pre-flight (returns error class for J-06) | voice_session |  | D-01, J-01, J-06 |
 | VOX-05 | POST | `/voice/sessions/{voiceSessionId}/fallback-to-text` | STU | Switch to chat keeping context | tutor_session |  | J-01, J-06 |
+| VOX-06 | POST | `/voice/sessions/{voiceSessionId}/turns` | STU | Push-to-talk turn: audio (base64) → STT → safety-checked tutor turn → TTS; returns transcript, reply text and audio | tutor_message,voice_session | P-SF-01,P-TU-01,P-VO-01,P-SF-02 | J-01, J-02 |
+| VOX-07 | GET | `/voice/status` | STU | Voice readiness for the learner: consent given, parent toggle | voice_consent,parent_ai_controls |  | J-01 |
 
 ## TRN
 
@@ -401,6 +403,9 @@
 |---|---|---|---|---|---|---|---|
 | RVC-01 | POST | `/internal/revision/generate` | CNT,SYS | Generate notes/flashcards/cheat sheets for a topic (batch) | revision_note,flashcard_deck,flashcard,cheat_sheet | P-RC-01,P-RC-02,P-RC-03,P-RC-04 | E-01 |
 | RVC-02 | GET | `/internal/revision/exceptions` | CNT | Failed revision QC | revision_note,cheat_sheet |  | E-01 |
+| RVC-03 | GET | `/internal/revision/notes` | CNT,SYS | List all revision note versions for a topic | revision_note |  | E-01 |
+| RVC-04 | POST | `/internal/revision/notes/{noteId}/approve` | CNT,SYS | Approve a revision note version (retires the previous approved one) | revision_note,audit_log |  | E-01 |
+| RVC-05 | POST | `/internal/revision/notes/{noteId}/reject` | CNT,SYS | Reject a revision note version (QC_FAILED) | revision_note,audit_log |  | E-01 |
 
 ## CMS
 

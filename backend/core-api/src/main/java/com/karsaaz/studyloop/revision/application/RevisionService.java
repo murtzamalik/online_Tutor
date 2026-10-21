@@ -6,6 +6,7 @@ import com.karsaaz.studyloop.gatewayclient.api.GatewayAiSupport;
 import com.karsaaz.studyloop.gatewayclient.api.GatewayClient;
 import com.karsaaz.studyloop.identity.domain.AccountPrincipal;
 import com.karsaaz.studyloop.platform.access.StudentAccessHelper;
+import com.karsaaz.studyloop.platform.application.AuditLogService;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -24,13 +25,33 @@ public class RevisionService {
   private final StudentAccessHelper access;
   private final GatewayClient gateway;
   private final GatewayAiSupport ai;
+  private final AuditLogService audit;
 
   public RevisionService(
-      JdbcTemplate jdbc, StudentAccessHelper access, GatewayClient gateway, GatewayAiSupport ai) {
+      JdbcTemplate jdbc,
+      StudentAccessHelper access,
+      GatewayClient gateway,
+      GatewayAiSupport ai,
+      AuditLogService audit) {
     this.jdbc = jdbc;
     this.access = access;
     this.gateway = gateway;
     this.ai = ai;
+    this.audit = audit;
+  }
+
+  /** RVC-01/03/04/05 are CNT,SYS only. */
+  private static void requireContentOrSystem(AccountPrincipal principal) {
+    if (principal == null
+        || (!StudentAccessHelper.hasContentRole(principal.roles()) && !principal.roles().contains("SYS"))) {
+      throw AppException.forbidden("Content or system access required");
+    }
+  }
+
+  /** Note approvals go into the hash-chained audit log. */
+  private void audit(AccountPrincipal p, String action, Object targetId, Map<String, Object> meta) {
+    String role = p.roles().isEmpty() ? "STAFF" : p.roles().get(0);
+    audit.append(p.accountId(), role, action, "revision_note", String.valueOf(targetId), meta);
   }
 
   public Map<String, Object> notes(AccountPrincipal principal, long topicId) {
@@ -262,10 +283,7 @@ public class RevisionService {
   @Transactional
   public Map<String, Object> generate(AccountPrincipal principal, Map<String, Object> body) {
     // RVC-01 is CNT,SYS only — this check used to be an empty if, so any signed-in user could spend tokens.
-    if (principal == null
-        || (!StudentAccessHelper.hasContentRole(principal.roles()) && !principal.roles().contains("SYS"))) {
-      throw AppException.forbidden("Content or system access required");
-    }
+    requireContentOrSystem(principal);
     long topicId = body.get("topicId") instanceof Number n ? n.longValue() : 0L;
     if (topicId == 0) {
       throw AppException.badRequest("VALIDATION_FAILED", "topicId required");
@@ -319,7 +337,7 @@ public class RevisionService {
       resp = gateway.run("P-RC-01", vars, null);
       result = ai.requireResult(resp, "P-RC-01");
     } catch (Exception e) {
-      throw new AppException("AI_UNAVAILABLE", 502, "Revision notes could not be generated: " + e.getClass().getSimpleName());
+      throw new AppException("AI_UNAVAILABLE", 502, "The AI could not write notes right now. Try again in a minute.");
     }
     if (GatewayAiSupport.cannotComplete(result)) {
       throw AppException.badRequest("VALIDATION_FAILED", "P-RC-01 cannot_complete: " + ai.asText(result.get("reason")));
@@ -329,18 +347,89 @@ public class RevisionService {
         "SELECT COALESCE(MAX(version),0)+1 FROM revision_note WHERE spec_topic_id = ?",
         Integer.class,
         topicId);
-    jdbc.update(
+    int version = ver == null ? 1 : ver;
+    Long noteId = jdbc.queryForObject(
         """
         INSERT INTO revision_note (spec_topic_id, version, body_md, reading_level, status, prompt_version, grounding_json)
         VALUES (?, ?, ?, ?, 'PENDING_QC', ?, ?::jsonb)
+        RETURNING note_id
         """,
+        Long.class,
         topicId,
-        ver == null ? 1 : ver,
+        version,
         bodyMd,
         vars.get("year_band"),
         "P-RC-01@" + ai.asText(resp.get("promptVersion")),
         ai.toJson(result.get("grounding")));
-    return Map.of("topicId", topicId, "version", ver == null ? 1 : ver, "status", "PENDING_QC");
+    return Map.of("noteId", noteId, "topicId", topicId, "version", version, "status", "PENDING_QC");
+  }
+
+  /** RVC-03: every version of a topic's notes, newest first, for content review. */
+  public List<Map<String, Object>> listNotes(AccountPrincipal principal, long topicId) {
+    requireContentOrSystem(principal);
+    return jdbc.query(
+        """
+        SELECT note_id, spec_topic_id, version, status, reading_level, body_md, created_at
+        FROM revision_note WHERE spec_topic_id = ?
+        ORDER BY version DESC
+        """,
+        (rs, i) -> Rows.of(
+            "noteId", rs.getLong("note_id"),
+            "topicId", rs.getLong("spec_topic_id"),
+            "version", rs.getInt("version"),
+            "status", rs.getString("status"),
+            "readingLevel", rs.getString("reading_level"),
+            "bodyMd", rs.getString("body_md"),
+            "createdAt", rs.getTimestamp("created_at").toInstant().toString()),
+        topicId);
+  }
+
+  /** RVC-04: approve one version; the topic's previously approved version is retired. */
+  @Transactional
+  public Map<String, Object> approveNote(AccountPrincipal principal, long noteId) {
+    requireContentOrSystem(principal);
+    Map<String, Object> note = loadNote(noteId);
+    long topicId = (Long) note.get("topicId");
+    if ("RETIRED".equals(note.get("status"))) {
+      throw AppException.badRequest("VALIDATION_FAILED", "Retired notes cannot be approved");
+    }
+    int retired = jdbc.update(
+        "UPDATE revision_note SET status = 'RETIRED' WHERE spec_topic_id = ? AND status = 'APPROVED' AND note_id <> ?",
+        topicId,
+        noteId);
+    jdbc.update("UPDATE revision_note SET status = 'APPROVED' WHERE note_id = ?", noteId);
+    audit(principal, "REVISION_NOTE_APPROVE", noteId, Map.of(
+        "topicId", topicId, "version", note.get("version"), "retiredCount", retired));
+    return Map.of("noteId", noteId, "topicId", topicId, "version", note.get("version"),
+        "status", "APPROVED", "retiredCount", retired);
+  }
+
+  /** RVC-05: reject one version (QC_FAILED); it is never shown to students. */
+  @Transactional
+  public Map<String, Object> rejectNote(AccountPrincipal principal, long noteId) {
+    requireContentOrSystem(principal);
+    Map<String, Object> note = loadNote(noteId);
+    jdbc.update("UPDATE revision_note SET status = 'QC_FAILED' WHERE note_id = ?", noteId);
+    audit(principal, "REVISION_NOTE_REJECT", noteId, Map.of(
+        "topicId", note.get("topicId"), "version", note.get("version"), "previousStatus", note.get("status")));
+    return Map.of("noteId", noteId, "topicId", note.get("topicId"), "version", note.get("version"),
+        "status", "QC_FAILED");
+  }
+
+  private Map<String, Object> loadNote(long noteId) {
+    Map<String, Object> note = jdbc.query(
+        "SELECT spec_topic_id, version, status FROM revision_note WHERE note_id = ? FOR UPDATE",
+        rs -> rs.next()
+            ? Rows.of(
+                "topicId", rs.getLong("spec_topic_id"),
+                "version", rs.getInt("version"),
+                "status", rs.getString("status"))
+            : null,
+        noteId);
+    if (note == null) {
+      throw AppException.notFound("Revision note not found");
+    }
+    return note;
   }
 
   /** Renders the {@code revision_notes} schema output as markdown (stored as PENDING_QC). */

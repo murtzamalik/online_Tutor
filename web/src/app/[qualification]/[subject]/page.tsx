@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { BellRinging, CalendarBlank, ChatsCircle, CheckCircle, Exam, Target } from "@phosphor-icons/react";
 import { captureLead, getMarketingPage } from "@/lib/api/marketing";
 import { listBoards, listQualifications, listSpecifications, listSubjects } from "@/lib/api/catalog";
@@ -34,6 +34,12 @@ type Spec = {
 
 type Named = { id: string; code: string; displayName: string; isPilot?: boolean };
 
+/**
+ * Qualification URL slugs this landing page serves (catalogue codes GCSE | IGCSE | A_LEVEL | ELEVEN_PLUS, plus AS).
+ * Anything else (e.g. /settings/voice, /student/results) is not a subject page and must 404 instead of being swallowed.
+ */
+const KNOWN_QUALIFICATIONS = new Set(["gcse", "igcse", "a-level", "as-level", "eleven-plus", "11-plus"]);
+
 /** "a-level" → "A_LEVEL", "chemistry" → "CHEMISTRY". */
 const toCode = (s: string) => decodeSafe(s).toUpperCase().replace(/[^A-Z0-9]+/g, "_");
 
@@ -48,6 +54,7 @@ function decodeSafe(s: string) {
 /** A-02 — Qualification / subject landing */
 export default function SubjectLandingPage() {
   const params = useParams<{ qualification: string; subject: string }>();
+  const knownQualification = KNOWN_QUALIFICATIONS.has(decodeSafe(String(params.qualification)).toLowerCase());
   const slug = `${params.qualification}-${params.subject}`.toLowerCase();
   const [page, setPage] = useState<MarketingContent | null>(null);
   const [specs, setSpecs] = useState<Spec[] | null>(null);
@@ -142,6 +149,8 @@ export default function SubjectLandingPage() {
       setLeadBusy(false);
     }
   }
+
+  if (!knownQualification) notFound();
 
   if (!page && !error) {
     return (

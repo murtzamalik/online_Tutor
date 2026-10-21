@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/shell/AppShell";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <AppShell loginPath="/login">{children}</AppShell>;
+  return <AppShell area="school" loginPath="/login">{children}</AppShell>;
 }

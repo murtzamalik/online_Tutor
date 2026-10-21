@@ -16,12 +16,16 @@ export function readToken(): string | undefined {
   return sessionStorage.getItem("accessToken") ?? undefined;
 }
 
-export type LoadFailure = { kind: "error" | "forbidden"; message: string };
+export type LoadFailure = { kind: "error" | "forbidden" | "notFound"; message: string };
 
 /** Maps any thrown value to a screen state: 403 → forbidden, everything else → error with a readable message. */
 export function toFailure(err: unknown, fallback: string): LoadFailure {
   if (err instanceof ApiError && err.status === 403) {
     return { kind: "forbidden", message: err.message || fallback };
+  }
+  // A bad or stale link (unknown id, or not an id at all): nothing to retry.
+  if (err instanceof ApiError && (err.status === 404 || err.status === 400)) {
+    return { kind: "notFound", message: "We couldn't find that. It may have been removed, or the link is wrong." };
   }
   if (err instanceof ApiError) return { kind: "error", message: err.message || fallback };
   if (err instanceof Error && err.message) return { kind: "error", message: err.message };

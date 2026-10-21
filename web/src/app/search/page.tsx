@@ -10,6 +10,8 @@ import { Badge, Card, Input, PageHeader } from "@/components/ui/primitives";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { ApiError } from "@/lib/api/client";
 import * as api from "@/lib/api/w3";
+import { useSession } from "@/components/shell/session";
+import { homeFor } from "@/components/shell/nav";
 import { asArray, asRecord, humanise, str } from "@/components/parent/format";
 
 type Result = { key: string; title: string; kind: string; snippet?: string; href?: string };
@@ -47,6 +49,9 @@ function toResults(data: unknown): Result[] {
 
 /** Shell-08 — In-app search */
 export default function Page() {
+  const session = useSession();
+  // In-app search (PRA-16) is student-only; other signed-in roles get a clear state instead of a 403.
+  const nonStudent = session?.status === "ready" && session.role !== "student";
   const [data, setData] = useState<Result[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [needsStudent, setNeedsStudent] = useState(false);
@@ -79,9 +84,10 @@ export default function Page() {
   }
 
   useEffect(() => {
+    if (nonStudent) return;
     void runSearch(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [nonStudent]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -92,7 +98,13 @@ export default function Page() {
     <AppPage width="content">
       <PageHeader title="Search" description="Find topics, revision notes and flashcard decks." />
 
-      {needsStudent ? (
+      {nonStudent && session ? (
+        <EmptyState
+          title="Search is for students"
+          body="In-app search covers a learner's topics, revision notes and flashcards. Head back to your home page to carry on."
+          action={<ButtonLink href={homeFor(session.role)}>Go to your home</ButtonLink>}
+        />
+      ) : needsStudent ? (
         <EmptyState
           title="Search is available after child login"
           body="In-app search is for the learner account. Sign in as a child, or open the parent home to manage children."

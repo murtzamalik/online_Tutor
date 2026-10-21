@@ -196,7 +196,10 @@ public class GenerationService {
     if ("MULTIPLE_CHOICE".equals(questionType)) {
       schemeType = "MCQ_KEY";
     }
-    Object schemeBody = "POINTS".equals(schemeType) ? scheme.get("marking_points") : scheme;
+    // Models sometimes return "points" instead of "marking_points"; both mean the same list.
+    Object schemeBody = "POINTS".equals(schemeType)
+        ? (scheme.get("marking_points") != null ? scheme.get("marking_points") : scheme.get("points"))
+        : scheme;
 
     Long questionId =
         jdbc.query(

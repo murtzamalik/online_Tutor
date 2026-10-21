@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Exam, Percent, Trophy } from "@phosphor-icons/react";
-import { createMockPaper, mockResults } from "@/lib/api/settings";
-import { ApiError } from "@/lib/api/client";
+import { mockResults } from "@/lib/api/settings";
 import { AppPage } from "@/components/ui/AppPage";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Badge, Callout, Card, CardHeader, MasteryBadge, PageHeader, StatTile } from "@/components/ui/primitives";
@@ -31,8 +30,6 @@ export default function MockResultsPage() {
   const params = useParams<{ mockId: string }>();
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [failure, setFailure] = useState<LoadFailure | null>(null);
-  const [demoError, setDemoError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -48,21 +45,6 @@ export default function MockResultsPage() {
     void load();
   }, [load]);
 
-  async function createDemo() {
-    setCreating(true);
-    setDemoError(null);
-    try {
-      const created = await createMockPaper();
-      const id = String(created.mockId ?? created.mock_id ?? "");
-      if (id) {
-        window.location.href = `/mock/${id}/results`;
-        return;
-      }
-    } catch (err) {
-      setDemoError(err instanceof ApiError ? err.message : "Could not create demo mock");
-    }
-    setCreating(false);
-  }
 
   const r = result ? readResult(result) : null;
 
@@ -77,14 +59,6 @@ export default function MockResultsPage() {
       {failure ? (
         <div className="space-y-4">
           <FailureView failure={failure} onRetry={() => void load()} />
-          {failure.kind === "error" && (
-            <div className="flex flex-col items-center gap-2">
-              <Button variant="tertiary" onClick={createDemo} loading={creating}>
-                Create demo completed mock
-              </Button>
-              {demoError && <Callout tone="danger">{demoError}</Callout>}
-            </div>
-          )}
         </div>
       ) : !r ? (
         <LoadingState lines={5} />

@@ -64,7 +64,25 @@ public class StudentService {
     if (!"ACTIVE".equals(status)) {
       throw AppException.forbidden("Parent account must be verified");
     }
-    String displayName = String.valueOf(req.get("displayName"));
+    String displayName = req.get("displayName") == null ? "" : req.get("displayName").toString().trim();
+    if (displayName.isEmpty()) {
+      throw AppException.badRequest(ProblemCode.VALIDATION_FAILED, "Enter your child's first name");
+    }
+    // One child per name per parent: a retried or double-clicked submit must not create a second child.
+    jdbc.query("SELECT pg_advisory_xact_lock(hashtext(?))", rs -> null, principal.accountId().toString());
+    Boolean exists = jdbc.queryForObject(
+        """
+        SELECT EXISTS (SELECT 1 FROM parent_student_link l
+                       JOIN student_profile sp ON sp.student_id = l.student_id
+                       WHERE l.parent_account_id = ? AND sp.status <> 'DELETED'
+                         AND lower(btrim(sp.display_name)) = lower(?))
+        """,
+        Boolean.class,
+        principal.accountId(),
+        displayName);
+    if (Boolean.TRUE.equals(exists)) {
+      throw AppException.conflict("CHILD_EXISTS", "You already have a child called " + displayName + ".");
+    }
     LocalDate birthMonth = req.get("birthMonth") != null
         ? LocalDate.parse(req.get("birthMonth").toString())
         : null;

@@ -2,7 +2,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Camera, PaperPlaneRight, ShieldCheck, Sparkle } from "@phosphor-icons/react";
+import { Camera, Microphone, PaperPlaneRight, ShieldCheck, Sparkle } from "@phosphor-icons/react";
 import { AppPage } from "@/components/ui/AppPage";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/primitives";
@@ -11,6 +11,8 @@ import { ErrorState, ForbiddenState, LoadingState } from "@/components/ui/states
 import { cx } from "@/components/ui/cx";
 import { ApiError } from "@/lib/api/client";
 import * as api from "@/lib/api/w3";
+import { voiceStatus } from "@/lib/api/w2";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 type Message = { key: string; role: "STUDENT" | "TUTOR" | "SYSTEM"; text: string };
 
@@ -35,6 +37,15 @@ export default function Page() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const [voiceOn, setVoiceOn] = useState(false);
+  usePageTitle("Tutor");
+
+  // "Talk instead" only shows when a parent has consented and switched voice on.
+  useEffect(() => {
+    voiceStatus()
+      .then((v) => setVoiceOn(v.available))
+      .catch(() => setVoiceOn(false));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,7 +58,8 @@ export default function Page() {
         setMessages((data.messages ?? []).map((m: any) => ({ key: m.messageId, role: m.role, text: m.text })));
       } catch (e) {
         if (cancelled) return;
-        if (e instanceof ApiError && (e.status === 403 || e.status === 404)) {
+        // Not found, not yours, or not a session id at all (e.g. an old /tutor/xyz link): start fresh.
+        if (e instanceof ApiError && (e.status === 400 || e.status === 403 || e.status === 404)) {
           try {
             const started: any = await api.startTutor({ mode: "SOCRATIC" }, token);
             if (!cancelled) router.replace(`/tutor/${started.tutorSessionId}`);
@@ -109,6 +121,11 @@ export default function Page() {
           <h1 className="text-h2">Your tutor</h1>
           <p className="text-caption text-neutral-600">Helps you think it through — it won&apos;t just give you the answer.</p>
         </div>
+        {voiceOn && (
+          <Link href="/voice/new" className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-[14px] font-semibold text-brand-navy hover:bg-brand-navySoft">
+            <Microphone size={18} /> Talk instead
+          </Link>
+        )}
         <Link href="/tutor/photo" className="hidden items-center gap-1.5 rounded-md px-3 py-2 text-[14px] font-semibold text-brand-navy hover:bg-brand-navySoft sm:inline-flex">
           <Camera size={18} /> Photo of a question
         </Link>

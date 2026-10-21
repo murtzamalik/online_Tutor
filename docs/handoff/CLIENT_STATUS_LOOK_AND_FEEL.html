@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Study Loop — Progress Update · Look &amp; Feel</title>
+  <style>
+    :root {
+      --ink: #0f2744;
+      --muted: #5a6b7d;
+      --line: #e6ebf0;
+      --bg: #f7f8fa;
+      --card: #ffffff;
+      --accent: #0f2744;
+      --teal: #1f7a6c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 48px 28px 80px; }
+    header.hero {
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 36px 40px;
+      margin-bottom: 32px;
+    }
+    .eyebrow {
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin: 0 0 12px;
+    }
+    h1 {
+      font-size: 34px;
+      line-height: 1.15;
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+    .lede { color: var(--muted); font-size: 18px; margin: 0; max-width: 38em; }
+    .meta {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 20px;
+    }
+    h2 {
+      font-size: 24px;
+      margin: 40px 0 12px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    h3 {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin: 28px 0 10px;
+    }
+    p, li { font-size: 16px; }
+    ul { padding-left: 1.2em; }
+    li { margin: 0.35em 0; }
+    .shot {
+      background: var(--card);
+      border: 1px solid var(--line);
+      margin: 16px 0 28px;
+      overflow: hidden;
+    }
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-bottom: 1px solid var(--line);
+    }
+    .shot figcaption {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 12px 16px 14px;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 720px) {
+      .grid2 { grid-template-columns: 1fr; }
+    }
+    .callout {
+      background: #eef6f4;
+      border-left: 3px solid var(--teal);
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 14px;
+      background: var(--card);
+      border: 1px solid var(--line);
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th { background: #f0f3f6; font-weight: 600; }
+    footer {
+      margin-top: 48px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; max-width: none; }
+      .shot { break-inside: avoid; }
+      header.hero { break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <p class="eyebrow">Client progress update</p>
+      <h1>Study Loop — what has been built, and how it looks</h1>
+      <p class="lede">
+        A visual status of the working web product — marketing site, student learning loop,
+        parent controls, staff tools — plus a plain-English explanation of how AI is used
+        and which providers power the pilot. Screenshots from the live local demo build.
+      </p>
+      <p class="meta">20 October 2026 · Confidential · For stakeholder review</p>
+    </header>
+
+    <h2>1. In short</h2>
+    <p>
+      Study Loop is running as a full web application. Families can sign in, learners practise
+      with instant marking and an AI tutor, parents oversee progress and privacy, and staff can
+      review content and A-Level marking queues. The look and feel is calm, modern, and education-focused —
+      navy brand mark, clear typography, and role-specific shells so students, parents and staff
+      each see a focused workspace.
+    </p>
+    <div class="callout">
+      <strong>How to share this file:</strong> open in Chrome/Safari → File → Print → Save as PDF.
+      Keep the <code>client_screenshots/</code> folder next to this HTML so images appear.
+    </div>
+
+    <h2>2. What’s ready to review</h2>
+    <ul>
+      <li><strong>Public site</strong> — home, pricing, library, FAQ, signup/login shells</li>
+      <li><strong>Student loop</strong> — picture-PIN child login, home, adaptive practice, AI tutor, revise topics, mock exams, progress map</li>
+      <li><strong>Parent portal</strong> — dashboard, child overview, AI controls, privacy, billing/trial entry points</li>
+      <li><strong>Staff tools</strong> — A-Level review workbench; content Question QC and past-paper authoring</li>
+      <li><strong>Live AI path</strong> — tutor and marking wired through the AI gateway in the demo environment</li>
+    </ul>
+
+    <h2>3. Look &amp; feel</h2>
+    <p>
+      The product presents as a serious UK exam-prep brand rather than a toy app: deep navy identity,
+      generous white space, teal accents for guidance, and clear empty states. Students get a bottom
+      navigation for Home / Practice / Revise / Tutor / Progress. Parents and staff get a quieter
+      operations shell with role-scoped menus.
+    </p>
+
+    <h3>Marketing</h3>
+    <figure class="shot">
+      <img src="client_screenshots/01_home.png" alt="Study Loop marketing homepage" />
+      <figcaption>Homepage — exam-board positioning, primary CTAs, trust stats</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="client_screenshots/02_pricing.png" alt="Pricing plans" />
+      <figcaption>Pricing — plan cards with monthly/yearly toggle</figcaption>
+    </figure>
+
+    <h3>Access</h3>
+    <div class="grid2">
+      <figure class="shot">
+        <img src="client_screenshots/03_login.png" alt="Parent login" />
+        <figcaption>Parent / carer email login</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="client_screenshots/04_child_login.png" alt="Child picture PIN login" />
+        <figcaption>Child login — handle + picture PIN (no email for younger learners)</figcaption>
+      </figure>
+    </div>
+
+    <h3>Student experience</h3>
+    <figure class="shot">
+      <img src="client_screenshots/05_student_home.png" alt="Student home" />
+      <figcaption>Student home — daily goal, adaptive practice pick, surprise check</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="client_screenshots/06_practice.png" alt="Practice session" />
+      <figcaption>Practice session — timed question, answer entry, mark-scheme aware flow</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="client_screenshots/07_tutor.png" alt="AI tutor chat" />
+      <figcaption>AI tutor — conversational help with safety notice</figcaption>
+    </figure>
+    <div class="grid2">
+      <figure class="shot">
+        <img src="client_screenshots/08_revise.png" alt="Revise topics" />
+        <figcaption>Revise — topics with mastery indicators</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="client_screenshots/09_mock.png" alt="Mock exam" />
+        <figcaption>Mock exam — assemble / sit experience</figcaption>
+      </figure>
+    </div>
+
+    <h3>Parent experience</h3>
+    <figure class="shot">
+      <img src="client_screenshots/10_parent_dashboard.png" alt="Parent dashboard" />
+      <figcaption>Parent dashboard — children overview and next actions</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="client_screenshots/11_parent_child.png" alt="Parent child detail" />
+      <figcaption>Child detail — progress tabs, controls, privacy entry points</figcaption>
+    </figure>
+
+    <h3>Staff &amp; content</h3>
+    <figure class="shot">
+      <img src="client_screenshots/12_staff_review.png" alt="A-Level review workbench" />
+      <figcaption>Staff — A-Level review workbench (SLA-aware queue)</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="client_screenshots/13_content_qc.png" alt="Question QC" />
+      <figcaption>Content admin — Question QC queue and coverage</figcaption>
+    </figure>
+
+    <h2>4. How we use AI (plain-English guide)</h2>
+    <p>
+      Think of Study Loop’s AI as a <strong>carefully supervised teaching assistant</strong> —
+      not a chatbot that freely invents answers. Every AI request goes through our own
+      <strong>AI Gateway</strong>: a secure door that checks safety, hides personal details,
+      picks the right model for the job, and keeps a record for quality and cost control.
+      Children’s names, school details and contact data are not sent to AI vendors.
+    </p>
+
+    <h3>Which AI providers we use (pilot stack)</h3>
+    <table>
+      <thead>
+        <tr><th>Provider</th><th>In simple terms</th><th>What we use it for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Google Gemini</strong> (Flash)</td>
+          <td>A fast, capable general AI from Google</td>
+          <td>Everyday tutoring help and many marking / feedback tasks where speed matters</td>
+        </tr>
+        <tr>
+          <td><strong>Groq</strong> (open models)</td>
+          <td>Very fast hosting of large open-source models</td>
+          <td>Heavier reasoning when we need a stronger second opinion or bigger model</td>
+        </tr>
+        <tr>
+          <td><strong>Ollama</strong> (on our machine)</td>
+          <td>AI that can run locally as a backup</td>
+          <td>Fallback if a cloud provider is slow or unavailable — keeps the demo resilient</td>
+        </tr>
+        <tr>
+          <td><strong>Anthropic Claude</strong> (optional)</td>
+          <td>A well-known paid AI, kept as a switchable option</td>
+          <td>Available as a rollback / alternative path if we choose that routing later</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      In practice these providers are reached through one control layer (<strong>LiteLLM</strong>),
+      so Study Loop can change or add models without rebuilding the whole student app.
+      Parents and students never pick a provider — the product chooses the right tool automatically.
+    </p>
+
+    <h3>Where AI helps in the product</h3>
+    <table>
+      <thead>
+        <tr><th>Feature the family sees</th><th>What the AI is doing</th><th>Benefit</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Instant marking</strong></td>
+          <td>Reads the student’s answer against the mark scheme and explains the marks</td>
+          <td>Feedback in seconds instead of waiting for a teacher — with reasons, not just a tick or cross</td>
+        </tr>
+        <tr>
+          <td><strong>AI tutor chat</strong></td>
+          <td>Talks the learner through a stuck question (guided help, with safety checks)</td>
+          <td>Support anytime at home; encourages thinking instead of only dumping the final answer</td>
+        </tr>
+        <tr>
+          <td><strong>Safety checks</strong></td>
+          <td>Screens learner messages and tutor replies for risk (e.g. safeguarding concerns)</td>
+          <td>Safer conversations; serious issues can be stopped and escalated to humans</td>
+        </tr>
+        <tr>
+          <td><strong>Question generation &amp; QC</strong></td>
+          <td>Helps draft practice items; staff still approve before students see them</td>
+          <td>Faster content coverage while humans stay in control of quality</td>
+        </tr>
+        <tr>
+          <td><strong>Reports &amp; insights</strong> (where enabled)</td>
+          <td>Turns practice data into clearer parent-facing summaries</td>
+          <td>Parents see progress in plain language, not raw scores only</td>
+        </tr>
+        <tr>
+          <td><strong>A-Level review assist</strong></td>
+          <td>Gives a provisional AI mark; specialist staff can confirm or adjust</td>
+          <td>Speed for the student, human oversight for high-stakes answers</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>Important for parents and schools:</strong> AI never replaces exam boards or teachers.
+      It speeds up practice and feedback. Sensitive journeys (safeguarding, final A-Level release,
+      content publish) stay under human control. Personal data is kept out of vendor prompts.
+    </div>
+
+    <h3>Simple picture of the flow</h3>
+    <p style="font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; background: #fff; border: 1px solid var(--line); padding: 16px 18px;">
+      Student asks or submits an answer<br />
+      → <strong>Study Loop app</strong> (practice / tutor screen)<br />
+      → <strong>AI Gateway</strong> (safety + privacy filter + choose model)<br />
+      → <strong>Gemini / Groq / Ollama</strong> (the actual AI engine)<br />
+      → Answer comes back through the same Gateway<br />
+      → Student sees marking feedback or tutor reply
+    </p>
+
+    <h2>5. Suggested walkthrough (demo)</h2>
+    <ol>
+      <li>Open the homepage and pricing to see positioning and plans.</li>
+      <li>Parent login → dashboard → open a child profile (controls and privacy).</li>
+      <li>Child login → Home → start Practice → submit an answer → open Tutor → ask a Chemistry question → browse Revise / Mock.</li>
+      <li>Optional: staff login to show review or content QC.</li>
+    </ol>
+
+    <h2>6. What’s next (polish before full UAT)</h2>
+    <p>Core journeys above are in place. Ahead of a formal UAT we are tightening:</p>
+    <ul>
+      <li>Diagnostic question display (content clarity)</li>
+      <li>Marking edge cases on short answers</li>
+      <li>A few secondary student routes and legal copy depth</li>
+      <li>Voice tutor entry polish</li>
+    </ul>
+    <p>None of these change the overall look-and-feel direction shown in this pack.</p>
+
+    <h2>7. Demo access (local)</h2>
+    <table>
+      <thead>
+        <tr><th>Surface</th><th>URL / login</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>App</td><td>http://localhost:8080</td></tr>
+        <tr><td>Parent</td><td>demo.family@studyloop.local · DemoFamily!234</td></tr>
+        <tr><td>Student (Alex)</td><td>/child-login · handle learner-e9ae-7469 · PIN cat → dog → tree</td></tr>
+        <tr><td>Staff reviewer</td><td>reviewer@studyloop.local · ReviewerDemo!23 · /staff/login</td></tr>
+        <tr><td>Content admin</td><td>content@studyloop.local · ReviewerDemo!23 · /staff/login</td></tr>
+      </tbody>
+    </table>
+
+    <footer>
+      Study Loop · Karsaaz Solutions · Screenshots from local Docker demo build · October 2026
+    </footer>
+  </div>
+</body>
+</html>

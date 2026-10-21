@@ -1,5 +1,6 @@
 import type { HTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cx } from "./cx";
+import { DocumentTitle } from "./DocumentTitle";
 
 /* ---------------------------------------------------------------- Card (§7.3) */
 
@@ -50,15 +51,20 @@ export function PageHeader({
   eyebrow,
   actions,
   className,
+  docTitle,
 }: {
   title: ReactNode;
   description?: ReactNode;
   eyebrow?: ReactNode;
   actions?: ReactNode;
   className?: string;
+  /** Browser tab title; defaults to `title` when it is plain text. */
+  docTitle?: string | null;
 }) {
+  const tabTitle = docTitle ?? (typeof title === "string" || typeof title === "number" ? String(title) : null);
   return (
     <header className={cx("mb-6 flex flex-wrap items-end justify-between gap-4", className)}>
+      <DocumentTitle title={tabTitle} />
       <div className="min-w-0">
         {eyebrow && <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-brand-teal">{eyebrow}</p>}
         <h1 className="text-h1 text-neutral-900">{title}</h1>

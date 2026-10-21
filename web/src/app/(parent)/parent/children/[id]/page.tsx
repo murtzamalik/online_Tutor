@@ -21,7 +21,7 @@ import {
   Th,
 } from "@/components/ui/primitives";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
-import { ChildHeader } from "@/components/parent/ChildHeader";
+import { ChildHeader, type ChildTab } from "@/components/parent/ChildHeader";
 import { LoadView, useLoad } from "@/components/parent/useLoad";
 import { getDailyGoalSummary, listWeeklyReports, type WeeklyReportSummary } from "@/components/parent/api";
 import { asArray, asRecord, errorMessage, formatDate, formatRelative, humanise, num, str } from "@/components/parent/format";
@@ -87,13 +87,50 @@ export default function ParentProgressPage() {
     };
   }, [id]);
 
+  const [active, setActive] = useState<ChildTab>("overview");
+  const reportsSettled = reports !== null || reportsError !== null;
+
+  /** Deep link /parent/children/{id}#reports (also the /reports redirect): highlight the tab and scroll once loaded. */
+  useEffect(() => {
+    if (!reportsSettled) return;
+    let timer = 0;
+    const sync = () => {
+      if (window.location.hash === "#reports") {
+        setActive("reports");
+        // Cards above the reports finish loading after them and push them down; scroll once settled.
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => document.getElementById("reports")?.scrollIntoView({ block: "start" }), 400);
+      } else {
+        setActive("overview");
+      }
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    window.addEventListener("popstate", sync);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("hashchange", sync);
+      window.removeEventListener("popstate", sync);
+    };
+  }, [reportsSettled]);
+
+  function onTabClick(key: ChildTab) {
+    if (key === "reports") {
+      setActive("reports");
+      document.getElementById("reports")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (key === "overview") {
+      setActive("overview");
+    }
+  }
+
   const openAlerts = state.status === "ready" ? state.data.alerts.filter((a) => a.status === "NEW").length : undefined;
 
   return (
     <AppPage>
       <ChildHeader
         studentId={id}
-        active="overview"
+        active={active}
+        onTabClick={onTabClick}
         title="Progress overview"
         description="This week's activity, the current action plan and recent weekly reports."
         actions={

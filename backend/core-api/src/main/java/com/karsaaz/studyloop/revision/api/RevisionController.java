@@ -128,4 +128,26 @@ public class RevisionController {
   public Map<String, Object> exceptions(@AuthenticationPrincipal AccountPrincipal principal) {
     return Map.of("items", revision.exceptions(principal));
   }
+
+  @GetMapping("/internal/revision/notes")
+  @CatalogueRoles(id = "RVC-03", roles = "CNT,SYS")
+  public Map<String, Object> listNotes(
+      @AuthenticationPrincipal AccountPrincipal principal,
+      @org.springframework.web.bind.annotation.RequestParam long topicId) {
+    return Map.of("items", revision.listNotes(principal, topicId));
+  }
+
+  @PostMapping("/internal/revision/notes/{noteId}/approve")
+  @CatalogueRoles(id = "RVC-04", roles = "CNT,SYS")
+  public Map<String, Object> approveNote(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable long noteId) {
+    return revision.approveNote(principal, noteId);
+  }
+
+  @PostMapping("/internal/revision/notes/{noteId}/reject")
+  @CatalogueRoles(id = "RVC-05", roles = "CNT,SYS")
+  public Map<String, Object> rejectNote(
+      @AuthenticationPrincipal AccountPrincipal principal, @PathVariable long noteId) {
+    return revision.rejectNote(principal, noteId);
+  }
 }

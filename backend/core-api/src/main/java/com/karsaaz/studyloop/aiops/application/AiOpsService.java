@@ -136,7 +136,9 @@ public class AiOpsService {
         """
         SELECT g.gold_id, g.answer_text, g.examiner_points_json::text AS examiner_points, g.examiner_total,
                q.question_text, q.marks_available,
-               COALESCE(ms.marking_points_json::text, ms.model_answer, '') AS scheme
+               CONCAT_WS(chr(10),
+                 NULLIF(NULLIF(ms.marking_points_json::text, '[]'), ''),
+                 'Model answer: ' || NULLIF(ms.model_answer, '')) AS scheme
         FROM gold_set_item g
         JOIN question q ON q.question_id = g.question_id
         LEFT JOIN mark_scheme ms ON ms.question_id = g.question_id

@@ -121,3 +121,32 @@ export function closeDisclosure(disclosureId: string, referralTarget: string, no
     schema: Rec,
   });
 }
+
+/** GET /internal/revision/notes?topicId= — RVC-03 (CNT, SYS). Every version, newest first. */
+export function listRevisionNotes(topicId: string | number) {
+  return apiFetch(`/internal/revision/notes?topicId=${encodeURIComponent(String(topicId))}`, {
+    method: "GET",
+    token: requireToken(),
+    schema: ItemList,
+  });
+}
+
+/** POST /internal/revision/generate — RVC-01 (CNT, SYS). Real AI call (P-RC-01); can take ~20 s. Returns noteId, version. */
+export function generateRevisionNotes(topicId: number) {
+  return apiFetch("/internal/revision/generate", {
+    method: "POST",
+    token: requireToken(),
+    body: JSON.stringify({ topicId }),
+    schema: Rec,
+  });
+}
+
+/** POST /internal/revision/notes/{id}/approve — RVC-04 (CNT, SYS). Retires the previously approved version. */
+export function approveRevisionNote(noteId: string | number) {
+  return apiFetch(`/internal/revision/notes/${noteId}/approve`, { method: "POST", token: requireToken(), schema: Rec });
+}
+
+/** POST /internal/revision/notes/{id}/reject — RVC-05 (CNT, SYS). Marks the version QC_FAILED. */
+export function rejectRevisionNote(noteId: string | number) {
+  return apiFetch(`/internal/revision/notes/${noteId}/reject`, { method: "POST", token: requireToken(), schema: Rec });
+}

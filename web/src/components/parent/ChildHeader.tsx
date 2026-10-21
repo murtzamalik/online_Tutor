@@ -52,16 +52,20 @@ export function ChildHeader({
   title,
   description,
   actions,
+  onTabClick,
 }: {
   studentId: string;
   active: ChildTab;
   title: string;
   description?: ReactNode;
   actions?: ReactNode;
+  /** Called when a section link is clicked (lets same-page tabs like Overview/Reports update the active state). */
+  onTabClick?: (key: ChildTab) => void;
 }) {
   const name = useChildName(studentId);
   const year = useChildYear(studentId);
   const base = `/parent/children/${studentId}`;
+  const section = TABS.find((t) => t.key === active)?.label ?? title;
   return (
     <div className="mb-6 print:hidden">
       <Link
@@ -74,6 +78,7 @@ export function ChildHeader({
         className="mb-4"
         eyebrow={[name ?? "Your child", year].filter(Boolean).join(" · ")}
         title={title}
+        docTitle={`${name ?? "Your child"} · ${section}`}
         description={description}
         actions={actions}
       />
@@ -86,6 +91,7 @@ export function ChildHeader({
                 <Link
                   href={`${base}${t.path}`}
                   aria-current={on ? "page" : undefined}
+                  onClick={onTabClick ? () => onTabClick(t.key) : undefined}
                   className={cx(
                     "-mb-px inline-flex h-10 items-center border-b-2 px-3 text-[14px] font-medium transition-colors duration-fast",
                     on

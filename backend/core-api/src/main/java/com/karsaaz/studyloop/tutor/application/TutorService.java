@@ -34,6 +34,7 @@ public class TutorService {
 
   static final int HISTORY_TURNS = 8;
   static final int MAX_WORDS = 120;
+  static final int MAX_VOICE_WORDS = 60;
   static final int MAX_MESSAGE_CHARS = 2000;
   static final int MAX_PHOTO_BYTES = 3 * 1024 * 1024;
   private static final String STUB_REPLY =
@@ -139,7 +140,13 @@ public class TutorService {
       vars.put("session_context", context);
       vars.put("history", formatHistory(history, HISTORY_TURNS));
       vars.put("student_message", redacted);
-      vars.put("max_words", MAX_WORDS);
+      // Voice turns: the gateway adds the P-VO-01 spoken-style overlay; replies stay short to speak.
+      boolean voice = "VOICE".equals(jdbc.query(
+          "SELECT channel FROM tutor_session WHERE tutor_session_id = ?",
+          rs -> rs.next() ? rs.getString(1) : null,
+          tutorSessionId));
+      vars.put("channel", voice ? "VOICE" : "CHAT");
+      vars.put("max_words", voice ? MAX_VOICE_WORDS : MAX_WORDS);
       Map<String, Object> result = ai.requireResult(gateway.run("P-TU-01", vars, null), "P-TU-01");
       if (GatewayAiSupport.cannotComplete(result)) {
         throw new IllegalStateException("P-TU-01 cannot_complete");
@@ -364,7 +371,7 @@ public class TutorService {
 
   // ---------------------------------------------------------------- helpers
 
-  private record SessionRow(String status, Long topicId, Long questionId) {}
+  private record SessionRow(String status, Long topicId, Long questionId, String mode, int turnCount) {}
 
   private Map<String, Object> stopTurn(
       UUID tutorSessionId, int seq, String action, Map<String, Object> safetyResult, Instant expires) {
@@ -395,9 +402,9 @@ public class TutorService {
     jdbc.update(
         """
         INSERT INTO tutor_message (message_id, tutor_session_id, seq, role, channel, content_text, ai_visible_text, blocked, expires_at)
-        VALUES (?,?,?,?,'CHAT',?,?,?,?)
+        VALUES (?,?,?,?,(SELECT channel FROM tutor_session WHERE tutor_session_id = ?),?,?,?,?)
         """,
-        id, sessionId, seq, role, content, aiVisible, blocked, Timestamp.from(expires));
+        id, sessionId, seq, role, sessionId, content, aiVisible, blocked, Timestamp.from(expires));
     return id;
   }
 
@@ -429,9 +436,15 @@ public class TutorService {
     return b.toString().trim();
   }
 
-  /** Strategy controller (P-TU-01 notes): code picks the teaching move band from mastery. */
+  /**
+   * Strategy controller (P-TU-01 notes): code picks the teaching move band from mastery. Unknown
+   * mastery (no topic yet, or a new learner) starts Socratic with guided hints, not a full explanation.
+   */
   static String strategyFor(Double mastery) {
-    if (mastery == null || mastery < 0.35) {
+    if (mastery == null) {
+      return "GUIDED_HINTS";
+    }
+    if (mastery < 0.35) {
       return "DIRECT_INSTRUCTION";
     }
     if (mastery < 0.6) {
@@ -488,7 +501,11 @@ public class TutorService {
           session.topicId());
     }
     ctx.put("mastery_band", masteryBand(mastery));
-    ctx.put("strategy", strategyFor(mastery));
+    // Rescue sessions explain directly (P-TU-05 intent); every other session follows the strategy band.
+    boolean rescue = "RESCUE".equals(session.mode());
+    ctx.put("mode", session.mode() == null ? "SOCRATIC" : session.mode());
+    ctx.put("strategy", rescue ? "DIRECT_INSTRUCTION" : strategyFor(mastery));
+    ctx.put("hint_level_so_far", session.turnCount());
     ctx.put("misconceptions_seen", List.of());
     if (session.questionId() != null) {
       jdbc.query(
@@ -596,9 +613,12 @@ public class TutorService {
 
   private SessionRow loadOwnedSession(UUID studentId, UUID sessionId) {
     SessionRow row = jdbc.query(
-        "SELECT status, topic_id, question_id FROM tutor_session WHERE tutor_session_id = ? AND student_id = ?",
+        """
+        SELECT status, topic_id, question_id, mode, turn_count
+        FROM tutor_session WHERE tutor_session_id = ? AND student_id = ?
+        """,
         rs -> rs.next()
-            ? new SessionRow(rs.getString(1), (Long) rs.getObject(2), (Long) rs.getObject(3))
+            ? new SessionRow(rs.getString(1), (Long) rs.getObject(2), (Long) rs.getObject(3), rs.getString(4), rs.getInt(5))
             : null,
         sessionId,
         studentId);

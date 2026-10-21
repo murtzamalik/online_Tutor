@@ -69,6 +69,34 @@ export const startVoice = () =>
 export const endVoice = (id: string) =>
   apiFetch(`/voice/sessions/${id}/end`, { method: "POST", token: token(), body: "{}", schema: z.any() });
 
+/** VOX-06 — one push-to-talk turn: audio in, transcript + reply text + reply audio out. */
+export const voiceTurn = (id: string, audioBase64: string, mimeType: string, durationMs?: number) =>
+  apiFetch(`/voice/sessions/${id}/turns`, {
+    method: "POST",
+    token: token(),
+    body: JSON.stringify({ audioBase64, mimeType, durationMs }),
+    schema: z.object({
+      transcript: z.string().nullable().optional(),
+      heard: z.boolean().optional(),
+      replyText: z.string().nullable().optional(),
+      blocked: z.boolean().nullable().optional(),
+      audioBase64: z.string().nullable().optional(),
+      mimeType: z.string().nullable().optional(),
+      ttsFailed: z.boolean().optional(),
+    }),
+  });
+
+/** VOX-07 — is voice ready for this learner (parent consent + voice setting)? */
+export const voiceStatus = () =>
+  apiFetch("/voice/status", {
+    method: "GET",
+    token: token(),
+    schema: z.object({ consentGiven: z.boolean(), parentEnabled: z.boolean(), available: z.boolean() }),
+  });
+
+export const voiceFallbackToText = (id: string) =>
+  apiFetch(`/voice/sessions/${id}/fallback-to-text`, { method: "POST", token: token(), body: "{}", schema: z.any() });
+
 export const engagementEvents = (events: unknown[]) =>
   apiFetch("/engagement/events", {
     method: "POST",

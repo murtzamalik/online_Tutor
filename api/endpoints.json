@@ -2132,6 +2132,33 @@
   ]
  },
  {
+  "id": "VOX-06",
+  "method": "POST",
+  "path": "/voice/sessions/{voiceSessionId}/turns",
+  "roles": "STU",
+  "summary": "Push-to-talk turn: audio (base64) \u2192 STT \u2192 safety-checked tutor turn \u2192 TTS; returns transcript, reply text and audio",
+  "tables": "tutor_message,voice_session",
+  "prompts": "P-SF-01,P-TU-01,P-VO-01,P-SF-02",
+  "notes": "Pilot transport instead of VOX-02 streaming; audio not stored",
+  "screens": [
+   "J-01",
+   "J-02"
+  ]
+ },
+ {
+  "id": "VOX-07",
+  "method": "GET",
+  "path": "/voice/status",
+  "roles": "STU",
+  "summary": "Voice readiness for the learner: consent given, parent toggle",
+  "tables": "voice_consent,parent_ai_controls",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "J-01"
+  ]
+ },
+ {
   "id": "TRN-01",
   "method": "GET",
   "path": "/students/{studentId}/ai-transcripts",
@@ -3297,6 +3324,45 @@
   "roles": "CNT",
   "summary": "Failed revision QC",
   "tables": "revision_note,cheat_sheet",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "RVC-03",
+  "method": "GET",
+  "path": "/internal/revision/notes",
+  "roles": "CNT,SYS",
+  "summary": "List all revision note versions for a topic",
+  "tables": "revision_note",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "RVC-04",
+  "method": "POST",
+  "path": "/internal/revision/notes/{noteId}/approve",
+  "roles": "CNT,SYS",
+  "summary": "Approve a revision note version (retires the previous approved one)",
+  "tables": "revision_note,audit_log",
+  "prompts": "",
+  "notes": "",
+  "screens": [
+   "E-01"
+  ]
+ },
+ {
+  "id": "RVC-05",
+  "method": "POST",
+  "path": "/internal/revision/notes/{noteId}/reject",
+  "roles": "CNT,SYS",
+  "summary": "Reject a revision note version (QC_FAILED)",
+  "tables": "revision_note,audit_log",
   "prompts": "",
   "notes": "",
   "screens": [

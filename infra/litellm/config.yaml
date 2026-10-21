@@ -7,6 +7,12 @@ model_list:
       model: gemini/gemini-3.8-flash
       api_key: os.environ/GEMINI_API_KEY
 
+  # Same-vendor stand-by: Gemini 3.8 Flash returns 503 "high demand" at busy times.
+  - model_name: gemini-flash-standby
+    litellm_params:
+      model: gemini/gemini-3.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+
   - model_name: groq-llama70b
     litellm_params:
       model: groq/openai/gpt-oss-120b
@@ -30,6 +36,14 @@ model_list:
 litellm_settings:
   drop_params: true
   set_verbose: false
+
+# Tried inside LiteLLM before the gateway sees a failure (Groq last: text only, so image tasks still fail over
+# to the gateway path); the gateway's own fallback
+# (model_routing.fallback_model_id, self-hosted Ollama) still applies after this.
+router_settings:
+  num_retries: 0
+  fallbacks:
+    - gemini-flash: ["gemini-flash-standby", "groq-llama70b"]
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

@@ -13,7 +13,7 @@ class TutorServiceHelpersTest {
 
   @Test
   void strategyFollowsTheMasteryBands() {
-    assertThat(TutorService.strategyFor(null)).isEqualTo("DIRECT_INSTRUCTION");
+    assertThat(TutorService.strategyFor(null)).isEqualTo("GUIDED_HINTS");
     assertThat(TutorService.strategyFor(0.2)).isEqualTo("DIRECT_INSTRUCTION");
     assertThat(TutorService.strategyFor(0.5)).isEqualTo("WORKED_EXAMPLE");
     assertThat(TutorService.strategyFor(0.7)).isEqualTo("GUIDED_HINTS");

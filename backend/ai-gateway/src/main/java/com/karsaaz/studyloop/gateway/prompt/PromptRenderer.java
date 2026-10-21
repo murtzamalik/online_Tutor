@@ -114,6 +114,14 @@ public class PromptRenderer {
       }
     }
 
+    // P-VO-01: voice turns get the spoken-style overlay after the tutor system prompt (channel = VOICE).
+    if (promptId.startsWith("P-TU-") && "VOICE".equals(String.valueOf(variables.get("channel")))) {
+      Path overlay = catalog.promptsRoot().resolve(VOICE_OVERLAY);
+      if (Files.isRegularFile(overlay)) {
+        system = system + "\n\n" + spokenOverlay(systemBlock(readRepoFile(overlay, "P-VO-01")));
+      }
+    }
+
     Path schemaPath = catalog.resolveSchema(promptId);
     if (schemaPath != null && Files.isRegularFile(schemaPath)) {
       system =
@@ -136,6 +144,21 @@ public class PromptRenderer {
           promptId + " is missing variables " + missing);
     }
     return new RenderedPrompt(promptId, renderedSystem, renderedUser, entry.taskKey(), version, schemaPath);
+  }
+
+  static final String VOICE_OVERLAY = "voice/prompts/01_spoken_style_overlay.md";
+
+  /**
+   * The overlay text without its {@code reply_display} instruction: the tutor_turn schema does not
+   * allow that field yet, so asking for it would fail validation. Spoken text goes in reply_text.
+   */
+  static String spokenOverlay(String overlay) {
+    StringBuilder out = new StringBuilder();
+    for (String line : overlay.split("\n")) {
+      int cut = line.indexOf("; also supply the display form");
+      out.append(cut >= 0 ? line.substring(0, cut) + "." : line).append("\n");
+    }
+    return out.toString().trim() + "\nPut the spoken reply in reply_text and keep every other JSON field as the schema defines.";
   }
 
   static String sharedRulesFor(String promptId) {

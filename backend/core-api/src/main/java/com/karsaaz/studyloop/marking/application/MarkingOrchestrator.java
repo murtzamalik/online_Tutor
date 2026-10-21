@@ -31,6 +31,7 @@ public class MarkingOrchestrator {
   private final JdbcTemplate jdbc;
   private final McqMarker mcqMarker;
   private final NumericMarker numericMarker;
+  private final ShortAnswerMarker shortAnswerMarker;
   private final GatewayClient gatewayClient;
   private final GatewayAiSupport ai;
   private final MasteryService masteryService;
@@ -42,6 +43,7 @@ public class MarkingOrchestrator {
       JdbcTemplate jdbc,
       McqMarker mcqMarker,
       NumericMarker numericMarker,
+      ShortAnswerMarker shortAnswerMarker,
       GatewayClient gatewayClient,
       GatewayAiSupport ai,
       MasteryService masteryService,
@@ -51,6 +53,7 @@ public class MarkingOrchestrator {
     this.jdbc = jdbc;
     this.mcqMarker = mcqMarker;
     this.numericMarker = numericMarker;
+    this.shortAnswerMarker = shortAnswerMarker;
     this.gatewayClient = gatewayClient;
     this.ai = ai;
     this.masteryService = masteryService;
@@ -105,6 +108,14 @@ public class MarkingOrchestrator {
     NumericMarker.ObjectiveResult num = numericMarker.mark((String) row.get("answerSpec"), structured, marksAvailable);
     if (num.applicable()) {
       finalizeObjective(responseId, studentId, topicId, num.marksAwarded(), num.confidence(), num.points(), marksAvailable);
+      return;
+    }
+    // Exact recall answers ("Blue") get full marks in code; anything else still goes to the AI passes.
+    String[] scheme = schemeParts(((Number) row.get("questionId")).longValue());
+    McqMarker.ObjectiveResult exact = shortAnswerMarker.mark(
+        (String) row.get("questionType"), (String) row.get("answerText"), scheme[0], scheme[1], marksAvailable);
+    if (exact.applicable()) {
+      finalizeObjective(responseId, studentId, topicId, exact.marksAwarded(), exact.confidence(), exact.points(), marksAvailable);
       return;
     }
 
@@ -284,19 +295,28 @@ public class MarkingOrchestrator {
         false);
   }
 
+  /** [marking points JSON, model answer] for a question; either may be null. */
+  private String[] schemeParts(long questionId) {
+    String[] parts = jdbc.query(
+        "SELECT marking_points_json::text, model_answer FROM mark_scheme WHERE question_id = ? LIMIT 1",
+        rs -> rs.next() ? new String[] {rs.getString(1), rs.getString(2)} : null,
+        questionId);
+    return parts == null ? new String[] {null, null} : parts;
+  }
+
   private Map<String, Object> baseVars(Map<String, Object> row) {
     long questionId = ((Number) row.get("questionId")).longValue();
     String questionText = jdbc.query(
         "SELECT question_text FROM question WHERE question_id = ?",
         rs -> rs.next() ? rs.getString(1) : "",
         questionId);
-    String markScheme = jdbc.query(
-        """
-        SELECT COALESCE(marking_points_json::text, model_answer, '')
-        FROM mark_scheme WHERE question_id = ? LIMIT 1
-        """,
-        rs -> rs.next() ? rs.getString(1) : "",
-        questionId);
+    // Points and model answer together: an empty points list must not hide the model answer.
+    String[] scheme = schemeParts(questionId);
+    String markScheme = scheme[0] == null || scheme[0].isBlank() ? "" : scheme[0];
+    if (scheme[1] != null && !scheme[1].isBlank()) {
+      markScheme = (markScheme.isEmpty() || "[]".equals(markScheme.trim()) ? "" : markScheme + "\n")
+          + "Model answer: " + scheme[1];
+    }
     Map<String, Object> vars = new HashMap<>();
     vars.put("student_answer", GatewayAiSupport.redactPii((String) row.get("answerText")));
     vars.put("question_for_student", questionText == null ? "" : questionText);

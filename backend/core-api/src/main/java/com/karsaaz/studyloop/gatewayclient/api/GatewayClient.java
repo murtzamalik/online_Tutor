@@ -69,6 +69,31 @@ public class GatewayClient {
         .body(Map.class);
   }
 
+  /** Voice STT: {@code {text, model, latencyMs}}. Audio is base64; the gateway does not keep it. */
+  public Map<?, ?> transcribe(String audioBase64, String mimeType) {
+    return client
+        .post()
+        .uri("/gateway/v1/speech/transcribe")
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(Map.of(
+            "audioBase64", audioBase64,
+            "mimeType", mimeType == null ? "audio/webm" : mimeType,
+            "requestId", java.util.UUID.randomUUID().toString()))
+        .retrieve()
+        .body(Map.class);
+  }
+
+  /** Voice TTS: {@code {audioBase64, mimeType, model, latencyMs}}. */
+  public Map<?, ?> synthesize(String text) {
+    return client
+        .post()
+        .uri("/gateway/v1/speech/synthesize")
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(Map.of("text", text, "requestId", java.util.UUID.randomUUID().toString()))
+        .retrieve()
+        .body(Map.class);
+  }
+
   /** Reachability only — no model call (voice connectivity check must not spend tokens). */
   public boolean isHealthy() {
     try {

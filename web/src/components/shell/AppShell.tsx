@@ -6,7 +6,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { Bell, List, SignOut, X, CaretDown } from "@phosphor-icons/react";
 import { cx } from "@/components/ui/cx";
 import { Logo } from "./Logo";
-import { homeFor, isActive, navFor, type NavSection, type Role } from "./nav";
+import { homeFor, isActive, navFor, pageAllowed, type NavSection, type Role } from "./nav";
+import { ForbiddenState } from "@/components/ui/states";
 import { SessionProvider, signOut, useSession } from "./session";
 import { getAccessibility } from "@/lib/api/w4";
 import { SESSION_EXPIRED_EVENT } from "@/lib/api/client";
@@ -23,15 +24,15 @@ const ROLE_LABEL: Record<Role, string> = {
   guest: "",
 };
 
-export function AppShell({ children, loginPath = "/login" }: { children: ReactNode; loginPath?: string }) {
+export function AppShell({ children, loginPath = "/login", area }: { children: ReactNode; loginPath?: string; area?: Role }) {
   return (
     <SessionProvider>
-      <ShellFrame loginPath={loginPath}>{children}</ShellFrame>
+      <ShellFrame loginPath={loginPath} area={area}>{children}</ShellFrame>
     </SessionProvider>
   );
 }
 
-function ShellFrame({ children, loginPath }: { children: ReactNode; loginPath: string }) {
+function ShellFrame({ children, loginPath, area }: { children: ReactNode; loginPath: string; area?: Role }) {
   const session = useSession();
   const router = useRouter();
   const pathname = usePathname() ?? "/";
@@ -124,7 +125,22 @@ function ShellFrame({ children, loginPath }: { children: ReactNode; loginPath: s
             }}
           />
           <div className={cx("sl-content pb-24 lg:pb-12", session?.status !== "ready" && "opacity-0")}>
-            {session?.status === "ready" ? children : null}
+            {session?.status !== "ready" ? null : area === "school" && role === "school" && !session.schoolId ? (
+              <div className="mx-auto max-w-xl px-4 py-12">
+                <ForbiddenState body="Your account is not linked to a school yet. Ask your school admin to add you." />
+              </div>
+            ) : area && !pageAllowed(area, role, pathname, session.roles) ? (
+              <div className="mx-auto max-w-xl px-4 py-12">
+                <ForbiddenState body="This page is not part of your account. Use the menu to go to the pages you can open." />
+                <p className="mt-4 text-center">
+                  <Link href={homeFor(role)} className="font-semibold text-brand-navy underline">
+                    Go to your home
+                  </Link>
+                </p>
+              </div>
+            ) : (
+              children
+            )}
           </div>
         </div>
 

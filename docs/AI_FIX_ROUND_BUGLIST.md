@@ -188,14 +188,59 @@ The whole web app was moved to the client design system (`supporting_docs/Design
 
 Verified end to end in the browser: signup → child → under-13 consent → enrol → child PIN login → practice with live AI marking → mark scheme; tutor chat; mock paper; teacher assignment create/publish; roster import; KCSIE; safety flag escalate → disclosure action; student dispute → ops queue → claim → resolve (UPHELD, 2/2); AI eval run.
 
+## QA E2E gaps round (manager report, 19 Oct 2026)
+
+Each GAP from the QA report, plus what we found while re-testing it in the browser. Same format as above. Migrations: V024 (past-paper stem/scheme), V025 (legal pilot draft), V026 (voice on Gemini, sub-processors).
+
+### P0
+
+| # | Bug | Fix | Files |
+|---|---|---|---|
+| QA-01 (GAP-001) | Diagnostic showed `[file-backed ingest] … paper=… scheme=…` as the question. Approving a past-paper item copied `raw_text` (metadata, or stem + appended mark-scheme JSON) into the question, with a placeholder 2-mark scheme, as `APPROVED`; selection served it first (`times_served = 0`). | Serving needs a cleared licence (`OWN`/`OFFICIAL_TEACHING_USE`/`BOARD_LICENSED`) in practice, diagnostic, mock, engagement and the marketing sample. Ingest keeps the scheme in `past_paper_item.scheme_json`; approval refuses items with no real stem or no extracted scheme and writes the real points and marks. V024 retires existing bad questions and returns their items to review. | `PracticeService`, `MockService`, `EngagementService`, `MarketingService`, `ContentService`, V024 |
+| QA-02 (GAP-002) | "Blue" for "State the colour of hydrated copper(II) sulfate" got 0/2 and went to ops. The marker sent `COALESCE(points, model_answer)`, so an empty `[]` points list hid the model answer from the model. | Model sees the points and the model answer. New deterministic `ShortAnswerMarker` gives full marks for an exact (normalised) match with the model answer or every point's accept list (short items ≤ 2 marks); anything else still goes to the AI passes. Same scheme fix in the eval runner. Generation accepts `points` as an alias; QC approve refuses a written-answer question with nothing to mark against. | `MarkingOrchestrator`, `ShortAnswerMarker` (+ test), `AiOpsService`, `GenerationService`, `ContentService` |
+| QA-03 (GAP-003) | `/settings/voice` and `/student/results` fell into the marketing catch-all ("We couldn't find that subject"); `/revise/flashcards/{id}` was a bare 404. | Catch-all only accepts known qualification slugs, else `notFound()`; new app-wide not-found page with a link to the user's home; `/student/results` lists mock papers; `/settings/voice` is the voice readiness page; `/revise/flashcards/{id}` redirects to `/revise/decks/{id}`. | `[qualification]/[subject]`, `app/not-found.tsx`, student pages |
+| QA-04 | Found in re-test: a bad or stale id (e.g. `/revise/decks/abc`) showed "Something went wrong — Request could not be read" with a Retry button. | 400/404 on student pages show "Not found" with a link home. | `studentData.toFailure`, `StudentUI.FailureView` |
+
+### P1
+
+| # | Bug | Fix | Files |
+|---|---|---|---|
+| QA-05 (GAP-004) | Legal pages were one-sentence stubs; `/legal/ai` did not exist. | V025: full pilot-draft privacy, terms, cookies, AI-and-data and safeguarding pages from repo facts, each marked "Pilot draft — final text from the client's solicitor before launch"; unknown facts are `[placeholders]`. `/legal/ai` → `/legal/ai-data`. Page title set. | V025, `legal/[slug]` |
+| QA-06 (GAP-005) | Reviewers saw "Exceptions" in the menu but the page refused them; several staff menu items did not match the API's role checks (OWN on content/support/flags/boundary, OPS on A-Level review). | Staff menu roles copied from the services' actual checks. | `nav.ts` |
+| QA-07 (GAP-006) | Wrong roles saw full forms (support search, school roster upload — using the pilot school id) and only got a 403 on submit. | The shell checks the area and the page's menu roles before rendering: wrong role → "You do not have access" at once. School pages use the account's school only (pilot fallback removed); a school user with no school sees "not linked to a school". | `AppShell` (`area`), `nav.pageAllowed`, `school.tsx`, staff/school layouts |
+| QA-08 (GAP-007) | `/tutor/voice` errored ("couldn't load this tutor session"); voice was a session row only — no speech-to-text, text-to-speech or audio. | Real push-to-talk voice: browser records a turn → `POST /voice/sessions/{id}/turns` (VOX-06) → gateway STT (Gemini `gemini-3.5-flash-lite`) → the same safety-checked tutor turn as chat with the P-VO-01 spoken overlay → gateway TTS (`gemini-3.8-flash-tts`, WAV) → played back with captions. Messages stored as `VOICE` channel, audio never stored, P-VO-02 summary on end, metrics recorded. `GET /voice/status` (VOX-07); "Talk instead" on the tutor page when a parent has consented; `/tutor/voice` → `/voice/new`; non-UUID tutor ids start a fresh chat. V026 routes `voice.stt`/`voice.tts` to vendor `GEMINI` and updates the public sub-processor list (Gemini, Groq; Anthropic inactive). | `SpeechController`, `GeminiSpeechClient`, `PromptRenderer`, `VoiceService`, `TutorService`, voice pages, V026, API catalogue |
+| QA-09 (GAP-008) | Two "Jordan Nexus" children: add-child was not idempotent and an earlier error message invited a retry. | Same parent + same first name (case-insensitive) → 409 "You already have a child called …" (advisory lock against double submit). Existing duplicates on other databases are not cleaned up. | `StudentService.createChild` |
+
+### P2
+
+| # | Bug | Fix | Files |
+|---|---|---|---|
+| QA-10 (GAP-009) | Revision notes existed for one topic and nothing could approve a note. | Content admins: Revision notes page — pick topic, generate with P-RC-01, preview, approve (retires the previous approved version) or reject; audited. RVC-03/04/05. Notes generated with real AI and approved for nine of the ten 8462 topics (topic 7 has no spec statements — see known gaps). Reading level "GCSE" now displays properly. | `RevisionController`/`Service`, `staff/content/notes`, API catalogue |
+| QA-11 (GAP-010) | First tutor reply was a full explanation: web sessions have no topic, so mastery was unknown and the strategy defaulted to `DIRECT_INSTRUCTION`; mode was never sent. | Unknown mastery → `GUIDED_HINTS`; `DIRECT_INSTRUCTION` only for measured low mastery or RESCUE sessions; `mode` and `hint_level_so_far` sent in the session context. | `TutorService` (+ test) |
+| QA-12 (GAP-011) | Teacher/school admin/ops/DSL/support accounts missing on the QA database; the seed script was manual and failed if an email already existed. | `infra/scripts/seed_local_demo.sh` waits for migrations and applies the role seed; seed reuses existing accounts by email. Run `infra/scripts/seed_local_demo.sh` once core-api is up (password `ReviewerDemo!23` for teacher@, schooladmin@, ops@, dsl@, support@, compliance@, aiengineer@, owner@ — all `@studyloop.local`). | `seed_local_demo_roles.sql`, `seed_local_demo.sh` |
+| QA-13 (GAP-012) | `/search` redirected parents and visitors to login. | Decision: search is for signed-in students only (Shell-08, PRA-16). Other roles see "Search is for students" with a link home. | `search/page.tsx` |
+| QA-14 (GAP-013) | `/parent/children/{id}#reports` stayed on Overview. | Hash selects the Reports tab and scrolls once the cards above have loaded; tab clicks keep the state in sync. | child overview page, `ChildHeader` |
+| QA-15 (GAP-014) | Every client page title was "Study Loop". | `PageHeader` sets "<title> · Study Loop"; child pages use "<child> · <section>"; tutor and legal pages set their own. | `usePageTitle`, `primitives.PageHeader`, `ChildHeader` |
+
+### Found while re-testing
+
+| # | Bug | Fix | Files |
+|---|---|---|---|
+| QA-16 | A slow vendor call ended in an unhandled `CancellationException` (HTTP 500, no retry or fallback). | Read timeout is a vendor failure (504, fallback-eligible); per-call timeout 45 s → 75 s for long notes. | `OpenAiCompatibleVendorClient`, gateway `application.yml` |
+| QA-17 | Gemini 3.8 Flash returned 503 "high demand" for long stretches; its only fallback (local Ollama) does not run on these stacks, so marking and notes failed. | LiteLLM falls back inside the proxy: `gemini-flash` → `gemini-3.5-flash` → Groq `gpt-oss-120b` (text), no retries on the busy model. The gateway's own fallback still applies after that. | `infra/litellm/config.yaml` |
+| QA-18 | Mock results page showed students a "Create demo completed mock" button. | Removed. | `mock/[mockId]/results` |
+| QA-19 | `minio/minio` is no longer published, so `docker compose up` failed. | Compose uses `cgr.dev/chainguard/minio` (override with `MINIO_IMAGE`). | `docker-compose.yml` |
+| QA-20 | Error text leaked class names ("Revision notes could not be generated: BadGateway"); exact-match marking showed "Marking point EXACT". | Plain messages; exact match shows as M1 "Matches the mark scheme answer". | `RevisionService`, `ShortAnswerMarker` |
+
+Verified in the browser on the Docker stack (20 Oct): Alex child login → diagnostic shows real questions (the metadata question, inserted locally to reproduce, is never served) → practice "Blue" scores 2/2 at once → tutor's first reply asks a guiding question → parent gives voice consent → student voice turn (spoken question → transcript → spoken reply, summary saved) → duplicate child refused → `#reports` and page titles → legal pages incl. `/legal/ai` → reviewer and parent get immediate "no access" on staff/school pages → content admin generates and approves notes → ops, DSL, school admin and support consoles work with seeded accounts. Unit tests: `ShortAnswerMarkerTest`, `McqMarkerTest`, `TutorServiceHelpersTest`, `CatalogueRoleMapTest`, `ArchUnitModuleTest` pass.
+
 ## Dependency note
 `next@15.2.4` is flagged by npm during the image build as affected by CVE-2025-66478. Upgrade to a patched 15.x release before production (not done in this round: it is a framework upgrade that needs its own regression pass).
 
 ## Known gaps found but not fixed in this round
 - Support chat: there is no endpoint to read chat messages back, so the widget can only send.
-- Safeguarding disclosures are read-only in the staff UI (no update endpoint).
 - Review release works only for items in `CLAIMED` state.
-- No local Ollama, so fallback models fail on this machine; a Gemini 503 made one QC1 fail closed (correct behaviour).
+- No local Ollama, so the gateway fallback models fail on this machine; LiteLLM now falls back to Gemini 3.5 Flash and Groq first (QA-17).
 - Names, schools and postcodes in free text are not redacted (regex covers email/phone/DOB only). A UK postcode regex was tried and rejected: it matches chemistry (e.g. `NH3 4OH`). Needs NER/list matching.
 - Marking runs synchronously inside the submit-answer request (two LLM calls); should move to a job + SSE.
 - Embeddings are written but never queried: no duplicate check (C8), no semantic retrieval.
@@ -203,6 +248,13 @@ Verified end to end in the browser: signup → child → under-13 consent → en
 - Synthetic gold items use "model answer for eval" as the answer, so real eval scores will be low until real gold data (P-2) is loaded.
 - `spec/decompose` re-runs append duplicate objectives.
 - Evidence-must-quote-the-answer (M4) follows the spec but may push many answers to exceptions if a model paraphrases; watch the exception rate in UAT.
+
+- Voice latency: a turn took 15–25 s on 20 Oct (Gemini under "high demand"; STT alone 7–20 s). The spec budget (first audio ≤ 1.5 s) needs streaming STT/TTS (VOX-02 WebSocket, or Google Cloud Speech Chirp per D-05) — the pilot uses push-to-talk over HTTP.
+- Voice uses the Gemini API instead of Google Cloud Speech (D-05): confirm with the client; the switch back is a `model_routing` change once a Cloud Speech client exists.
+- Legal pages are a pilot draft with `[placeholders]` (company details, ICO number, DPO, transfer terms, no-training statement); final text must come from the client's solicitor.
+- Existing duplicate children on other databases (e.g. two "Jordan Nexus") were not cleaned up; only new duplicates are refused.
+- Mock paper results are still a stub (`MockService.submit` writes a fixed 60%).
+- 8462 topic 7 (Organic Chemistry) has no specification statements in the seed, so P-RC-01 correctly refuses to write notes for it (cannot_complete). Notes are approved for the other nine 8462 topics.
 
 ## How to verify (on your laptop)
 1. `mvn -f backend/pom.xml test` — unit tests (gateway: catalog, renderer, fixtures-vs-schema, runner, redaction; core: AiMarkParser, PassCompare, SafetyDecision, tutor helpers, code checks, QC verdict, report narrative, eval scoring, PDF chunking).

@@ -94,6 +94,9 @@ public class OpenAiCompatibleVendorClient implements ChatTransport {
       throw new VendorCallException(status, "LiteLLM HTTP " + status + " for " + model, e);
     } catch (ResourceAccessException e) {
       throw new VendorCallException(0, "LiteLLM unreachable for " + model, e);
+    } catch (java.util.concurrent.CancellationException e) {
+      // The read timeout cancels the JDK request; treat it like any slow vendor so retry/fallback runs.
+      throw new VendorCallException(504, "LiteLLM timed out for " + model, e);
     }
     try {
       JsonNode root = mapper.readTree(raw);

@@ -334,6 +334,7 @@ public class PracticeService {
         FROM question q
         LEFT JOIN mastery_state m ON m.topic_id = q.topic_id AND m.student_id = ? AND m.model_type = 'BKT'
         WHERE q.specification_id = ? AND q.review_status = 'APPROVED'
+          AND q.licence_status IN ('OWN','OFFICIAL_TEACHING_USE','BOARD_LICENSED')
           AND q.question_id NOT IN (
             SELECT question_id FROM session_question WHERE session_id = ?
           )
@@ -486,7 +487,7 @@ public class PracticeService {
       Long qid = jdbc.query(
           """
           SELECT question_id FROM question
-          WHERE review_status = 'APPROVED'
+          WHERE review_status = 'APPROVED' AND licence_status IN ('OWN','OFFICIAL_TEACHING_USE','BOARD_LICENSED')
             AND (?::bigint IS NULL OR topic_id = ?)
           ORDER BY random() LIMIT 1
           """,

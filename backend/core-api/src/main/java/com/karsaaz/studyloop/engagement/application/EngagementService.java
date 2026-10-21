@@ -160,7 +160,8 @@ public class EngagementService {
         JOIN spec_topic t ON t.specification_id = se.specification_id AND t.topic_level = 1
         WHERE se.student_id = ? AND se.status = 'ACTIVE'
           AND EXISTS (SELECT 1 FROM question q
-                      WHERE q.topic_id = t.topic_id AND q.review_status = 'APPROVED')
+                      WHERE q.topic_id = t.topic_id AND q.review_status = 'APPROVED'
+                        AND q.licence_status IN ('OWN','OFFICIAL_TEACHING_USE','BOARD_LICENSED'))
         ORDER BY random() LIMIT 1
         """,
         rs -> rs.next() ? rs.getLong(1) : null,

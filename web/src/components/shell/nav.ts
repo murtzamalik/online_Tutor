@@ -110,36 +110,37 @@ export const STAFF_NAV: NavSection[] = [
   {
     title: "Marking",
     items: [
-      { href: "/staff/review", label: "A-Level review", icon: CheckSquareOffset, roles: ["REVIEWER", "REV", "OPS", "OWN"] },
-      { href: "/staff/marking/exceptions", label: "Exceptions", icon: WarningOctagon, roles: ["REVIEWER", "REV", "OPS", "OPS_REVIEWER", "OWN"] },
-      { href: "/staff/marking/systemic", label: "Systemic issues", icon: Graph, roles: ["OPS", "OPS_REVIEWER", "OWN", "AIE", "AI_ENGINEER"] },
+      { href: "/staff/review", label: "A-Level review", icon: CheckSquareOffset, roles: ["REVIEWER", "REV", "OWN", "PRODUCT_OWNER", "BUSINESS_OWNER"] },
+      { href: "/staff/marking/exceptions", label: "Exceptions", icon: WarningOctagon, roles: ["OPS", "OPS_REVIEWER"] },
+      { href: "/staff/marking/systemic", label: "Systemic issues", icon: Graph, roles: ["OPS", "OPS_REVIEWER", "CONTENT_ADMIN", "CNT", "OWN", "PRODUCT_OWNER", "BUSINESS_OWNER"] },
     ],
   },
   {
     title: "Content",
     items: [
-      { href: "/staff/content/qc", label: "Question QC", icon: FileMagnifyingGlass, roles: ["CONTENT_ADMIN", "CNT", "OWN"] },
-      { href: "/staff/content/authoring", label: "Past papers", icon: Notebook, roles: ["CONTENT_ADMIN", "CNT", "OWN"] },
-      { href: "/staff/spec", label: "Specifications", icon: ListChecks, roles: ["CONTENT_ADMIN", "CNT", "OWN"], match: ["/staff/spec"] },
-      { href: "/staff/style", label: "Board style", icon: Palette, roles: ["CONTENT_ADMIN", "CNT", "OWN"] },
+      { href: "/staff/content/qc", label: "Question QC", icon: FileMagnifyingGlass, roles: ["CONTENT_ADMIN", "CNT"] },
+      { href: "/staff/content/notes", label: "Revision notes", icon: BookOpenText, roles: ["CONTENT_ADMIN", "CNT"] },
+      { href: "/staff/content/authoring", label: "Past papers", icon: Notebook, roles: ["CONTENT_ADMIN", "CNT"] },
+      { href: "/staff/spec", label: "Specifications", icon: ListChecks, roles: ["CONTENT_ADMIN", "CNT"], match: ["/staff/spec"] },
+      { href: "/staff/style", label: "Board style", icon: Palette, roles: ["CONTENT_ADMIN", "CNT"] },
     ],
   },
   {
     title: "Safety & support",
     items: [
-      { href: "/staff/safety", label: "Safety flags", icon: Siren, roles: ["DSL", "SAFEGUARDING_LEAD", "COMPLIANCE", "CMP", "OWN"] },
+      { href: "/staff/safety", label: "Safety flags", icon: Siren, roles: ["DSL", "SAFEGUARDING_LEAD", "COMPLIANCE", "CMP"] },
       { href: "/staff/safeguarding", label: "Safeguarding", icon: ShieldCheck, roles: ["DSL", "SAFEGUARDING_LEAD", "COMPLIANCE", "CMP"] },
-      { href: "/staff/support", label: "Support", icon: Headset, roles: ["SUPPORT", "SUP", "OPS", "OPS_REVIEWER", "OWN", "PRODUCT_OWNER"] },
+      { href: "/staff/support", label: "Support", icon: Headset, roles: ["SUPPORT", "SUP", "OPS", "OPS_REVIEWER", "PRODUCT_OWNER"] },
     ],
   },
   {
     title: "AI operations",
     items: [
-      { href: "/staff/ai/prompts", label: "Prompts", icon: Robot, roles: ["AI_ENGINEER", "AIE", "OWN", "PRODUCT_OWNER"] },
-      { href: "/staff/ai/eval", label: "Evaluation", icon: ListChecks, roles: ["AI_ENGINEER", "AIE", "OWN", "PRODUCT_OWNER"] },
+      { href: "/staff/ai/prompts", label: "Prompts", icon: Robot, roles: ["AI_ENGINEER", "AIE", "OWN", "PRODUCT_OWNER", "BUSINESS_OWNER"] },
+      { href: "/staff/ai/eval", label: "Evaluation", icon: ListChecks, roles: ["AI_ENGINEER", "AIE", "OWN", "PRODUCT_OWNER", "BUSINESS_OWNER"] },
       { href: "/staff/ai/cost", label: "AI cost", icon: CurrencyGbp, roles: ["OWN", "PRODUCT_OWNER", "BUSINESS_OWNER"] },
-      { href: "/staff/ai/boundary", label: "Data boundary", icon: Fingerprint, roles: ["AI_ENGINEER", "AIE", "COMPLIANCE", "CMP", "OWN"] },
-      { href: "/staff/audit", label: "Audit log", icon: Scroll, roles: ["COMPLIANCE", "CMP", "OWN", "PRODUCT_OWNER"] },
+      { href: "/staff/ai/boundary", label: "Data boundary", icon: Fingerprint, roles: ["AI_ENGINEER", "AIE", "COMPLIANCE", "CMP"] },
+      { href: "/staff/audit", label: "Audit log", icon: Scroll, roles: ["COMPLIANCE", "CMP", "PRODUCT_OWNER"] },
     ],
   },
 ];
@@ -166,6 +167,20 @@ export function navFor(role: Role, roles?: string[]): NavSection[] {
     default:
       return [];
   }
+}
+
+/**
+ * Whether a signed-in user may open a page in an area, decided before any API call so forms never
+ * render for the wrong role. Staff pages also check the nav item's roles; the API stays the real guard.
+ */
+export function pageAllowed(area: Role, role: Role, pathname: string, roles?: string[]): boolean {
+  if (role !== area) return false;
+  if (area !== "staff") return true;
+  const s = set(roles);
+  if (s.size === 0) return true;
+  const items = STAFF_NAV.flatMap((sec) => sec.items).filter((i) => isActive(pathname, i));
+  if (items.length === 0) return true;
+  return items.some((i) => !i.roles || i.roles.some((r) => s.has(r)));
 }
 
 export function homeFor(role: Role): string {

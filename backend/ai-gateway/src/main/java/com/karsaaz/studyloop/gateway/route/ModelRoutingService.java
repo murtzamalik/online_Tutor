@@ -65,6 +65,20 @@ public class ModelRoutingService {
     }
   }
 
+  /** One string value from a task's {@code params_json}, e.g. the TTS voice name. */
+  public String param(String taskKey, String key, String defaultValue) {
+    try {
+      String json = jdbc.query(
+          "SELECT params_json::text FROM model_routing WHERE task_key = ?",
+          rs -> rs.next() ? rs.getString(1) : null,
+          taskKey);
+      String v = parseParams(json).path(key).asText("");
+      return v.isBlank() ? defaultValue : v;
+    } catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
   static int defaultMaxTokens(String tier) {
     return "small".equals(tier) ? 1024 : 4096;
   }

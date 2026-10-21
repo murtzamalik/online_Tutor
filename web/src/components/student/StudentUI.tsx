@@ -4,8 +4,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { CaretRight, Check } from "@phosphor-icons/react";
 import { cx } from "@/components/ui/cx";
-import { ErrorState, ForbiddenState } from "@/components/ui/states";
-import { Button } from "@/components/ui/Button";
+import { EmptyState, ErrorState, ForbiddenState } from "@/components/ui/states";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import type { LoadFailure } from "./studentData";
 import type { McqOption } from "./studentData";
 
@@ -24,6 +24,9 @@ export function FailureView({
   action?: ReactNode;
 }) {
   if (failure.kind === "forbidden") return <ForbiddenState body={forbiddenBody ?? failure.message} />;
+  if (failure.kind === "notFound") {
+    return <EmptyState title="Not found" body={failure.message} action={action ?? <ButtonLink href="/home" variant="secondary" size="sm">Go to Home</ButtonLink>} />;
+  }
   return (
     <ErrorState
       body={failure.message}

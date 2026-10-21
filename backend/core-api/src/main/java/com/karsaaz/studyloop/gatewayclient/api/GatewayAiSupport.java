@@ -85,6 +85,15 @@ public class GatewayAiSupport {
     }
   }
 
+  /** Parsed JSON (maps, lists, scalars); null when the text is not valid JSON. */
+  public Object parseJson(String json) {
+    try {
+      return json == null ? null : mapper.readValue(json, Object.class);
+    } catch (JsonProcessingException e) {
+      return null;
+    }
+  }
+
   public String asText(Object value) {
     return value == null ? "" : String.valueOf(value);
   }
